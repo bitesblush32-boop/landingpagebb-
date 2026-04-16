@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BlushBite — Where Fantasy Meets Connection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Jost:wght@300;400;500&family=Cinzel:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blush:      #F2C4CE;
+    --blush-light:#FDE8ED;
+    --berry:      #A82040;
+    --berry-dark: #7B1530;
+    --burgundy:   #5C0F2A;
+    --dusty:      #C9A0A8;
+    --cream:      #FAF0E6;
+    --cream-warm: #F5E8DC;
+    --plum:       #6D3B5C;
+    --plum-dark:  #3D1D32;
+    --deep:       #0F0508;
+    --deep2:      #1A0B11;
+    --gold:       #C9A96E;
+    --text-light: rgba(250,240,230,0.85);
+    --text-muted: rgba(250,240,230,0.45);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--deep);
+    color: var(--cream);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── Custom Cursor ── */
+  .cursor {
+    position: fixed; top: 0; left: 0; z-index: 9999;
+    pointer-events: none; mix-blend-mode: difference;
+  }
+  .cursor-dot {
+    width: 8px; height: 8px;
+    background: var(--blush);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform .1s;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(242,196,206,0.5);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform .18s ease, width .3s, height .3s;
+  }
+  body:has(a:hover) .cursor-ring,
+  body:has(button:hover) .cursor-ring { width: 56px; height: 56px; }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 24px 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background .4s, padding .4s;
+  }
+  nav.scrolled {
+    background: rgba(15,5,8,.82);
+    backdrop-filter: blur(18px);
+    padding: 16px 60px;
+    border-bottom: 1px solid rgba(242,196,206,.08);
+  }
+  .nav-logo {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    letter-spacing: .12em;
+    color: var(--blush);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 36px; list-style: none; }
+  .nav-links a {
+    font-size: .78rem; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--text-muted); text-decoration: none;
+    transition: color .3s;
+  }
+  .nav-links a:hover { color: var(--blush); }
+  .nav-cta {
+    font-size: .78rem; letter-spacing: .14em; text-transform: uppercase;
+    padding: 10px 24px;
+    border: 1px solid rgba(242,196,206,.35);
+    color: var(--blush); background: transparent;
+    border-radius: 2px; cursor: none;
+    transition: background .3s, color .3s;
+    text-decoration: none;
+  }
+  .nav-cta:hover { background: var(--berry); color: var(--cream); border-color: var(--berry); }
+
+  /* ── HERO ── */
+  #hero {
+    position: relative; height: 100vh; min-height: 700px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Layered depth background */
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 60% 55%, rgba(92,15,42,.55) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 30% 40%, rgba(109,59,92,.3) 0%, transparent 55%),
+      radial-gradient(ellipse 100% 100% at 50% 100%, rgba(123,21,48,.2) 0%, transparent 70%),
+      linear-gradient(160deg, #0F0508 0%, #1A0B11 40%, #220D16 70%, #0F0508 100%);
+    z-index: 0;
+  }
+
+  /* Cinematic vignette */
+  .hero-vignette {
+    position: absolute; inset: 0; z-index: 1;
+    background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 30%, rgba(5,2,4,.8) 100%);
+  }
+
+  /* Bokeh particles */
+  .bokeh-layer {
+    position: absolute; inset: 0; z-index: 2; overflow: hidden;
+  }
+  .bokeh {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle, rgba(242,196,206,.18) 0%, transparent 70%);
+    animation: float-bokeh linear infinite;
+    filter: blur(1px);
+  }
+
+  @keyframes float-bokeh {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: .6; }
+    100% { transform: translateY(-120vh) scale(1.3); opacity: 0; }
+  }
+
+  /* Scene SVG */
+  .hero-scene {
+    position: absolute; inset: 0; z-index: 3;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hero-scene svg { width: 100%; height: 100%; }
+
+  /* Parallax layers */
+  .parallax-far  { transform: translateY(var(--py-far,  0px)); transition: transform .05s linear; }
+  .parallax-mid  { transform: translateY(var(--py-mid,  0px)); transition: transform .05s linear; }
+  .parallax-near { transform: translateY(var(--py-near, 0px)); transition: transform .05s linear; }
+
+  /* Hero text */
+  .hero-content {
+    position: relative; z-index: 10;
+    text-align: center; max-width: 860px; padding: 0 24px;
+  }
+  .hero-eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: .72rem; letter-spacing: .3em; text-transform: uppercase;
+    color: var(--gold); opacity: 0;
+    animation: fade-up .9s .3s forwards;
+  }
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.8rem, 9vw, 8rem);
+    font-weight: 300; line-height: .92;
+    color: var(--cream);
+    margin: 18px 0 6px;
+    opacity: 0;
+    animation: fade-up .9s .55s forwards;
+  }
+  .hero-title em { color: var(--blush); font-style: italic; }
+  .hero-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.3rem, 3vw, 2.1rem);
+    font-weight: 300; font-style: italic;
+    color: var(--dusty);
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fade-up .9s .75s forwards;
+  }
+  .hero-desc {
+    font-size: .88rem; line-height: 1.9;
+    color: var(--text-muted); max-width: 560px; margin: 0 auto 40px;
+    opacity: 0;
+    animation: fade-up .9s .95s forwards;
+  }
+  .hero-actions {
+    display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+    opacity: 0;
+    animation: fade-up .9s 1.1s forwards;
+  }
+  .btn-primary {
+    padding: 16px 44px;
+    background: linear-gradient(135deg, var(--berry) 0%, var(--burgundy) 100%);
+    color: var(--cream-warm);
+    font-family: 'Jost', sans-serif;
+    font-size: .8rem; letter-spacing: .18em; text-transform: uppercase;
+    border: none; border-radius: 2px; cursor: none;
+    position: relative; overflow: hidden;
+    transition: transform .3s, box-shadow .3s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-primary::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--blush) 0%, var(--berry) 100%);
+    opacity: 0; transition: opacity .4s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 20px 50px rgba(168,32,64,.4); }
+  .btn-primary:hover::before { opacity: 1; }
+  .btn-primary span { position: relative; z-index: 1; }
+  .btn-ghost {
+    padding: 16px 36px;
+    border: 1px solid rgba(242,196,206,.3);
+    color: var(--blush);
+    font-size: .8rem; letter-spacing: .18em; text-transform: uppercase;
+    background: transparent; border-radius: 2px; cursor: none;
+    transition: border-color .3s, background .3s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-ghost:hover { border-color: var(--blush); background: rgba(242,196,206,.06); }
+
+  .hero-scroll-hint {
+    position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+    z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    opacity: 0; animation: fade-up .9s 1.5s forwards;
+  }
+  .scroll-line {
+    width: 1px; height: 60px;
+    background: linear-gradient(to bottom, rgba(242,196,206,.6), transparent);
+    animation: scroll-pulse 2s ease-in-out infinite;
+  }
+  @keyframes scroll-pulse {
+    0%, 100% { opacity: .4; transform: scaleY(1); }
+    50% { opacity: 1; transform: scaleY(1.15); }
+  }
+  .scroll-label {
+    font-size: .62rem; letter-spacing: .25em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTION BASE ── */
+  section { padding: 140px 60px; }
+  .section-inner { max-width: 1200px; margin: 0 auto; }
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: .68rem; letter-spacing: .3em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 18px;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 300; line-height: 1.1;
+    color: var(--cream);
+  }
+  .section-title em { color: var(--blush); font-style: italic; }
+
+  /* Reveal animation */
+  .reveal {
+    opacity: 0; transform: translateY(40px);
+    transition: opacity .85s cubic-bezier(.22,1,.36,1), transform .85s cubic-bezier(.22,1,.36,1);
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: .1s; }
+  .reveal-delay-2 { transition-delay: .2s; }
+  .reveal-delay-3 { transition-delay: .32s; }
+  .reveal-delay-4 { transition-delay: .44s; }
+  .reveal-delay-5 { transition-delay: .56s; }
+  .reveal-delay-6 { transition-delay: .68s; }
+
+  /* ── WHAT IT IS ── */
+  #what {
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 50%, rgba(109,59,92,.12) 0%, transparent 60%),
+      var(--deep2);
+    border-top: 1px solid rgba(242,196,206,.06);
+  }
+  .what-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px; align-items: center;
+    margin-top: 70px;
+  }
+  .what-visual {
+    position: relative; aspect-ratio: 4/5;
+    border-radius: 4px; overflow: hidden;
+  }
+  .what-visual-bg {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--plum-dark) 0%, var(--burgundy) 50%, var(--deep) 100%);
+  }
+  .what-visual-art {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .what-visual::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(15,5,8,.7) 0%, transparent 60%);
+  }
+  .what-text { }
+  .what-text p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem; font-weight: 300; line-height: 1.8;
+    color: var(--text-light);
+    margin-bottom: 24px;
+  }
+  .what-text p strong { color: var(--blush); font-weight: 500; }
+  .what-pillars {
+    display: flex; flex-direction: column; gap: 14px;
+    margin-top: 36px;
+  }
+  .what-pill {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    background: rgba(242,196,206,.04);
+    border: 1px solid rgba(242,196,206,.08);
+    border-radius: 2px;
+    transition: background .3s, border-color .3s, transform .3s;
+  }
+  .what-pill:hover {
+    background: rgba(242,196,206,.07);
+    border-color: rgba(242,196,206,.2);
+    transform: translateX(6px);
+  }
+  .pill-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--berry) 0%, var(--plum) 100%);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: .9rem;
+  }
+  .pill-text { font-size: .85rem; color: var(--text-light); letter-spacing: .02em; }
+
+  /* ── THREE LAYERS ── */
+  #layers {
+    background:
+      radial-gradient(ellipse 60% 60% at 80% 50%, rgba(92,15,42,.15) 0%, transparent 60%),
+      var(--deep);
+  }
+  .layers-intro { max-width: 640px; margin-bottom: 80px; }
+  .layers-intro p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem; font-weight: 300; line-height: 1.85;
+    color: var(--text-muted); margin-top: 20px;
+  }
+  .layers-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .layer-card {
+    position: relative; overflow: hidden;
+    border-radius: 4px; aspect-ratio: 3/4;
+    cursor: none;
+    transition: transform .4s cubic-bezier(.22,1,.36,1);
+  }
+  .layer-card:hover { transform: translateY(-10px) scale(1.01); }
+  .layer-card:hover .layer-glow { opacity: 1; }
+  .layer-card:hover .layer-content { transform: translateY(0); }
+
+  .layer-bg {
+    position: absolute; inset: 0;
+    transition: transform .6s cubic-bezier(.22,1,.36,1);
+  }
+  .layer-card:hover .layer-bg { transform: scale(1.06); }
+
+  .layer-bg-1 {
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 30%, rgba(168,32,64,.4) 0%, transparent 60%),
+      linear-gradient(160deg, #2A0E1A 0%, #1A0B11 100%);
+  }
+  .layer-bg-2 {
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 30%, rgba(109,59,92,.5) 0%, transparent 60%),
+      linear-gradient(160deg, #1D0D1A 0%, #12080E 100%);
+  }
+  .layer-bg-3 {
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 30%, rgba(92,15,42,.4) 0%, transparent 60%),
+      linear-gradient(160deg, #250B16 0%, #160810 100%);
+  }
+
+  .layer-glow {
+    position: absolute; inset: 0; z-index: 1;
+    opacity: 0; transition: opacity .4s;
+    pointer-events: none;
+  }
+  .layer-glow-1 { background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(242,196,206,.08) 0%, transparent 60%); }
+  .layer-glow-2 { background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(109,59,92,.12) 0%, transparent 60%); }
+  .layer-glow-3 { background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(168,32,64,.1) 0%, transparent 60%); }
+
+  .layer-art {
+    position: absolute; inset: 0; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px;
+  }
+  .layer-border {
+    position: absolute; inset: 16px; z-index: 3;
+    border: 1px solid rgba(242,196,206,.1);
+    border-radius: 2px;
+    transition: border-color .4s;
+    pointer-events: none;
+  }
+  .layer-card:hover .layer-border { border-color: rgba(242,196,206,.22); }
+
+  .layer-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 5;
+    background: linear-gradient(to top, rgba(10,4,8,.95) 0%, transparent 100%);
+    padding: 40px 30px 30px;
+  }
+  .layer-content { transition: transform .4s ease; }
+  .layer-num {
+    font-family: 'Cinzel', serif;
+    font-size: .6rem; letter-spacing: .3em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 10px;
+  }
+  .layer-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.9rem; font-weight: 400; line-height: 1.1;
+    color: var(--cream); margin-bottom: 10px;
+  }
+  .layer-name em { color: var(--blush); font-style: italic; }
+  .layer-desc {
+    font-size: .82rem; line-height: 1.7;
+    color: var(--text-muted);
+    max-height: 0; overflow: hidden;
+    transition: max-height .4s ease, opacity .4s;
+    opacity: 0;
+  }
+  .layer-card:hover .layer-desc { max-height: 80px; opacity: 1; }
+
+  /* ── EXPERIENCE MODULES ── */
+  #modules {
+    background:
+      radial-gradient(ellipse 50% 60% at 10% 50%, rgba(109,59,92,.1) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 60% at 90% 50%, rgba(92,15,42,.12) 0%, transparent 55%),
+      var(--deep2);
+    border-top: 1px solid rgba(242,196,206,.06);
+  }
+  .modules-header { max-width: 620px; margin-bottom: 80px; }
+  .modules-header p {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem; font-weight: 300; line-height: 1.9;
+    color: var(--text-muted); margin-top: 18px;
+  }
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .module-card {
+    position: relative; border-radius: 4px; overflow: hidden;
+    padding: 40px 32px 36px;
+    background: rgba(242,196,206,.03);
+    border: 1px solid rgba(242,196,206,.07);
+    cursor: none;
+    transition: background .35s, border-color .35s, transform .35s cubic-bezier(.22,1,.36,1);
+  }
+  .module-card:hover {
+    background: rgba(242,196,206,.055);
+    border-color: rgba(242,196,206,.15);
+    transform: translateY(-6px);
+  }
+  .module-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--berry), transparent);
+    opacity: 0; transition: opacity .4s;
+  }
+  .module-card:hover::before { opacity: 1; }
+
+  .module-art {
+    width: 100%; aspect-ratio: 16/9;
+    border-radius: 2px; overflow: hidden;
+    margin-bottom: 28px; position: relative;
+  }
+  .module-icon-wrap {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+  }
+  .module-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem; font-weight: 500;
+    color: var(--cream); margin-bottom: 10px;
+    line-height: 1.2;
+  }
+  .module-desc {
+    font-size: .82rem; line-height: 1.75;
+    color: var(--text-muted);
+  }
+  .module-tag {
+    display: inline-block; margin-top: 18px;
+    font-size: .65rem; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--gold); padding: 4px 12px;
+    border: 1px solid rgba(201,169,110,.25);
+    border-radius: 20px;
+  }
+
+  /* ── CLOSING CTA ── */
+  #cta {
+    position: relative; overflow: hidden;
+    background: linear-gradient(160deg, var(--deep) 0%, var(--burgundy) 40%, var(--plum-dark) 70%, var(--deep) 100%);
+    text-align: center; padding: 160px 60px;
+    border-top: 1px solid rgba(242,196,206,.08);
+  }
+  #cta::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 50%, rgba(168,32,64,.25) 0%, transparent 60%),
+      radial-gradient(ellipse 100% 100% at 50% 100%, rgba(15,5,8,.8) 0%, transparent 50%);
+  }
+  .cta-inner { position: relative; z-index: 2; max-width: 800px; margin: 0 auto; }
+  .cta-pretext {
+    font-family: 'Cinzel', serif;
+    font-size: .68rem; letter-spacing: .35em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 30px;
+  }
+  .cta-headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.6rem, 6vw, 5rem);
+    font-weight: 300; line-height: 1.1;
+    color: var(--cream); margin-bottom: 16px;
+  }
+  .cta-headline em { color: var(--blush); font-style: italic; }
+  .cta-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem; font-weight: 300; font-style: italic;
+    color: var(--dusty); margin-bottom: 52px;
+  }
+  .cta-divider {
+    width: 80px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--berry), transparent);
+    margin: 0 auto 52px;
+  }
+  .btn-grand {
+    display: inline-block;
+    padding: 20px 64px;
+    background: linear-gradient(135deg, var(--berry) 0%, var(--burgundy) 100%);
+    color: var(--cream-warm);
+    font-family: 'Jost', sans-serif;
+    font-size: .85rem; letter-spacing: .22em; text-transform: uppercase;
+    border: none; border-radius: 2px; cursor: none;
+    position: relative; overflow: hidden;
+    transition: transform .35s, box-shadow .35s;
+    text-decoration: none;
+  }
+  .btn-grand::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(242,196,206,.15) 0%, transparent 60%);
+    opacity: 0; transition: opacity .4s;
+  }
+  .btn-grand:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 28px 70px rgba(168,32,64,.5), 0 0 0 1px rgba(242,196,206,.2);
+  }
+  .btn-grand:hover::before { opacity: 1; }
+  .btn-grand span { position: relative; z-index: 1; }
+
+  .cta-note {
+    font-size: .75rem; letter-spacing: .1em;
+    color: var(--text-muted); margin-top: 24px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--deep); padding: 40px 60px;
+    border-top: 1px solid rgba(242,196,206,.06);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem; letter-spacing: .12em;
+    color: rgba(242,196,206,.4);
+  }
+  .footer-copy {
+    font-size: .72rem; letter-spacing: .08em;
+    color: rgba(250,240,230,.2);
+  }
+  .footer-links { display: flex; gap: 28px; list-style: none; }
+  .footer-links a {
+    font-size: .7rem; letter-spacing: .12em; text-transform: uppercase;
+    color: rgba(250,240,230,.2); text-decoration: none;
+    transition: color .3s;
+  }
+  .footer-links a:hover { color: var(--blush); }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, var(--berry), transparent);
+    margin: 28px 0;
+  }
+
+  /* ── MODULE art fills ── */
+  .mod-art-1 { background: linear-gradient(135deg, #2A0E1A 0%, #3D1A28 50%, #1A0B11 100%); }
+  .mod-art-2 { background: linear-gradient(135deg, #1D0D1A 0%, #2E1A2A 50%, #12080E 100%); }
+  .mod-art-3 { background: linear-gradient(135deg, #250B16 0%, #3A1225 50%, #160810 100%); }
+  .mod-art-4 { background: linear-gradient(135deg, #1A0D20 0%, #2E1A38 50%, #100B16 100%); }
+  .mod-art-5 { background: linear-gradient(135deg, #200B18 0%, #351625 50%, #14090F 100%); }
+  .mod-art-6 { background: linear-gradient(135deg, #120D20 0%, #221638 50%, #0D0A16 100%); }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    nav { padding: 20px 28px; }
+    nav.scrolled { padding: 14px 28px; }
+    .nav-links { display: none; }
+    section { padding: 100px 28px; }
+    .what-grid { grid-template-columns: 1fr; gap: 48px; }
+    .layers-grid { grid-template-columns: 1fr; gap: 20px; }
+    .layer-card { aspect-ratio: 4/3; }
+    .modules-grid { grid-template-columns: 1fr 1fr; }
+    footer { flex-direction: column; gap: 20px; text-align: center; }
+    .footer-links { justify-content: center; }
+  }
+  @media (max-width: 600px) {
+    .modules-grid { grid-template-columns: 1fr; }
+    .hero-actions { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor" id="cursorDot"><div class="cursor-dot"></div></div>
+<div class="cursor" id="cursorRing"><div class="cursor-ring"></div></div>
+
+<!-- Nav -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">Blush<span>Bite</span></a>
+  <ul class="nav-links">
+    <li><a href="#what">About</a></li>
+    <li><a href="#layers">Layers</a></li>
+    <li><a href="#modules">Experience</a></li>
+  </ul>
+  <a href="#cta" class="nav-cta">Explore</a>
+</nav>
+
+<!-- ─────────────── HERO ─────────────── -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-vignette"></div>
+
+  <!-- Bokeh layer -->
+  <div class="bokeh-layer" id="bokehLayer"></div>
+
+  <!-- Cinematic scene -->
+  <div class="hero-scene">
+    <svg viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="lightSource" cx="58%" cy="42%" r="38%">
+          <stop offset="0%"   stop-color="#C9A96E" stop-opacity=".18"/>
+          <stop offset="40%"  stop-color="#A82040" stop-opacity=".08"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <radialGradient id="floorGlow" cx="50%" cy="90%" r="40%">
+          <stop offset="0%"   stop-color="#5C0F2A" stop-opacity=".35"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <filter id="softBlur">
+          <feGaussianBlur stdDeviation="1.5"/>
+        </filter>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <linearGradient id="figGradM" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"  stop-color="#2A1020"/>
+          <stop offset="60%" stop-color="#1A0B14"/>
+          <stop offset="100%" stop-color="#0F0508" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="figGradW" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"  stop-color="#3A1828"/>
+          <stop offset="60%" stop-color="#220E18"/>
+          <stop offset="100%" stop-color="#0F0508" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="rimM" x1="1" y1="0" x2="0" y2="0">
+          <stop offset="0%" stop-color="#C9A96E" stop-opacity=".55"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </linearGradient>
+        <linearGradient id="rimW" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#F2C4CE" stop-opacity=".45"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </linearGradient>
+        <clipPath id="clipScene">
+          <rect width="1440" height="900"/>
+        </clipPath>
+      </defs>
+
+      <g clip-path="url(#clipScene)">
+        <!-- Ambient light pool -->
+        <ellipse cx="720" cy="580" rx="480" ry="200" fill="url(#floorGlow)"/>
+        <rect width="1440" height="900" fill="url(#lightSource)"/>
+
+        <!-- Far background petals / bokeh shapes -->
+        <g opacity=".12" filter="url(#softBlur)" class="parallax-far">
+          <circle cx="200" cy="200" r="80" fill="#F2C4CE"/>
+          <circle cx="1280" cy="150" r="60" fill="#C9A96E"/>
+          <circle cx="900"  cy="100" r="40" fill="#A82040"/>
+          <circle cx="400"  cy="700" r="55" fill="#6D3B5C"/>
+          <circle cx="1100" cy="650" r="45" fill="#F2C4CE"/>
+        </g>
+
+        <!-- Mid: soft light column between figures -->
+        <g class="parallax-mid">
+          <ellipse cx="720" cy="380" rx="90" ry="240" fill="#C9A96E" opacity=".04" filter="url(#softBlur)"/>
+        </g>
+
+        <!-- MALE FIGURE (left, walking toward) -->
+        <g class="parallax-near">
+          <!-- Shadow -->
+          <ellipse cx="540" cy="840" rx="80" ry="18" fill="#000" opacity=".3"/>
+          <!-- Body silhouette -->
+          <g filter="url(#softBlur)" opacity=".97">
+            <!-- Legs -->
+            <path d="M490,840 L510,680 L530,840 Z" fill="url(#figGradM)"/>
+            <path d="M530,840 L545,680 L560,840 Z" fill="url(#figGradM)"/>
+            <!-- Torso / jacket -->
+            <path d="M480,680 C480,620 500,560 525,480 C535,440 545,440 555,480 C578,560 598,620 600,680 Z" fill="url(#figGradM)"/>
+            <!-- Shoulder / arm reaching out right -->
+            <path d="M600,580 C620,560 660,520 700,490 C720,478 730,480 725,495 C710,520 680,540 650,560 C630,575 608,590 600,590 Z" fill="url(#figGradM)"/>
+            <!-- Left arm down -->
+            <path d="M480,580 C468,600 460,640 458,680" stroke="#2A1020" stroke-width="22" stroke-linecap="round" fill="none"/>
+            <!-- Head -->
+            <ellipse cx="527" cy="458" rx="28" ry="32" fill="url(#figGradM)"/>
+          </g>
+          <!-- Rim light (warm gold from center) -->
+          <g opacity=".7">
+            <path d="M596,480 C610,450 616,440 610,430 C604,420 592,425 584,440 C576,456 590,475 596,480 Z" fill="url(#rimM)" opacity=".4"/>
+          </g>
+        </g>
+
+        <!-- FEMALE FIGURE (right, reaching back) -->
+        <g class="parallax-near" style="transform-origin:900px 700px">
+          <ellipse cx="900" cy="842" rx="72" ry="16" fill="#000" opacity=".25"/>
+          <g filter="url(#softBlur)" opacity=".95">
+            <!-- Dress / skirt flare -->
+            <path d="M848,840 C860,760 870,700 880,640 C885,600 895,590 905,590 C915,590 924,600 930,640 C940,700 950,760 962,840 Z" fill="url(#figGradW)"/>
+            <!-- Torso -->
+            <path d="M878,640 C876,580 882,530 898,480 C904,460 912,460 918,480 C932,530 938,580 934,640 Z" fill="url(#figGradW)"/>
+            <!-- Left arm reaching toward man -->
+            <path d="M878,550 C860,530 820,500 782,478 C762,466 754,470 758,486 C768,510 800,528 828,545 C848,558 874,565 878,560 Z" fill="url(#figGradW)"/>
+            <!-- Right arm behind -->
+            <path d="M934,550 C948,570 954,610 952,650" stroke="#220E18" stroke-width="20" stroke-linecap="round" fill="none"/>
+            <!-- Head with hair silhouette -->
+            <ellipse cx="902" cy="462" rx="26" ry="30" fill="url(#figGradW)"/>
+            <path d="M876,445 C878,400 888,380 902,375 C916,380 924,400 926,445" fill="url(#figGradW)"/>
+            <!-- Hair flow -->
+            <path d="M876,445 C864,460 856,480 862,510 C866,520 872,515 876,500 Z" fill="url(#figGradW)" opacity=".7"/>
+          </g>
+          <!-- Rim light (blush from center) -->
+          <path d="M784,472 C770,444 765,434 772,424 C779,414 792,420 798,436 C804,452 792,470 784,472 Z" fill="url(#rimW)" opacity=".4"/>
+        </g>
+
+        <!-- Center: fingertip spark / connection point -->
+        <g class="parallax-near">
+          <circle cx="742" cy="488" r="3" fill="#F2C4CE" opacity=".9" filter="url(#glow)">
+            <animate attributeName="opacity" values=".4;1;.4" dur="2.8s" repeatCount="indefinite"/>
+            <animate attributeName="r" values="2;4;2" dur="2.8s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="742" cy="488" r="14" fill="#F2C4CE" opacity=".06">
+            <animate attributeName="opacity" values=".03;.1;.03" dur="2.8s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+
+        <!-- Rose petals floating -->
+        <g opacity=".18" class="parallax-mid">
+          <ellipse cx="620" cy="300" rx="10" ry="5" fill="#F2C4CE" transform="rotate(-20,620,300)"/>
+          <ellipse cx="800" cy="250" rx="8"  ry="4"  fill="#F2C4CE" transform="rotate(15,800,250)"/>
+          <ellipse cx="680" cy="200" rx="7"  ry="3"  fill="#C9A96E" transform="rotate(-35,680,200)"/>
+          <ellipse cx="760" cy="330" rx="9"  ry="4"  fill="#F2C4CE" transform="rotate(10,760,330)"/>
+          <ellipse cx="640" cy="400" rx="6"  ry="3"  fill="#D4A5A5" transform="rotate(-15,640,400)"/>
+        </g>
+
+        <!-- Floor reflection (cinematic wet floor illusion) -->
+        <g opacity=".08" class="parallax-far">
+          <ellipse cx="720" cy="870" rx="300" ry="40" fill="#A82040"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Hero text content -->
+  <div class="hero-content">
+    <div class="hero-eyebrow">An Intimate Universe Awaits</div>
+    <h1 class="hero-title">Blush<em>Bite</em></h1>
+    <p class="hero-tagline">Where Fantasy Meets Connection</p>
+    <p class="hero-desc">
+      A premium AI-powered platform that blends dating-style discovery, immersive content,
+      and personalized companion exploration into one emotionally intelligent experience.
+      A blend of dating, creator content, and personalized discovery.
+    </p>
+    <div class="hero-actions">
+      <a href="#cta" class="btn-primary"><span>Enter the Experience</span></a>
+      <a href="#what" class="btn-ghost">Learn More</a>
+    </div>
+  </div>
+
+  <div class="hero-scroll-hint">
+    <div class="scroll-line"></div>
+    <span class="scroll-label">Discover</span>
+  </div>
+</section>
+
+<!-- ─────────────── WHAT IT IS ─────────────── -->
+<section id="what">
+  <div class="section-inner">
+    <div class="what-grid">
+      <div class="what-visual reveal">
+        <div class="what-visual-bg"></div>
+        <div class="what-visual-art">
+          <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <defs>
+              <radialGradient id="wg1" cx="50%" cy="40%" r="55%">
+                <stop offset="0%" stop-color="#A82040" stop-opacity=".3"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+              <radialGradient id="wg2" cx="50%" cy="60%" r="45%">
+                <stop offset="0%" stop-color="#6D3B5C" stop-opacity=".25"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <rect width="400" height="500" fill="url(#wg1)"/>
+            <rect width="400" height="500" fill="url(#wg2)"/>
+            <!-- Abstract profile card layers -->
+            <rect x="60" y="80" width="160" height="200" rx="4" fill="rgba(242,196,206,.04)" stroke="rgba(242,196,206,.12)" stroke-width="1"/>
+            <rect x="90" y="110" width="100" height="100" rx="50" fill="rgba(168,32,64,.15)"/>
+            <ellipse cx="140" cy="160" rx="34" ry="36" fill="rgba(201,169,110,.12)"/>
+            <rect x="78" y="222" width="126" height="6" rx="3" fill="rgba(242,196,206,.15)"/>
+            <rect x="98" y="238" width="86"  height="4" rx="2" fill="rgba(242,196,206,.08)"/>
+            <!-- Second card offset -->
+            <rect x="180" y="180" width="150" height="190" rx="4" fill="rgba(109,59,92,.05)" stroke="rgba(242,196,206,.08)" stroke-width="1"/>
+            <ellipse cx="255" cy="245" rx="32" ry="34" fill="rgba(168,32,64,.1)"/>
+            <rect x="198" y="292" width="116" height="5" rx="2.5" fill="rgba(242,196,206,.12)"/>
+            <rect x="212" y="306" width="80"  height="4" rx="2"   fill="rgba(242,196,206,.06)"/>
+            <!-- Heart connector -->
+            <path d="M160,185 C170,175 190,175 195,185 C200,175 218,175 228,185 C228,195 195,218 195,218 C195,218 160,195 160,185 Z" fill="#A82040" opacity=".25"/>
+            <!-- Waveform (audio) -->
+            <g transform="translate(60,330)">
+              <rect x="0"  y="20" width="8"  height="25" rx="4" fill="rgba(242,196,206,.2)"/>
+              <rect x="14" y="10" width="8"  height="45" rx="4" fill="rgba(168,32,64,.35)"/>
+              <rect x="28" y="16" width="8"  height="33" rx="4" fill="rgba(242,196,206,.2)"/>
+              <rect x="42" y="5"  width="8"  height="55" rx="4" fill="rgba(201,169,110,.4)"/>
+              <rect x="56" y="18" width="8"  height="29" rx="4" fill="rgba(242,196,206,.2)"/>
+              <rect x="70" y="12" width="8"  height="41" rx="4" fill="rgba(168,32,64,.3)"/>
+              <rect x="84" y="22" width="8"  height="21" rx="4" fill="rgba(242,196,206,.15)"/>
+              <rect x="98" y="8"  width="8"  height="49" rx="4" fill="rgba(201,169,110,.35)"/>
+            </g>
+            <!-- Stars / sparkles -->
+            <circle cx="310" cy="120" r="2" fill="#C9A96E" opacity=".7"/>
+            <circle cx="320" cy="108" r="1.2" fill="#F2C4CE" opacity=".5"/>
+            <circle cx="295" cy="130" r="1.5" fill="#C9A96E" opacity=".4"/>
+          </svg>
+        </div>
+        <div style="position:absolute;bottom:28px;left:28px;right:28px;z-index:10;">
+          <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Discovery Platform</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--cream);line-height:1.2;">Built for the <em style="color:var(--blush);">emotionally curious</em></div>
+        </div>
+      </div>
+
+      <div class="what-text">
+        <div class="section-label reveal">What It Is</div>
+        <h2 class="section-title reveal reveal-delay-1">A New Kind of<br><em>Intimate Discovery</em></h2>
+        <div class="section-divider reveal reveal-delay-2"></div>
+        <p class="reveal reveal-delay-2" style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:300;line-height:1.85;color:var(--text-light);margin-bottom:16px;">
+          BlushBite is a next-generation intimate discovery platform combining <strong>personalized profile discovery</strong>, fantasy stories, confessions, creator-style content, and AI-generated audio into one seamless experience.
+        </p>
+        <p class="reveal reveal-delay-3" style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;line-height:1.85;color:var(--text-muted);margin-bottom:36px;">
+          Instead of only showing profiles, it introduces users to moods, themes, stories, and voices — then guides them toward profiles that fit that emotional context.
+        </p>
+        <div class="what-pillars">
+          <div class="what-pill reveal reveal-delay-3">
+            <div class="pill-icon">✦</div>
+            <span class="pill-text">Personalized profile discovery guided by your mood and desire</span>
+          </div>
+          <div class="what-pill reveal reveal-delay-4">
+            <div class="pill-icon">◈</div>
+            <span class="pill-text">Fantasy stories, confessions and immersive creator content</span>
+          </div>
+          <div class="what-pill reveal reveal-delay-5">
+            <div class="pill-icon">♪</div>
+            <span class="pill-text">AI-generated audio that brings voices and emotions to life</span>
+          </div>
+          <div class="what-pill reveal reveal-delay-6">
+            <div class="pill-icon">❧</div>
+            <span class="pill-text">Emotionally intelligent matching and companion exploration</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── THREE LAYERS ─────────────── -->
+<section id="layers">
+  <div class="section-inner">
+    <div class="layers-intro">
+      <div class="section-label reveal">The Architecture</div>
+      <h2 class="section-title reveal reveal-delay-1">Three Layers of<br><em>Experience</em></h2>
+      <p class="reveal reveal-delay-2">Every interaction on BlushBite moves through three carefully designed layers — each one building depth, trust, and connection with every moment you spend inside the platform.</p>
+    </div>
+
+    <div class="layers-grid">
+
+      <!-- Layer 1: Visual -->
+      <div class="layer-card reveal">
+        <div class="layer-bg layer-bg-1"></div>
+        <div class="layer-glow layer-glow-1"></div>
+        <div class="layer-art">
+          <svg viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg" width="90%">
+            <defs>
+              <radialGradient id="lg1" cx="50%" cy="35%" r="55%">
+                <stop offset="0%" stop-color="#A82040" stop-opacity=".22"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <rect width="300" height="340" fill="url(#lg1)"/>
+            <!-- Profile card stack -->
+            <rect x="90" y="40" width="140" height="170" rx="6" fill="rgba(242,196,206,.04)" stroke="rgba(242,196,206,.12)" stroke-width="1" transform="rotate(-5,160,125)"/>
+            <rect x="80" y="50" width="140" height="170" rx="6" fill="rgba(168,32,64,.06)"   stroke="rgba(242,196,206,.09)" stroke-width="1" transform="rotate(-2,150,135)"/>
+            <rect x="72" y="60" width="140" height="170" rx="6" fill="rgba(109,59,92,.08)"   stroke="rgba(242,196,206,.14)" stroke-width="1"/>
+            <!-- Avatar circle -->
+            <ellipse cx="142" cy="115" rx="38" ry="40" fill="rgba(168,32,64,.2)"/>
+            <ellipse cx="142" cy="105" rx="18" ry="20" fill="rgba(201,169,110,.18)"/>
+            <path d="M104,145 C104,125 175,125 175,145 L175,165 C175,165 104,165 104,145 Z" fill="rgba(242,196,206,.08)"/>
+            <!-- Name bar -->
+            <rect x="90" y="190" width="100" height="6" rx="3" fill="rgba(242,196,206,.2)"/>
+            <rect x="100" y="204" width="70"  height="4" rx="2" fill="rgba(242,196,206,.1)"/>
+            <!-- Like / heart button -->
+            <circle cx="210" cy="220" r="16" fill="rgba(168,32,64,.3)" stroke="rgba(242,196,206,.2)" stroke-width="1"/>
+            <path d="M203,218 C203,214 207,212 210,215 C213,212 217,214 217,218 C217,222 210,227 210,227 C210,227 203,222 203,218 Z" fill="#F2C4CE" opacity=".8"/>
+            <!-- Teaser strip -->
+            <rect x="72" y="242" width="156" height="28" rx="3" fill="rgba(242,196,206,.03)" stroke="rgba(242,196,206,.08)" stroke-width="1"/>
+            <rect x="82"  y="252" width="80" height="3" rx="1.5" fill="rgba(242,196,206,.18)"/>
+            <rect x="82"  y="260" width="55" height="3" rx="1.5" fill="rgba(242,196,206,.09)"/>
+          </svg>
+        </div>
+        <div class="layer-border"></div>
+        <div class="layer-overlay">
+          <div class="layer-content">
+            <div class="layer-num">Layer 01</div>
+            <div class="layer-name">Visual<br><em>Layer</em></div>
+            <div class="layer-desc">Premium profile cards, curated images, and short teasers that give you a first, unforgettable impression.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 2: Fantasy -->
+      <div class="layer-card reveal reveal-delay-2">
+        <div class="layer-bg layer-bg-2"></div>
+        <div class="layer-glow layer-glow-2"></div>
+        <div class="layer-art">
+          <svg viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg" width="90%">
+            <defs>
+              <radialGradient id="lg2" cx="50%" cy="40%" r="55%">
+                <stop offset="0%" stop-color="#6D3B5C" stop-opacity=".28"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <rect width="300" height="340" fill="url(#lg2)"/>
+            <!-- Book / scroll motif -->
+            <rect x="85" y="55" width="130" height="175" rx="4" fill="rgba(109,59,92,.12)" stroke="rgba(242,196,206,.1)" stroke-width="1"/>
+            <rect x="85" y="55" width="8" height="175" rx="2" fill="rgba(168,32,64,.15)"/>
+            <!-- Text lines -->
+            <rect x="104" y="80" width="96" height="3" rx="1.5" fill="rgba(242,196,206,.2)"/>
+            <rect x="104" y="90" width="88" height="3" rx="1.5" fill="rgba(242,196,206,.14)"/>
+            <rect x="104" y="100" width="92" height="3" rx="1.5" fill="rgba(242,196,206,.18)"/>
+            <rect x="104" y="110" width="70" height="3" rx="1.5" fill="rgba(242,196,206,.1)"/>
+            <rect x="104" y="126" width="96" height="3" rx="1.5" fill="rgba(242,196,206,.18)"/>
+            <rect x="104" y="136" width="80" height="3" rx="1.5" fill="rgba(242,196,206,.12)"/>
+            <rect x="104" y="146" width="88" height="3" rx="1.5" fill="rgba(242,196,206,.16)"/>
+            <rect x="104" y="156" width="60" height="3" rx="1.5" fill="rgba(242,196,206,.08)"/>
+            <rect x="104" y="172" width="96" height="3" rx="1.5" fill="rgba(242,196,206,.15)"/>
+            <rect x="104" y="182" width="72" height="3" rx="1.5" fill="rgba(242,196,206,.1)"/>
+            <!-- Audio waveform -->
+            <g transform="translate(72,258)">
+              <rect x="0"  y="14" width="6" height="18" rx="3" fill="rgba(242,196,206,.22)"/>
+              <rect x="10" y="8"  width="6" height="30" rx="3" fill="rgba(168,32,64,.5)"/>
+              <rect x="20" y="11" width="6" height="24" rx="3" fill="rgba(242,196,206,.2)"/>
+              <rect x="30" y="4"  width="6" height="38" rx="3" fill="rgba(201,169,110,.55)"/>
+              <rect x="40" y="9"  width="6" height="28" rx="3" fill="rgba(242,196,206,.2)"/>
+              <rect x="50" y="12" width="6" height="22" rx="3" fill="rgba(168,32,64,.4)"/>
+              <rect x="60" y="6"  width="6" height="34" rx="3" fill="rgba(201,169,110,.45)"/>
+              <rect x="70" y="14" width="6" height="18" rx="3" fill="rgba(242,196,206,.18)"/>
+              <rect x="80" y="10" width="6" height="26" rx="3" fill="rgba(168,32,64,.35)"/>
+              <rect x="90" y="7"  width="6" height="32" rx="3" fill="rgba(201,169,110,.4)"/>
+              <rect x="100" y="13" width="6" height="20" rx="3" fill="rgba(242,196,206,.15)"/>
+              <rect x="110" y="5"  width="6" height="36" rx="3" fill="rgba(168,32,64,.45)"/>
+              <rect x="120" y="11" width="6" height="24" rx="3" fill="rgba(201,169,110,.35)"/>
+              <rect x="130" y="9"  width="6" height="28" rx="3" fill="rgba(242,196,206,.2)"/>
+              <rect x="140" y="15" width="6" height="16" rx="3" fill="rgba(242,196,206,.12)"/>
+              <rect x="150" y="8"  width="6" height="30" rx="3" fill="rgba(168,32,64,.4)"/>
+            </g>
+          </svg>
+        </div>
+        <div class="layer-border"></div>
+        <div class="layer-overlay">
+          <div class="layer-content">
+            <div class="layer-num">Layer 02</div>
+            <div class="layer-name">Fantasy<br><em>Layer</em></div>
+            <div class="layer-desc">Stories, confessions, audio, and emotional immersion that draw you deeper before you ever make a connection.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layer 3: Discovery -->
+      <div class="layer-card reveal reveal-delay-4">
+        <div class="layer-bg layer-bg-3"></div>
+        <div class="layer-glow layer-glow-3"></div>
+        <div class="layer-art">
+          <svg viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg" width="90%">
+            <defs>
+              <radialGradient id="lg3" cx="50%" cy="45%" r="55%">
+                <stop offset="0%" stop-color="#A82040" stop-opacity=".2"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <rect width="300" height="340" fill="url(#lg3)"/>
+            <!-- Connection nodes -->
+            <circle cx="150" cy="130" r="22" fill="rgba(168,32,64,.2)" stroke="rgba(242,196,206,.18)" stroke-width="1"/>
+            <circle cx="80"  cy="185" r="16" fill="rgba(109,59,92,.2)"  stroke="rgba(242,196,206,.12)" stroke-width="1"/>
+            <circle cx="220" cy="185" r="16" fill="rgba(109,59,92,.2)"  stroke="rgba(242,196,206,.12)" stroke-width="1"/>
+            <circle cx="110" cy="250" r="13" fill="rgba(92,15,42,.2)"   stroke="rgba(242,196,206,.1)"  stroke-width="1"/>
+            <circle cx="190" cy="250" r="13" fill="rgba(92,15,42,.2)"   stroke="rgba(242,196,206,.1)"  stroke-width="1"/>
+            <circle cx="150" cy="290" r="10" fill="rgba(168,32,64,.15)" stroke="rgba(242,196,206,.1)"  stroke-width="1"/>
+            <!-- Connecting lines -->
+            <line x1="150" y1="152" x2="80"  y2="169" stroke="rgba(242,196,206,.1)" stroke-width="1"/>
+            <line x1="150" y1="152" x2="220" y2="169" stroke="rgba(242,196,206,.1)" stroke-width="1"/>
+            <line x1="80"  y1="201" x2="110" y2="237" stroke="rgba(242,196,206,.08)" stroke-width="1"/>
+            <line x1="220" y1="201" x2="190" y2="237" stroke="rgba(242,196,206,.08)" stroke-width="1"/>
+            <line x1="110" y1="263" x2="150" y2="280" stroke="rgba(242,196,206,.07)" stroke-width="1"/>
+            <line x1="190" y1="263" x2="150" y2="280" stroke="rgba(242,196,206,.07)" stroke-width="1"/>
+            <!-- Center avatar -->
+            <ellipse cx="150" cy="122" rx="10" ry="11" fill="rgba(201,169,110,.25)"/>
+            <path d="M135,140 C135,130 165,130 165,140 L165,145 C165,145 135,145 135,140 Z" fill="rgba(242,196,206,.1)"/>
+            <!-- Filter sliders -->
+            <g transform="translate(60,60)">
+              <rect x="0" y="0" width="70" height="3" rx="1.5" fill="rgba(242,196,206,.1)"/>
+              <rect x="0" y="0" width="42" height="3" rx="1.5" fill="rgba(168,32,64,.4)"/>
+              <circle cx="42" cy="1.5" r="5" fill="var(--berry)" opacity=".7"/>
+              <rect x="0" y="12" width="70" height="3" rx="1.5" fill="rgba(242,196,206,.1)"/>
+              <rect x="0" y="12" width="55" height="3" rx="1.5" fill="rgba(201,169,110,.4)"/>
+              <circle cx="55" cy="13.5" r="5" fill="var(--gold)" opacity=".7"/>
+            </g>
+          </svg>
+        </div>
+        <div class="layer-border"></div>
+        <div class="layer-overlay">
+          <div class="layer-content">
+            <div class="layer-num">Layer 03</div>
+            <div class="layer-name">Discovery<br><em>Layer</em></div>
+            <div class="layer-desc">Filters, trust signals, and personalized recommendations that bring the right connections to you.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── EXPERIENCE MODULES ─────────────── -->
+<section id="modules">
+  <div class="section-inner">
+    <div class="modules-header">
+      <div class="section-label reveal">Experience Modules</div>
+      <h2 class="section-title reveal reveal-delay-1">Six Ways to<br><em>Feel Something Real</em></h2>
+      <p class="reveal reveal-delay-2">Each module is crafted to serve a different emotional state — from curious browsing to deep, immersive connection.</p>
+    </div>
+
+    <div class="modules-grid">
+
+      <div class="module-card reveal">
+        <div class="module-art mod-art-1">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <defs><radialGradient id="ma1" cx="30%" cy="40%" r="60%"><stop offset="0%" stop-color="#A82040" stop-opacity=".3"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+            <rect width="320" height="180" fill="url(#ma1)"/>
+            <rect x="20" y="20" width="80"  height="100" rx="4" fill="rgba(242,196,206,.05)" stroke="rgba(242,196,206,.1)" stroke-width="1"/>
+            <rect x="30" y="30" width="60"  height="55"  rx="3" fill="rgba(168,32,64,.12)"/>
+            <rect x="30" y="92" width="50"  height="4"   rx="2" fill="rgba(242,196,206,.2)"/>
+            <rect x="30" y="102" width="38" height="3"   rx="1.5" fill="rgba(242,196,206,.1)"/>
+            <rect x="114" y="15" width="80" height="100" rx="4" fill="rgba(109,59,92,.06)" stroke="rgba(242,196,206,.08)" stroke-width="1"/>
+            <rect x="124" y="25" width="60" height="55"  rx="3" fill="rgba(109,59,92,.15)"/>
+            <rect x="124" y="87" width="45" height="4"   rx="2" fill="rgba(242,196,206,.18)"/>
+            <rect x="220" y="30" width="70" height="85"  rx="4" fill="rgba(92,15,42,.08)" stroke="rgba(242,196,206,.07)" stroke-width="1"/>
+            <rect x="230" y="40" width="50" height="45"  rx="3" fill="rgba(92,15,42,.18)"/>
+            <rect x="230" y="92" width="40" height="4"   rx="2" fill="rgba(242,196,206,.15)"/>
+            <!-- spark -->
+            <circle cx="60" cy="57" r="3" fill="rgba(201,169,110,.4)"/>
+            <circle cx="154" cy="52" r="3" fill="rgba(242,196,206,.35)"/>
+          </svg>
+        </div>
+        <div class="module-icon-wrap" style="background:linear-gradient(135deg,#A82040,#5C0F2A);">✦</div>
+        <div class="module-name">The Personalized Feed</div>
+        <div class="module-desc">A curated stream of profiles, stories, and teasers tailored to your current mood, preferences, and past interactions.</div>
+        <div class="module-tag">Discovery</div>
+      </div>
+
+      <div class="module-card reveal reveal-delay-1">
+        <div class="module-art mod-art-2">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <defs><radialGradient id="ma2" cx="60%" cy="40%" r="55%"><stop offset="0%" stop-color="#6D3B5C" stop-opacity=".35"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+            <rect width="320" height="180" fill="url(#ma2)"/>
+            <rect x="40" y="25" width="240" height="130" rx="4" fill="rgba(109,59,92,.08)" stroke="rgba(242,196,206,.08)" stroke-width="1"/>
+            <rect x="48" y="33" width="6" height="114" rx="3" fill="rgba(168,32,64,.25)"/>
+            <rect x="66" y="40" width="200" height="4" rx="2" fill="rgba(242,196,206,.22)"/>
+            <rect x="66" y="52" width="180" height="3" rx="1.5" fill="rgba(242,196,206,.14)"/>
+            <rect x="66" y="62" width="190" height="3" rx="1.5" fill="rgba(242,196,206,.18)"/>
+            <rect x="66" y="72" width="160" height="3" rx="1.5" fill="rgba(242,196,206,.12)"/>
+            <rect x="66" y="88" width="195" height="3" rx="1.5" fill="rgba(242,196,206,.16)"/>
+            <rect x="66" y="98" width="170" height="3" rx="1.5" fill="rgba(242,196,206,.1)"/>
+            <rect x="66" y="108" width="185" height="3" rx="1.5" fill="rgba(242,196,206,.14)"/>
+            <rect x="66" y="118" width="140" height="3" rx="1.5" fill="rgba(242,196,206,.08)"/>
+            <rect x="66" y="134" width="190" height="3" rx="1.5" fill="rgba(242,196,206,.18)"/>
+            <circle cx="264" cy="42" r="8" fill="rgba(168,32,64,.3)" stroke="rgba(242,196,206,.15)" stroke-width="1"/>
+          </svg>
+        </div>
+        <div class="module-icon-wrap" style="background:linear-gradient(135deg,#6D3B5C,#3D1D32);">❧</div>
+        <div class="module-name">Fantasy Stories &amp; Confessions</div>
+        <div class="module-desc">Written and audio confessions, dark romance narratives, and fantasy scenarios crafted to stir genuine emotion.</div>
+        <div class="module-tag">Immersion</div>
+      </div>
+
+      <div class="module-card reveal reveal-delay-2">
+        <div class="module-art mod-art-3">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <defs><radialGradient id="ma3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#A82040" stop-opacity=".25"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+            <rect width="320" height="180" fill="url(#ma3)"/>
+            <circle cx="160" cy="90" r="45" fill="rgba(168,32,64,.1)" stroke="rgba(242,196,206,.1)" stroke-width="1"/>
+            <circle cx="160" cy="90" r="28" fill="rgba(168,32,64,.15)" stroke="rgba(242,196,206,.15)" stroke-width="1"/>
+            <circle cx="160" cy="90" r="12" fill="rgba(168,32,64,.3)"/>
+            <path d="M155,84 L155,96 L168,90 Z" fill="#F2C4CE" opacity=".8"/>
+            <g>
+              <rect x="44" y="79" width="6" height="22" rx="3" fill="rgba(242,196,206,.2)"/>
+              <rect x="56" y="70" width="6" height="40" rx="3" fill="rgba(168,32,64,.5)"/>
+              <rect x="68" y="76" width="6" height="28" rx="3" fill="rgba(242,196,206,.2)"/>
+              <rect x="80" y="64" width="6" height="52" rx="3" fill="rgba(201,169,110,.5)"/>
+              <rect x="92" y="73" width="6" height="34" rx="3" fill="rgba(242,196,206,.2)"/>
+            </g>
+            <g transform="translate(228,68)">
+              <rect x="0"  y="11" width="6" height="22" rx="3" fill="rgba(242,196,206,.2)"/>
+              <rect x="10" y="4"  width="6" height="36" rx="3" fill="rgba(201,169,110,.45)"/>
+              <rect x="20" y="8"  width="6" height="28" rx="3" fill="rgba(242,196,206,.2)"/>
+              <rect x="30" y="0"  width="6" height="44" rx="3" fill="rgba(168,32,64,.45)"/>
+              <rect x="40" y="6"  width="6" height="32" rx="3" fill="rgba(242,196,206,.18)"/>
+            </g>
+          </svg>
+        </div>
+        <div class="module-icon-wrap" style="background:linear-gradient(135deg,#A82040,#6D3B5C);">♪</div>
+        <div class="module-name">AI Audio Experiences</div>
+        <div class="module-desc">Voices, whispers, and intimate narratives brought to life through AI-generated audio personalised to your taste.</div>
+        <div class="module-tag">Audio</div>
+      </div>
+
+      <div class="module-card reveal reveal-delay-3">
+        <div class="module-art mod-art-4">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <defs><radialGradient id="ma4" cx="50%" cy="40%" r="55%"><stop offset="0%" stop-color="#6D3B5C" stop-opacity=".28"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+            <rect width="320" height="180" fill="url(#ma4)"/>
+            <!-- Mood tags -->
+            <rect x="30" y="35" width="70" height="22" rx="11" fill="rgba(168,32,64,.2)" stroke="rgba(168,32,64,.35)" stroke-width="1"/>
+            <text x="65" y="50" text-anchor="middle" fill="rgba(242,196,206,.7)" font-size="9" font-family="'Jost',sans-serif" letter-spacing="1">CURIOUS</text>
+            <rect x="114" y="35" width="62" height="22" rx="11" fill="rgba(109,59,92,.2)" stroke="rgba(109,59,92,.4)" stroke-width="1"/>
+            <text x="145" y="50" text-anchor="middle" fill="rgba(242,196,206,.6)" font-size="9" font-family="'Jost',sans-serif" letter-spacing="1">TENDER</text>
+            <rect x="190" y="35" width="72" height="22" rx="11" fill="rgba(201,169,110,.12)" stroke="rgba(201,169,110,.3)" stroke-width="1"/>
+            <text x="226" y="50" text-anchor="middle" fill="rgba(201,169,110,.7)" font-size="9" font-family="'Jost',sans-serif" letter-spacing="1">LONGING</text>
+            <rect x="30" y="72" width="80" height="22" rx="11" fill="rgba(92,15,42,.18)" stroke="rgba(242,196,206,.2)" stroke-width="1"/>
+            <text x="70" y="87" text-anchor="middle" fill="rgba(242,196,206,.55)" font-size="9" font-family="'Jost',sans-serif" letter-spacing="1">ROMANTIC</text>
+            <rect x="124" y="72" width="60" height="22" rx="11" fill="rgba(168,32,64,.25)" stroke="rgba(168,32,64,.4)" stroke-width="1"/>
+            <text x="154" y="87" text-anchor="middle" fill="rgba(242,196,206,.75)" font-size="9" font-family="'Jost',sans-serif" letter-spacing="1">PLAYFUL</text>
+            <rect x="198" y="72" width="65" height="22" rx="11" fill="rgba(109,59,92,.15)" stroke="rgba(109,59,92,.3)" stroke-width="1"/>
+            <text x="231" y="87" text-anchor="middle" fill="rgba(242,196,206,.5)" font-size="9" font-family="'Jost',sans-serif" letter-spacing="1">INTENSE</text>
+            <!-- Connecting arrow to profile -->
+            <path d="M160,110 L160,130" stroke="rgba(242,196,206,.15)" stroke-width="1" stroke-dasharray="4,3"/>
+            <polygon points="155,130 160,140 165,130" fill="rgba(242,196,206,.15)"/>
+            <rect x="100" y="145" width="120" height="24" rx="3" fill="rgba(168,32,64,.12)" stroke="rgba(242,196,206,.1)" stroke-width="1"/>
+            <rect x="112" y="154" width="70" height="3" rx="1.5" fill="rgba(242,196,206,.22)"/>
+            <rect x="112" y="161" width="50" height="2.5" rx="1.2" fill="rgba(242,196,206,.1)"/>
+          </svg>
+        </div>
+        <div class="module-icon-wrap" style="background:linear-gradient(135deg,#5C0F2A,#3D1D32);">◈</div>
+        <div class="module-name">Mood-Based Discovery</div>
+        <div class="module-desc">Select your emotional state and let BlushBite surface content and profiles that resonate with where you are right now.</div>
+        <div class="module-tag">Intelligence</div>
+      </div>
+
+      <div class="module-card reveal reveal-delay-4">
+        <div class="module-art mod-art-5">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <defs><radialGradient id="ma5" cx="50%" cy="45%" r="55%"><stop offset="0%" stop-color="#A82040" stop-opacity=".22"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+            <rect width="320" height="180" fill="url(#ma5)"/>
+            <!-- Two figures converging -->
+            <!-- Left figure -->
+            <ellipse cx="90" cy="65" rx="22" ry="25" fill="rgba(109,59,92,.2)"/>
+            <ellipse cx="90" cy="55" rx="10" ry="12" fill="rgba(201,169,110,.15)"/>
+            <path d="M68,100 C68,80 112,80 112,100 L112,130 C112,130 68,130 68,100 Z" fill="rgba(109,59,92,.12)"/>
+            <!-- Right figure -->
+            <ellipse cx="230" cy="65" rx="22" ry="25" fill="rgba(168,32,64,.15)"/>
+            <ellipse cx="230" cy="55" rx="10" ry="12" fill="rgba(242,196,206,.12)"/>
+            <path d="M208,100 C208,80 252,80 252,100 L252,130 C252,130 208,130 208,100 Z" fill="rgba(168,32,64,.08)"/>
+            <!-- Heart bridge -->
+            <path d="M112,105 C130,90 155,85 160,90 C165,85 190,90 208,105" stroke="rgba(242,196,206,.12)" stroke-width="1.5" fill="none" stroke-dasharray="5,4"/>
+            <path d="M150,88 C150,82 158,80 160,84 C162,80 170,82 170,88 C170,94 160,101 160,101 C160,101 150,94 150,88 Z" fill="#A82040" opacity=".4"/>
+            <!-- Trust badge -->
+            <circle cx="160" cy="148" r="15" fill="rgba(201,169,110,.15)" stroke="rgba(201,169,110,.3)" stroke-width="1"/>
+            <path d="M154,148 L158,152 L167,143" stroke="#C9A96E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".8"/>
+          </svg>
+        </div>
+        <div class="module-icon-wrap" style="background:linear-gradient(135deg,#A82040,#7B1530);">❤</div>
+        <div class="module-name">Companion Bridging</div>
+        <div class="module-desc">Seamlessly transition from content immersion to real companion profiles — at exactly the moment you feel ready.</div>
+        <div class="module-tag">Connection</div>
+      </div>
+
+      <div class="module-card reveal reveal-delay-5">
+        <div class="module-art mod-art-6">
+          <svg viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <defs><radialGradient id="ma6" cx="50%" cy="50%" r="55%"><stop offset="0%" stop-color="#5C0F2A" stop-opacity=".3"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+            <rect width="320" height="180" fill="url(#ma6)"/>
+            <!-- Shared space visual: two overlapping circles (Venn) -->
+            <circle cx="130" cy="90" r="55" fill="rgba(168,32,64,.08)" stroke="rgba(242,196,206,.1)" stroke-width="1"/>
+            <circle cx="190" cy="90" r="55" fill="rgba(109,59,92,.08)" stroke="rgba(242,196,206,.1)" stroke-width="1"/>
+            <!-- Overlap fill -->
+            <path d="M160,48 C175,60 180,75 180,90 C180,105 175,120 160,132 C145,120 140,105 140,90 C140,75 145,60 160,48 Z" fill="rgba(201,169,110,.07)"/>
+            <!-- Shared icon in overlap -->
+            <path d="M151,88 C151,82 158,79 160,83 C162,79 169,82 169,88 C169,94 160,102 160,102 C160,102 151,94 151,88 Z" fill="rgba(242,196,206,.35)"/>
+            <!-- Left side labels -->
+            <rect x="62" y="78" width="42" height="4" rx="2" fill="rgba(242,196,206,.2)"/>
+            <rect x="62" y="88" width="34" height="3" rx="1.5" fill="rgba(242,196,206,.12)"/>
+            <rect x="62" y="97" width="38" height="3" rx="1.5" fill="rgba(242,196,206,.15)"/>
+            <!-- Right side labels -->
+            <rect x="216" y="78" width="42" height="4" rx="2" fill="rgba(242,196,206,.2)"/>
+            <rect x="216" y="88" width="35" height="3" rx="1.5" fill="rgba(242,196,206,.12)"/>
+            <rect x="216" y="97" width="40" height="3" rx="1.5" fill="rgba(242,196,206,.14)"/>
+            <!-- Bottom message -->
+            <rect x="80" y="152" width="160" height="18" rx="9" fill="rgba(168,32,64,.15)" stroke="rgba(242,196,206,.1)" stroke-width="1"/>
+            <rect x="100" y="158" width="100" height="3" rx="1.5" fill="rgba(242,196,206,.2)"/>
+          </svg>
+        </div>
+        <div class="module-icon-wrap" style="background:linear-gradient(135deg,#6D3B5C,#5C0F2A);">✧</div>
+        <div class="module-name">Shared Desire, Shared Space</div>
+        <div class="module-desc">A private, emotionally safe environment where desires align and authentic connections unfold naturally and without judgement.</div>
+        <div class="module-tag">Privacy</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────── CLOSING CTA ─────────────── -->
+<section id="cta">
+  <div class="cta-inner">
+    <div class="cta-pretext reveal">The Platform for the Emotionally Curious</div>
+    <h2 class="cta-headline reveal reveal-delay-1">
+      BlushBite turns mood into<br><em>discovery</em>, and discovery<br>into <em>connection.</em>
+    </h2>
+    <div class="cta-divider reveal reveal-delay-2"></div>
+    <p class="cta-sub reveal reveal-delay-3">Your story begins with a feeling.</p>
+    <div class="reveal reveal-delay-4">
+      <a href="#" class="btn-grand"><span>Explore the Experience</span></a>
+    </div>
+    <p class="cta-note reveal reveal-delay-5">Discreet &nbsp;·&nbsp; Secure &nbsp;·&nbsp; Emotionally Intelligent</p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">BlushBite</div>
+  <ul class="footer-links">
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Terms</a></li>
+    <li><a href="#">Support</a></li>
+    <li><a href="#">Press</a></li>
+  </ul>
+  <div class="footer-copy">© 2025 BlushBite. All rights reserved.</div>
+</footer>
+
+<script>
+  /* ── Custom cursor ── */
+  const dot  = document.querySelector('#cursorDot .cursor-dot');
+  const ring = document.querySelector('#cursorRing .cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  (function animCursor() {
+    dot.style.left  = mx + 'px'; dot.style.top  = my + 'px';
+    rx += (mx - rx) * .14; ry += (my - ry) * .14;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animCursor);
+  })();
+
+  /* ── Nav scroll ── */
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  /* ── Parallax hero ── */
+  window.addEventListener('scroll', () => {
+    const sy = window.scrollY;
+    document.documentElement.style.setProperty('--py-far',  (-sy * 0.06) + 'px');
+    document.documentElement.style.setProperty('--py-mid',  (-sy * 0.12) + 'px');
+    document.documentElement.style.setProperty('--py-near', (-sy * 0.20) + 'px');
+  });
+
+  /* ── Bokeh particles ── */
+  const bokehLayer = document.getElementById('bokehLayer');
+  function spawnBokeh() {
+    const b = document.createElement('div');
+    b.className = 'bokeh';
+    const size = Math.random() * 80 + 20;
+    b.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      bottom:-${size}px;
+      animation-duration:${Math.random()*18+10}s;
+      animation-delay:${Math.random()*8}s;
+    `;
+    bokehLayer.appendChild(b);
+    setTimeout(() => b.remove(), 28000);
+  }
+  for (let i = 0; i < 14; i++) spawnBokeh();
+  setInterval(spawnBokeh, 2200);
+
+  /* ── Scroll reveal ── */
+  const revealEls = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => obs.observe(el));
+
+  /* ── 3D tilt on layer cards ── */
+  document.querySelectorAll('.layer-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - .5;
+      const y = (e.clientY - r.top)  / r.height - .5;
+      card.style.transform = `translateY(-10px) rotateX(${-y * 7}deg) rotateY(${x * 7}deg) scale(1.01)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+      card.style.transition = 'transform .5s cubic-bezier(.22,1,.36,1)';
+    });
+  });
+
+  /* ── 3D tilt on module cards ── */
+  document.querySelectorAll('.module-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - .5;
+      const y = (e.clientY - r.top)  / r.height - .5;
+      card.style.transform = `translateY(-6px) rotateX(${-y*5}deg) rotateY(${x*5}deg)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+  });
+</script>
+</body>
+</html>
