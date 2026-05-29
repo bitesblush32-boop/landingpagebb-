@@ -56,7 +56,8 @@
       left: 0;
       z-index: 9999;
       pointer-events: none;
-      mix-blend-mode: difference;
+      opacity: 0;
+      transition: opacity .3s ease;
     }
 
     .cursor-dot {
@@ -90,7 +91,7 @@
       left: 0;
       right: 0;
       z-index: 100;
-      padding: 24px 60px;
+      padding: 12px 60px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -100,7 +101,7 @@
     nav.scrolled {
       background: rgba(15, 5, 8, .82);
       backdrop-filter: blur(18px);
-      padding: 16px 60px;
+      padding: 8px 60px;
       border-bottom: 1px solid rgba(242, 196, 206, .08);
     }
 
@@ -1076,11 +1077,11 @@
     /* ── Responsive ── */
     @media (max-width: 900px) {
       nav {
-        padding: 20px 28px;
+        padding: 10px 28px;
       }
 
       nav.scrolled {
-        padding: 14px 28px;
+        padding: 6px 28px;
       }
 
       .nav-links {
@@ -1145,13 +1146,14 @@
 
   <!-- Nav -->
   <nav id="navbar">
-    <a href="#" class="nav-logo" style="display: flex; align-items: center;"><img src="./logo_light.png" alt="BlushBite Logo" style="height: 48px; width: auto;" /></a>
+    <a href="#" class="nav-logo" style="display: flex; align-items: center;"><img src="./logo_light.png" alt="BlushBite Logo" style="height: 68px; width: auto;" /></a>
     <ul class="nav-links">
       <li><a href="#what">About</a></li>
       <li><a href="#layers">Layers</a></li>
       <li><a href="#modules">Experience</a></li>
+      <li><a href="https://blushbite.co" style="color:rgba(242,196,206,.55);">Sign In</a></li>
     </ul>
-    <a href="#cta" class="nav-cta">Explore</a>
+    <a href="https://blushbite.co" class="nav-cta">Enter BlushBite</a>
   </nav>
 
   <!-- ─────────────── HERO ─────────────── -->
@@ -1316,18 +1318,20 @@
 
     <!-- Hero text content -->
     <div class="hero-content">
-      <div class="hero-eyebrow">An Intimate Universe Awaits</div>
+      <div class="hero-eyebrow">18+ · An Intimate Universe Awaits</div>
       <h1 class="hero-title">Blush<em>Bite</em></h1>
       <p class="hero-tagline">Where Fantasy Meets Connection</p>
       <p class="hero-desc">
-        A premium AI-powered platform that blends dating-style discovery, immersive content,
-        and personalized companion exploration into one emotionally intelligent experience.
-        A blend of dating, creator content, and personalized discovery.
+        A private world where mood leads to discovery, stories lead to companions,
+        and connection begins entirely on your terms. Discreet, intimate, emotionally intelligent.
       </p>
       <div class="hero-actions">
-        <a href="#cta" class="btn-primary"><span>Enter the Experience</span></a>
-        <a href="#what" class="btn-ghost">Learn More</a>
+        <a href="https://blushbite.co" class="btn-primary"><span>Enter the Experience</span></a>
+        <a href="#what" class="btn-ghost">Discover More</a>
       </div>
+      <p style="margin-top:20px;font-size:.75rem;letter-spacing:.08em;color:rgba(250,240,230,.28);">
+        Already a member?&nbsp;<a href="https://blushbite.co" style="color:var(--blush);text-decoration:none;border-bottom:1px solid rgba(242,196,206,.3);padding-bottom:1px;">Sign in →</a>
+      </p>
     </div>
 
     <div class="hero-scroll-hint">
@@ -1892,9 +1896,12 @@
       <div class="cta-divider reveal reveal-delay-2"></div>
       <p class="cta-sub reveal reveal-delay-3">Your story begins with a feeling.</p>
       <div class="reveal reveal-delay-4">
-        <a href="#" class="btn-grand"><span>Explore the Experience</span></a>
+        <a href="https://blushbite.co" class="btn-grand"><span>Enter BlushBite</span></a>
       </div>
-      <p class="cta-note reveal reveal-delay-5">Discreet &nbsp;·&nbsp; Secure &nbsp;·&nbsp; Emotionally Intelligent</p>
+      <p class="cta-note reveal reveal-delay-5">Discreet &nbsp;·&nbsp; Anonymous &nbsp;·&nbsp; Emotionally Intelligent</p>
+      <p class="reveal reveal-delay-5" style="margin-top:20px;font-size:.75rem;letter-spacing:.08em;color:rgba(250,240,230,.22);">
+        Already a member?&nbsp;<a href="https://blushbite.co" style="color:var(--blush);opacity:.8;text-decoration:none;border-bottom:1px solid rgba(242,196,206,.25);padding-bottom:1px;">Sign in →</a>
+      </p>
     </div>
   </section>
 
@@ -1902,24 +1909,47 @@
   <footer>
     <div class="footer-logo">BlushBite</div>
     <ul class="footer-links">
-      <li><a href="#">Privacy</a></li>
-      <li><a href="#">Terms</a></li>
-      <li><a href="#">Support</a></li>
-      <li><a href="#">Press</a></li>
+      <li><a href="/privacy">Privacy</a></li>
+      <li><a href="/terms">Terms</a></li>
+      <li><a href="https://blushbite.co">Enter the Platform</a></li>
     </ul>
-    <div class="footer-copy">© 2025 BlushBite. All rights reserved.</div>
+    <div class="footer-copy">© 2026 BlushBite. All rights reserved. 18+ only.</div>
   </footer>
 
   <script>
     /* ── Custom cursor ── */
-    const dot = document.querySelector('#cursorDot .cursor-dot');
-    const ring = document.querySelector('#cursorRing .cursor-ring');
-    let mx = 0, my = 0, rx = 0, ry = 0;
-    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    const cursorDotEl  = document.getElementById('cursorDot');
+    const cursorRingEl = document.getElementById('cursorRing');
+    const dot  = cursorDotEl.querySelector('.cursor-dot');
+    const ring = cursorRingEl.querySelector('.cursor-ring');
+    let mx = -200, my = -200, rx = -200, ry = -200, cursorVisible = false;
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      if (!cursorVisible) {
+        cursorVisible = true;
+        rx = mx; ry = my; // snap ring instantly on reveal — no lag from corner
+        cursorDotEl.style.left  = mx + 'px'; cursorDotEl.style.top  = my + 'px';
+        cursorRingEl.style.left = rx + 'px'; cursorRingEl.style.top = ry + 'px';
+        cursorDotEl.style.opacity  = '1';
+        cursorRingEl.style.opacity = '1';
+      }
+    });
+    document.addEventListener('mouseleave', () => {
+      cursorDotEl.style.opacity  = '0';
+      cursorRingEl.style.opacity = '0';
+      cursorVisible = false;
+    });
+    document.addEventListener('mouseenter', e => {
+      mx = e.clientX; my = e.clientY;
+      rx = mx; ry = my;
+      cursorDotEl.style.opacity  = '1';
+      cursorRingEl.style.opacity = '1';
+      cursorVisible = true;
+    });
     (function animCursor() {
-      dot.style.left = mx + 'px'; dot.style.top = my + 'px';
-      rx += (mx - rx) * .14; ry += (my - ry) * .14;
-      ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+      cursorDotEl.style.left  = mx + 'px'; cursorDotEl.style.top  = my + 'px';
+      rx += (mx - rx) * .14;               ry += (my - ry) * .14;
+      cursorRingEl.style.left = rx + 'px'; cursorRingEl.style.top = ry + 'px';
       requestAnimationFrame(animCursor);
     })();
 
