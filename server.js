@@ -1,10 +1,14 @@
 'use strict'
 
-const express = require('express')
+const express  = require('express')
 const { Pool } = require('pg')
-const bcrypt = require('bcryptjs')
-const crypto = require('crypto')
-const path = require('path')
+const crypto   = require('crypto')
+const path     = require('path')
+const fs       = require('fs')
+const { Resend } = require('resend')
+
+const resend   = new Resend(process.env.RESEND_API_KEY)
+const FROM     = process.env.FROM_EMAIL || 'admin@blushbite.co'
 
 // ── Database ───────────────────────────────────────────────────────────────────
 
@@ -66,29 +70,27 @@ function isAtLeast18(dob) {
 }
 
 function validate(body) {
-  const { fullName, email, password, dateOfBirth, country,
+  const { fullName, email, dateOfBirth, country,
           city, whatsappNumber, displayName, gender, tagline, bio, sessionModality } = body
 
   if (!fullName || fullName.trim().length < 2)
     return 'We need your full legal name.'
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return 'Enter a valid email address.'
-  if (!password || password.length < 8)
-    return 'Password must be at least 8 characters.'
-  if (password.length > 72)
-    return 'Password is too long.'
   if (!dateOfBirth || isNaN(new Date(dateOfBirth).getTime()))
     return 'Enter a valid date of birth.'
   if (!isAtLeast18(dateOfBirth))
     return 'You must be 18 or older to apply.'
   if (!country || country.trim().length < 1)
     return 'Please select your country.'
-  if (whatsappNumber && whatsappNumber !== '' && !/^\+[1-9]\d{6,14}$/.test(whatsappNumber))
-    return 'Use E.164 format, e.g. +31612345678.'
+  if (!city || city.trim().length < 1)
+    return 'Please enter your city.'
+  if (!whatsappNumber || !/^\+[1-9]\d{6,14}$/.test(whatsappNumber))
+    return 'Enter a valid WhatsApp number in E.164 format, e.g. +31612345678.'
 
   const validGenders = ['woman','man','non_binary','trans_woman','trans_man','other','prefer_not_to_say']
-  if (gender && !validGenders.includes(gender))
-    return 'Invalid gender selection.'
+  if (!gender || !validGenders.includes(gender))
+    return 'Please select your gender.'
 
   const validModalities = ['in_person','online','both']
   const modality = sessionModality || 'in_person'
@@ -96,6 +98,123 @@ function validate(body) {
     return 'Invalid session modality.'
 
   return null // no error
+}
+
+// ── OTP store (in-memory, dev only — prod uses Next.js routes) ────────────────
+
+const otpStore  = new Map() // email → { otp, expiry, attempts }
+const rateStore = new Map() // email → { count, windowStart }
+const OTP_TTL    = 10 * 60 * 1000
+const RATE_WIN   = 10 * 60 * 1000
+
+function checkRate(email) {
+  const now = Date.now(), e = rateStore.get(email)
+  if (!e || now - e.windowStart > RATE_WIN) { rateStore.set(email, { count: 1, windowStart: now }); return true }
+  if (e.count >= 3) return false
+  e.count++; return true
+}
+
+// ── Email template ─────────────────────────────────────────────────────────────
+
+function buildOtpEmail(otp) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your BlushBite code</title>
+</head>
+<body style="margin:0;padding:0;background-color:#07090f;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#07090f;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
+
+          <!-- Logo -->
+          <tr>
+            <td style="padding-bottom:32px;">
+              <span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;color:#eeeef0;letter-spacing:0.03em;">BlushBite</span>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background-color:#0d1117;border:1px solid #1c2333;border-radius:16px;overflow:hidden;">
+
+              <!-- Top accent line -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="height:2px;background:linear-gradient(90deg,transparent,#e8607a,transparent);line-height:2px;font-size:2px;">&nbsp;</td>
+                </tr>
+              </table>
+
+              <!-- Card body -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding:40px 40px 12px;">
+                    <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#6b7280;">Companion application</p>
+                    <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:#eeeef0;line-height:1.3;">
+                      Your verification <em style="font-style:italic;color:#e8607a;">code</em>
+                    </h1>
+                    <p style="margin:0 0 28px;font-size:14px;color:#6b7280;line-height:1.7;">
+                      Enter this code in the application form to verify your email address.
+                      It expires in <strong style="color:#eeeef0;">10 minutes</strong>.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- OTP block -->
+                <tr>
+                  <td style="padding:0 40px 32px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="background-color:#111620;border:1px solid rgba(232,96,122,0.25);border-radius:12px;text-align:center;padding:28px 24px;">
+                          <span style="font-family:'Courier New',Courier,monospace;font-size:40px;font-weight:700;letter-spacing:0.3em;color:#eeeef0;display:block;line-height:1;">${otp}</span>
+                          <span style="display:block;margin-top:12px;font-size:11px;color:#6b7280;letter-spacing:0.05em;text-transform:uppercase;">One-time code · valid for 10 min</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                  <td style="padding:0 40px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr><td style="height:1px;background-color:#1c2333;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Footer note -->
+                <tr>
+                  <td style="padding:24px 40px 36px;">
+                    <p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">
+                      If you did not request this code, someone may have entered your email address.
+                      You can safely ignore this message — your address will not be used without this code.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding-top:28px;">
+              <p style="margin:0;font-size:11px;color:#374151;line-height:1.6;">
+                &copy; BlushBite &nbsp;&middot;&nbsp; EU-hosted &nbsp;&middot;&nbsp; Your identity stays private — always.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
 }
 
 // ── CORS headers ───────────────────────────────────────────────────────────────
@@ -110,11 +229,62 @@ const CORS = {
 
 const app = express()
 app.use(express.json())
+
+// Serve index.html with Google Maps key injected from env
+const INDEX_HTML = path.join(__dirname, 'index.html')
+app.get('/', (req, res) => {
+  const key  = process.env.GOOGLE_MAPS_KEY || ''
+  const html = fs.readFileSync(INDEX_HTML, 'utf8')
+    .replace("window.GOOGLE_MAPS_KEY = ''", `window.GOOGLE_MAPS_KEY = '${key}'`)
+  res.type('html').send(html)
+})
+
 app.use(express.static(path.join(__dirname)))
 
-// Preflight
-app.options('/api/companions/apply', (req, res) => {
-  res.set(CORS).status(204).end()
+// Preflight (all companion endpoints)
+app.options('/api/companions/apply',      (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/send-otp',   (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/verify-otp', (req, res) => res.set(CORS).status(204).end())
+
+// POST /api/companions/send-otp
+app.post('/api/companions/send-otp', async (req, res) => {
+  res.set(CORS)
+  const email = ((req.body || {}).email || '').toLowerCase().trim()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return res.status(400).json({ error: 'Enter a valid email address.' })
+  if (!checkRate(email))
+    return res.status(429).json({ error: 'Too many code requests. Please wait 10 minutes.' })
+
+  const otp = String(Math.floor(100000 + Math.random() * 900000))
+  otpStore.set(email, { otp, expiry: Date.now() + OTP_TTL, attempts: 0 })
+
+  try {
+    await resend.emails.send({
+      from:    `BlushBite <${FROM}>`,
+      to:      email,
+      subject: `${otp} — your BlushBite verification code`,
+      html:    buildOtpEmail(otp),
+    })
+  } catch (err) {
+    console.error('[send-otp] Resend error:', err.message)
+    otpStore.delete(email)
+    return res.status(500).json({ error: 'Could not send the code. Please try again.' })
+  }
+  return res.json({ sent: true })
+})
+
+// POST /api/companions/verify-otp
+app.post('/api/companions/verify-otp', (req, res) => {
+  res.set(CORS)
+  const email = ((req.body || {}).email || '').toLowerCase().trim()
+  const otp   = String((req.body || {}).otp || '').trim()
+  const entry = otpStore.get(email)
+  if (!entry)          return res.status(400).json({ verified: false, error: 'No code sent for this email. Request a new one.' })
+  if (Date.now() > entry.expiry) { otpStore.delete(email); return res.status(400).json({ verified: false, error: 'Code expired. Request a new one.' }) }
+  if (entry.attempts >= 5) { otpStore.delete(email); return res.status(400).json({ verified: false, error: 'Too many attempts. Request a new code.' }) }
+  if (entry.otp !== otp) { entry.attempts++; return res.status(400).json({ verified: false, error: 'That code is incorrect.' }) }
+  otpStore.delete(email)
+  return res.json({ verified: true })
 })
 
 // POST /api/companions/apply
@@ -128,7 +298,7 @@ app.post('/api/companions/apply', async (req, res) => {
   }
 
   const {
-    fullName, email, password, dateOfBirth,
+    fullName, email, dateOfBirth,
     country, city, whatsappNumber,
     displayName, gender, tagline, bio,
   } = body
@@ -158,9 +328,6 @@ app.post('/api/companions/apply', async (req, res) => {
       })
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12)
-
     // Generate unique alias
     let alias = generateAlias()
     for (let i = 0; i < 10; i++) {
@@ -177,12 +344,12 @@ app.post('/api/companions/apply', async (req, res) => {
     // Insert companion
     await client.query(
       `INSERT INTO companions
-        (id, email, hashed_password, name, alias, full_name,
+        (id, email, name, alias, full_name,
          date_of_birth, country, whatsapp_number, companion_stage,
          onboarding_complete, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
       [
-        id, cleanEmail, hashedPassword, displayOrFirst, alias, cleanName,
+        id, cleanEmail, displayOrFirst, alias, cleanName,
         dateOfBirth, country, whatsappNumber || null, 3,
         false, now, now,
       ]

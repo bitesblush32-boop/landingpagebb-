@@ -12,6 +12,18 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap"
     rel="stylesheet" />
+  <!-- Google Places Autocomplete — set GOOGLE_MAPS_KEY env var on your server -->
+  <script>window.GOOGLE_MAPS_KEY = ''</script>
+  <script>
+    (function() {
+      var k = window.GOOGLE_MAPS_KEY
+      if (!k) return
+      var s = document.createElement('script')
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + k + '&libraries=places&callback=initPlaces'
+      s.async = true; s.defer = true
+      document.head.appendChild(s)
+    })()
+  </script>
   <style>
     /* ── Reset ── */
     *,
@@ -732,6 +744,7 @@
       outline: none;
       resize: none;
       -webkit-appearance: none;
+      appearance: none;
       transition: border-color 0.2s;
       min-height: 48px;
     }
@@ -782,20 +795,51 @@
       display: block;
     }
 
-    /* Password strength */
-    .bb-pw-bars {
-      display: flex;
-      gap: 4px;
+    /* OTP / email verification */
+    .bb-send-code-btn {
+      display: inline-block;
       margin-top: 8px;
+      font-size: 12px;
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      color: #e8607a;
+      background: rgba(232,96,122,0.08);
+      border: 1px solid rgba(232,96,122,0.3);
+      border-radius: 20px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      touch-action: manipulation;
+    }
+    .bb-send-code-btn:hover { background: rgba(232,96,122,0.14); }
+    .bb-send-code-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .bb-otp-row {
+      display: none;
+      margin-top: 10px;
+    }
+    .bb-otp-row.show { display: block; }
+
+    .bb-otp-row input {
+      font-size: 24px;
+      letter-spacing: 0.35em;
+      text-align: center;
+      font-family: 'DM Sans', -apple-system, sans-serif;
     }
 
-    .bb-pw-bar {
-      height: 3px;
-      flex: 1;
-      border-radius: 2px;
-      background-color: #1c2333;
-      transition: background-color 0.3s;
+    .bb-countdown {
+      display: block;
+      font-size: 11px;
+      color: #4b5563;
+      margin-top: 5px;
     }
+
+    .bb-verified-badge {
+      display: none;
+      font-size: 12px;
+      color: #22c55e;
+      margin-top: 7px;
+    }
+    .bb-verified-badge.show { display: flex; align-items: center; gap: 5px; }
 
     /* Pill selects */
     .bb-pills {
@@ -1821,23 +1865,20 @@
 
         <div class="bb-field">
           <label class="bb-field-label">Email address <span class="bb-req">*</span></label>
-          <input type="email" id="f-email" placeholder="you@example.com" autocomplete="email" inputmode="email" />
-          <div class="bb-field-hint">Your approval notification arrives here.</div>
-          <div class="bb-field-err" id="e-email"></div>
-        </div>
-
-        <div class="bb-field">
-          <label class="bb-field-label">Password <span class="bb-req">*</span></label>
-          <input type="password" id="f-password" placeholder="Minimum 8 characters" autocomplete="new-password"
-            oninput="updatePwStrength()" />
-          <div class="bb-pw-bars">
-            <div class="bb-pw-bar" id="pbar1"></div>
-            <div class="bb-pw-bar" id="pbar2"></div>
-            <div class="bb-pw-bar" id="pbar3"></div>
-            <div class="bb-pw-bar" id="pbar4"></div>
+          <input type="email" id="f-email" placeholder="you@example.com" autocomplete="email" inputmode="email"
+            oninput="onEmailInput()" />
+          <button type="button" class="bb-send-code-btn" id="sendCodeBtn" onclick="sendOtp()">Send verification code</button>
+          <div class="bb-otp-row" id="otpRow">
+            <input type="text" id="f-otp" inputmode="numeric" maxlength="6" placeholder="000000"
+              oninput="onOtpInput()" autocomplete="one-time-code" />
+            <span class="bb-countdown" id="otpCountdown"></span>
           </div>
-          <div class="bb-field-hint">Used to log in once approved.</div>
-          <div class="bb-field-err" id="e-password"></div>
+          <div class="bb-verified-badge" id="emailVerifiedBadge">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#22c55e"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Email verified
+          </div>
+          <div class="bb-field-err" id="e-email"></div>
+          <div class="bb-field-err" id="e-otp"></div>
         </div>
 
         <div class="bb-field">
@@ -1926,15 +1967,15 @@
         </div>
 
         <div class="bb-field">
-          <label class="bb-field-label">City <span style="color:#4b5563; font-size:10px;">(optional)</span></label>
-          <input type="text" id="f-city" placeholder="Amsterdam, Paris, London&hellip;" autocomplete="address-level2"
+          <label class="bb-field-label">City <span class="bb-req">*</span></label>
+          <input type="text" id="f-city" placeholder="Start typing your city…" autocomplete="address-level2"
             inputmode="text" autocapitalize="words" />
           <div class="bb-field-hint">Shown to dreamers on your profile.</div>
+          <div class="bb-field-err" id="e-city"></div>
         </div>
 
         <div class="bb-field">
-          <label class="bb-field-label">WhatsApp number <span
-              style="color:#4b5563; font-size:10px;">(optional)</span></label>
+          <label class="bb-field-label">WhatsApp number <span class="bb-req">*</span></label>
           <div class="bb-phone-row">
             <span class="bb-phone-prefix" id="phonePrefix">+__</span>
             <input type="tel" id="f-whatsapp" placeholder="612 345 678" autocomplete="tel" inputmode="tel"
@@ -1965,8 +2006,7 @@
         </div>
 
         <div class="bb-field">
-          <label class="bb-field-label">Gender identity <span
-              style="color:#4b5563; font-size:10px;">(optional)</span></label>
+          <label class="bb-field-label">Gender identity <span class="bb-req">*</span></label>
           <div class="bb-pills" id="g-gender">
             <div class="bb-pill" data-v="woman" onclick="togglePill('g-gender','woman')">Woman</div>
             <div class="bb-pill" data-v="man" onclick="togglePill('g-gender','man')">Man</div>
@@ -1977,6 +2017,7 @@
             <div class="bb-pill" data-v="prefer_not_to_say" onclick="togglePill('g-gender','prefer_not_to_say')">Prefer
               not to say</div>
           </div>
+          <div class="bb-field-err" id="e-gender"></div>
         </div>
 
         <div class="bb-field">
@@ -2048,6 +2089,10 @@
     /* ── Config ─────────────────────────────────────────────────────────────── */
     var API_BASE = ''  // same-origin — server.js serves both HTML and API
 
+    /* ── OTP state ──────────────────────────────────────────────────────────── */
+    var emailVerified    = false
+    var otpCountdownTimer = null
+
     /* ── Country → dial code map ────────────────────────────────────────────── */
     var DIAL_CODES = {
       NL:'+31', DE:'+49', FR:'+33', GB:'+44', BE:'+32', ES:'+34', IT:'+39',
@@ -2062,6 +2107,109 @@
     }
     var currentDialCode = ''
 
+    /* ── OTP: send ───────────────────────────────────────────────────────────── */
+    async function sendOtp() {
+      showErr('email', '')
+      showErr('otp', '')
+      var email = document.getElementById('f-email').value.trim().toLowerCase()
+      if (!isEmail(email)) { showErr('email', 'Enter a valid email address first.'); return }
+
+      var btn = document.getElementById('sendCodeBtn')
+      btn.disabled = true
+      btn.textContent = 'Sending…'
+
+      try {
+        var res  = await fetch(API_BASE + '/api/companions/send-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email })
+        })
+        var data = await res.json()
+        if (!res.ok) {
+          showErr('email', data.error || 'Could not send code. Try again.')
+          btn.disabled = false
+          btn.textContent = 'Send verification code'
+          return
+        }
+        // Show OTP row, start 60s countdown
+        document.getElementById('otpRow').classList.add('show')
+        document.getElementById('f-otp').value = ''
+        document.getElementById('f-otp').focus()
+        startOtpCountdown(60)
+        btn.textContent = 'Resend code'
+      } catch(e) {
+        showErr('email', 'Network error. Check your connection and try again.')
+        btn.disabled = false
+        btn.textContent = 'Send verification code'
+      }
+    }
+
+    function startOtpCountdown(seconds) {
+      clearInterval(otpCountdownTimer)
+      var rem = seconds
+      var el  = document.getElementById('otpCountdown')
+      var btn = document.getElementById('sendCodeBtn')
+      btn.disabled = true
+      function tick() {
+        el.textContent = 'Code expires in ' + rem + 's'
+        rem--
+        if (rem < 0) {
+          clearInterval(otpCountdownTimer)
+          el.textContent = 'Code expired — send a new one.'
+          btn.disabled = false
+        }
+      }
+      tick()
+      otpCountdownTimer = setInterval(tick, 1000)
+    }
+
+    function onEmailInput() {
+      // Reset verified state when email changes
+      if (emailVerified) {
+        emailVerified = false
+        document.getElementById('emailVerifiedBadge').classList.remove('show')
+        document.getElementById('otpRow').classList.remove('show')
+        document.getElementById('sendCodeBtn').disabled = false
+        document.getElementById('sendCodeBtn').textContent = 'Send verification code'
+        clearInterval(otpCountdownTimer)
+        document.getElementById('otpCountdown').textContent = ''
+      }
+    }
+
+    /* ── OTP: auto-verify on 6 digits ────────────────────────────────────────── */
+    function onOtpInput() {
+      var val = document.getElementById('f-otp').value.replace(/\D/g, '')
+      document.getElementById('f-otp').value = val
+      showErr('otp', '')
+      if (val.length === 6) verifyOtp()
+    }
+
+    async function verifyOtp() {
+      var email = document.getElementById('f-email').value.trim().toLowerCase()
+      var otp   = document.getElementById('f-otp').value.trim()
+      try {
+        var res  = await fetch(API_BASE + '/api/companions/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, otp: otp })
+        })
+        var data = await res.json()
+        if (data.verified) {
+          emailVerified = true
+          clearInterval(otpCountdownTimer)
+          document.getElementById('otpCountdown').textContent = ''
+          document.getElementById('otpRow').classList.remove('show')
+          document.getElementById('emailVerifiedBadge').classList.add('show')
+          document.getElementById('sendCodeBtn').style.display = 'none'
+          showErr('otp', '')
+        } else {
+          showErr('otp', data.error || 'That code is incorrect.')
+        }
+      } catch(e) {
+        showErr('otp', 'Could not verify. Check your connection.')
+      }
+    }
+
     /* ── Country change → auto-fill phone prefix ─────────────────────────────── */
     function onCountryChange() {
       var country = document.getElementById('f-country').value
@@ -2075,7 +2223,6 @@
         prefixEl.textContent = code
         prefixEl.className = 'bb-phone-prefix has-code'
         hint.textContent = 'Country code ' + code + ' added — type your local number next.'
-        // Only focus if field is empty
         if (!waInput.value.trim()) waInput.focus()
       } else {
         prefixEl.textContent = '+__'
@@ -2089,17 +2236,13 @@
     function getFullWhatsapp() {
       var typed = document.getElementById('f-whatsapp').value.trim()
       if (!typed) return ''
-      // Already a full E164 number typed by user
       if (typed.startsWith('+')) return typed.replace(/[\s\-()]/g, '')
-      // Strip leading zeros (e.g. 0612... → 612...)
       var digits = typed.replace(/[\s\-()]/g, '').replace(/^0+/, '')
       if (!digits) return ''
       return currentDialCode ? currentDialCode + digits : ''
     }
 
-    function onWhatsappInput() {
-      showErr('whatsapp', '')
-    }
+    function onWhatsappInput() { showErr('whatsapp', '') }
 
     /* ── Pill state ─────────────────────────────────────────────────────────── */
     var pillState = { 'g-gender': null, 'g-modality': 'in_person' }
@@ -2108,6 +2251,19 @@
       pillState[groupId] = value
       document.querySelectorAll('#' + groupId + ' .bb-pill').forEach(function(el) {
         el.classList.toggle('selected', el.dataset.v === value)
+      })
+      if (groupId === 'g-gender') showErr('gender', '')
+    }
+
+    /* ── Google Places Autocomplete callback ─────────────────────────────────── */
+    function initPlaces() {
+      var cityInput = document.getElementById('f-city')
+      if (!cityInput || !window.google) return
+      var ac = new google.maps.places.Autocomplete(cityInput, { types: ['(cities)'] })
+      ac.addListener('place_changed', function() {
+        var place = ac.getPlace()
+        if (place && place.name) cityInput.value = place.name
+        showErr('city', '')
       })
     }
 
@@ -2124,7 +2280,6 @@
     }
 
     function handleOverlayClick(e) {
-      // Close only when clicking the dark backdrop, not inner content
       if (e.target === document.getElementById('wizardOverlay')) closeWizard()
     }
 
@@ -2139,9 +2294,7 @@
     function goToStep(n) {
       clearErrors()
       currentStep = n
-      document.querySelectorAll('.bb-step-panel').forEach(function(p) {
-        p.classList.remove('active')
-      })
+      document.querySelectorAll('.bb-step-panel').forEach(function(p) { p.classList.remove('active') })
       var panel = document.getElementById('wpanel' + n)
       if (panel) panel.classList.add('active')
       document.getElementById('wiz-progress').style.display = 'block'
@@ -2154,17 +2307,6 @@
       document.getElementById('wizardOverlay').scrollTo({ top: 0, behavior: 'smooth' })
     }
 
-    /* ── Password strength ──────────────────────────────────────────────────── */
-    function updatePwStrength() {
-      var pw = document.getElementById('f-password').value
-      var score = [pw.length >= 8, /[A-Z]/.test(pw), /[0-9]/.test(pw), /[^A-Za-z0-9]/.test(pw)].filter(Boolean).length
-      var colors = ['', '#e8607a', '#c9a96e', '#c9a96e', '#22c55e']
-      for (var i = 1; i <= 4; i++) {
-        var bar = document.getElementById('pbar' + i)
-        if (bar) bar.style.backgroundColor = (i <= score) ? colors[score] : '#1c2333'
-      }
-    }
-
     /* ── Error helpers ──────────────────────────────────────────────────────── */
     function showErr(id, msg) {
       var el = document.getElementById('e-' + id)
@@ -2175,8 +2317,7 @@
 
     function clearErrors() {
       document.querySelectorAll('.bb-field-err').forEach(function(el) {
-        el.textContent = ''
-        el.classList.remove('show')
+        el.textContent = ''; el.classList.remove('show')
       })
       var ge = document.getElementById('globalErr')
       if (ge) { ge.textContent = ''; ge.classList.remove('show') }
@@ -2206,16 +2347,14 @@
       clearErrors()
       var name  = document.getElementById('f-fullName').value.trim()
       var email = document.getElementById('f-email').value.trim()
-      var pw    = document.getElementById('f-password').value
       var dob   = document.getElementById('f-dob').value
       var ok    = true
 
-      if (name.length < 2)    { showErr('fullName', 'Enter your full legal name.'); ok = false }
-      if (!isEmail(email))    { showErr('email', 'Enter a valid email address.'); ok = false }
-      if (pw.length < 8)      { showErr('password', 'Password must be at least 8 characters.'); ok = false }
-      if (pw.length > 72)     { showErr('password', 'Password is too long.'); ok = false }
-      if (!dob)               { showErr('dob', 'Enter your date of birth.'); ok = false }
-      else if (!isAdult(dob)) { showErr('dob', 'You must be 18 or older to apply.'); ok = false }
+      if (name.length < 2)        { showErr('fullName', 'Enter your full legal name.'); ok = false }
+      if (!isEmail(email))        { showErr('email', 'Enter a valid email address.'); ok = false }
+      else if (!emailVerified)    { showErr('email', 'Please verify your email — click "Send verification code" above.'); ok = false }
+      if (!dob)                   { showErr('dob', 'Enter your date of birth.'); ok = false }
+      else if (!isAdult(dob))     { showErr('dob', 'You must be 18 or older to apply.'); ok = false }
 
       if (ok) goToStep(2)
     }
@@ -2224,15 +2363,15 @@
     function step2Next() {
       clearErrors()
       var country = document.getElementById('f-country').value
+      var city    = document.getElementById('f-city').value.trim()
       var ok      = true
 
-      if (!country) { showErr('country', 'Please select your country.'); ok = false }
+      if (!country)       { showErr('country', 'Please select your country.'); ok = false }
+      if (!city)          { showErr('city', 'Please enter your city.'); ok = false }
 
       var fullWa = getFullWhatsapp()
-      if (fullWa && !isE164(fullWa)) {
-        showErr('whatsapp', 'Enter your local number after the country code — digits only.')
-        ok = false
-      }
+      if (!fullWa)                     { showErr('whatsapp', 'Enter your WhatsApp number.'); ok = false }
+      else if (!isE164(fullWa))        { showErr('whatsapp', 'Enter your local number after the country code — digits only.'); ok = false }
 
       if (ok) goToStep(3)
     }
@@ -2241,27 +2380,26 @@
     async function submitApp() {
       clearErrors()
       var displayName = document.getElementById('f-displayName').value.trim()
-      if (displayName.length < 1) {
-        showErr('displayName', 'Choose a display name for your profile.')
-        return
-      }
+      var gender      = pillState['g-gender']
+      var ok          = true
+
+      if (displayName.length < 1) { showErr('displayName', 'Choose a display name for your profile.'); ok = false }
+      if (!gender)                 { showErr('gender', 'Please select your gender identity.'); ok = false }
+      if (!ok) return
 
       var btn = document.getElementById('submitBtn')
       btn.disabled = true
       btn.innerHTML = '<span class="bb-spinner"></span>Submitting…'
 
-      var fullWa = getFullWhatsapp()
-
       var payload = {
         fullName:        document.getElementById('f-fullName').value.trim(),
         email:           document.getElementById('f-email').value.trim().toLowerCase(),
-        password:        document.getElementById('f-password').value,
         dateOfBirth:     document.getElementById('f-dob').value,
         country:         document.getElementById('f-country').value,
-        city:            document.getElementById('f-city').value.trim() || undefined,
-        whatsappNumber:  fullWa || undefined,
+        city:            document.getElementById('f-city').value.trim(),
+        whatsappNumber:  getFullWhatsapp(),
         displayName:     displayName,
-        gender:          pillState['g-gender'] || undefined,
+        gender:          gender,
         tagline:         document.getElementById('f-tagline').value.trim() || undefined,
         bio:             document.getElementById('f-bio').value.trim() || undefined,
         sessionModality: pillState['g-modality'] || 'in_person'
@@ -2282,7 +2420,7 @@
           return
         }
 
-        // Success — show confirmation panel
+        // Success
         document.querySelectorAll('.bb-step-panel').forEach(function(p) { p.classList.remove('active') })
         document.getElementById('wiz-progress').style.display = 'none'
         document.getElementById('globalErr').classList.remove('show')
@@ -2298,7 +2436,6 @@
 
     /* ── Init ────────────────────────────────────────────────────────────────── */
     ;(function() {
-      // Cap DOB to today
       var t = new Date()
       var dobInput = document.getElementById('f-dob')
       if (dobInput) {
@@ -2307,7 +2444,6 @@
           + String(t.getDate()).padStart(2, '0')
         dobInput.setAttribute('max', max)
       }
-      // Set initial step dots
       goToStep(1)
     })()
   </script>
