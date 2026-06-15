@@ -1,5 +1,7 @@
 'use strict'
 
+require('dotenv').config({ path: require('path').join(__dirname, '.env.local') })
+
 const express  = require('express')
 const { Pool } = require('pg')
 const crypto   = require('crypto')
