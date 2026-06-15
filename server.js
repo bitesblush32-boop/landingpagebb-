@@ -304,7 +304,6 @@ app.post('/api/companions/apply', async (req, res) => {
     country, city, whatsappNumber,
     displayName, gender, tagline, bio,
   } = body
-  const sessionModality = body.sessionModality || 'in_person'
   const cleanEmail = email.toLowerCase().trim()
   const cleanName  = fullName.trim()
   const now        = new Date()
@@ -361,14 +360,14 @@ app.post('/api/companions/apply', async (req, res) => {
     await client.query(
       `INSERT INTO companion_profiles
         (companion_id, bio, tagline, city, gender,
-         session_modality, availability_status, whatsapp_number,
+         availability_status, whatsapp_number,
          is_verified, is_live, profile_completeness, is_visible_to_users,
          created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
       [
         id,
         bio || null, tagline || null, city || null, gender || null,
-        sessionModality, 'offline', whatsappNumber || null,
+        'offline', whatsappNumber || null,
         false, false, 0, false,
         now, now,
       ]
@@ -395,7 +394,9 @@ app.post('/api/companions/apply', async (req, res) => {
       message: 'Application received. We will be in touch within 48 hours.',
     })
   } catch (err) {
-    console.error('[apply]', err)
+    console.error('[apply] ERROR:', err.message)
+    console.error('[apply] CODE:', err.code)
+    console.error('[apply] DETAIL:', err.detail)
     return res.status(500).json({
       error: 'Something went wrong creating your account. Please try again.',
     })
