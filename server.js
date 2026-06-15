@@ -138,7 +138,14 @@ app.post('/api/companions/apply', async (req, res) => {
   const now        = new Date()
   const id         = crypto.randomUUID()
 
-  const client = await pool.connect()
+  let client
+  try {
+    client = await pool.connect()
+  } catch (err) {
+    console.error('[apply] db connect failed:', err.message)
+    return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' })
+  }
+
   try {
     // Check duplicate email
     const existing = await client.query(
@@ -224,7 +231,7 @@ app.post('/api/companions/apply', async (req, res) => {
       error: 'Something went wrong creating your account. Please try again.',
     })
   } finally {
-    client.release()
+    if (client) client.release()
   }
 })
 
