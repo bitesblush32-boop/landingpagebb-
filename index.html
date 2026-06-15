@@ -796,52 +796,6 @@
       display: block;
     }
 
-    /* OTP / email verification */
-    .bb-send-code-btn {
-      display: inline-block;
-      margin-top: 8px;
-      font-size: 12px;
-      font-family: 'DM Sans', -apple-system, sans-serif;
-      color: #e8607a;
-      background: rgba(232,96,122,0.08);
-      border: 1px solid rgba(232,96,122,0.3);
-      border-radius: 20px;
-      padding: 6px 14px;
-      cursor: pointer;
-      transition: background 0.15s, opacity 0.15s;
-      touch-action: manipulation;
-    }
-    .bb-send-code-btn:hover { background: rgba(232,96,122,0.14); }
-    .bb-send-code-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    .bb-otp-row {
-      display: none;
-      margin-top: 10px;
-    }
-    .bb-otp-row.show { display: block; }
-
-    .bb-otp-row input {
-      font-size: 24px;
-      letter-spacing: 0.35em;
-      text-align: center;
-      font-family: 'DM Sans', -apple-system, sans-serif;
-    }
-
-    .bb-countdown {
-      display: block;
-      font-size: 11px;
-      color: #4b5563;
-      margin-top: 5px;
-    }
-
-    .bb-verified-badge {
-      display: none;
-      font-size: 12px;
-      color: #22c55e;
-      margin-top: 7px;
-    }
-    .bb-verified-badge.show { display: flex; align-items: center; gap: 5px; }
-
     /* Pill selects */
     .bb-pills {
       display: flex;
@@ -1866,20 +1820,9 @@
 
         <div class="bb-field">
           <label class="bb-field-label">Email address <span class="bb-req">*</span></label>
-          <input type="email" id="f-email" placeholder="you@example.com" autocomplete="email" inputmode="email"
-            oninput="onEmailInput()" />
-          <button type="button" class="bb-send-code-btn" id="sendCodeBtn" onclick="sendOtp()">Send verification code</button>
-          <div class="bb-otp-row" id="otpRow">
-            <input type="text" id="f-otp" inputmode="numeric" maxlength="6" placeholder="000000"
-              oninput="onOtpInput()" autocomplete="one-time-code" />
-            <span class="bb-countdown" id="otpCountdown"></span>
-          </div>
-          <div class="bb-verified-badge" id="emailVerifiedBadge">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="7" fill="#22c55e"/><path d="M4 7l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Email verified
-          </div>
+          <input type="email" id="f-email" placeholder="you@example.com" autocomplete="email" inputmode="email" />
+          <div class="bb-field-hint">Your approval notification arrives here.</div>
           <div class="bb-field-err" id="e-email"></div>
-          <div class="bb-field-err" id="e-otp"></div>
         </div>
 
         <div class="bb-field">
@@ -2090,10 +2033,6 @@
     /* ── Config ─────────────────────────────────────────────────────────────── */
     var API_BASE = ''  // same-origin — server.js serves both HTML and API
 
-    /* ── OTP state ──────────────────────────────────────────────────────────── */
-    var emailVerified    = false
-    var otpCountdownTimer = null
-
     /* ── Country → dial code map ────────────────────────────────────────────── */
     var DIAL_CODES = {
       NL:'+31', DE:'+49', FR:'+33', GB:'+44', BE:'+32', ES:'+34', IT:'+39',
@@ -2107,109 +2046,6 @@
       ZA:'+27', NG:'+234', KE:'+254', TR:'+90'
     }
     var currentDialCode = ''
-
-    /* ── OTP: send ───────────────────────────────────────────────────────────── */
-    async function sendOtp() {
-      showErr('email', '')
-      showErr('otp', '')
-      var email = document.getElementById('f-email').value.trim().toLowerCase()
-      if (!isEmail(email)) { showErr('email', 'Enter a valid email address first.'); return }
-
-      var btn = document.getElementById('sendCodeBtn')
-      btn.disabled = true
-      btn.textContent = 'Sending…'
-
-      try {
-        var res  = await fetch(API_BASE + '/api/companions/send-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email })
-        })
-        var data = await res.json()
-        if (!res.ok) {
-          showErr('email', data.error || 'Could not send code. Try again.')
-          btn.disabled = false
-          btn.textContent = 'Send verification code'
-          return
-        }
-        // Show OTP row, start 60s countdown
-        document.getElementById('otpRow').classList.add('show')
-        document.getElementById('f-otp').value = ''
-        document.getElementById('f-otp').focus()
-        startOtpCountdown(60)
-        btn.textContent = 'Resend code'
-      } catch(e) {
-        showErr('email', 'Network error. Check your connection and try again.')
-        btn.disabled = false
-        btn.textContent = 'Send verification code'
-      }
-    }
-
-    function startOtpCountdown(seconds) {
-      clearInterval(otpCountdownTimer)
-      var rem = seconds
-      var el  = document.getElementById('otpCountdown')
-      var btn = document.getElementById('sendCodeBtn')
-      btn.disabled = true
-      function tick() {
-        el.textContent = 'Code expires in ' + rem + 's'
-        rem--
-        if (rem < 0) {
-          clearInterval(otpCountdownTimer)
-          el.textContent = 'Code expired — send a new one.'
-          btn.disabled = false
-        }
-      }
-      tick()
-      otpCountdownTimer = setInterval(tick, 1000)
-    }
-
-    function onEmailInput() {
-      // Reset verified state when email changes
-      if (emailVerified) {
-        emailVerified = false
-        document.getElementById('emailVerifiedBadge').classList.remove('show')
-        document.getElementById('otpRow').classList.remove('show')
-        document.getElementById('sendCodeBtn').disabled = false
-        document.getElementById('sendCodeBtn').textContent = 'Send verification code'
-        clearInterval(otpCountdownTimer)
-        document.getElementById('otpCountdown').textContent = ''
-      }
-    }
-
-    /* ── OTP: auto-verify on 6 digits ────────────────────────────────────────── */
-    function onOtpInput() {
-      var val = document.getElementById('f-otp').value.replace(/\D/g, '')
-      document.getElementById('f-otp').value = val
-      showErr('otp', '')
-      if (val.length === 6) verifyOtp()
-    }
-
-    async function verifyOtp() {
-      var email = document.getElementById('f-email').value.trim().toLowerCase()
-      var otp   = document.getElementById('f-otp').value.trim()
-      try {
-        var res  = await fetch(API_BASE + '/api/companions/verify-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email, otp: otp })
-        })
-        var data = await res.json()
-        if (data.verified) {
-          emailVerified = true
-          clearInterval(otpCountdownTimer)
-          document.getElementById('otpCountdown').textContent = ''
-          document.getElementById('otpRow').classList.remove('show')
-          document.getElementById('emailVerifiedBadge').classList.add('show')
-          document.getElementById('sendCodeBtn').style.display = 'none'
-          showErr('otp', '')
-        } else {
-          showErr('otp', data.error || 'That code is incorrect.')
-        }
-      } catch(e) {
-        showErr('otp', 'Could not verify. Check your connection.')
-      }
-    }
 
     /* ── Country change → auto-fill phone prefix ─────────────────────────────── */
     function onCountryChange() {
@@ -2351,11 +2187,10 @@
       var dob   = document.getElementById('f-dob').value
       var ok    = true
 
-      if (name.length < 2)        { showErr('fullName', 'Enter your full legal name.'); ok = false }
-      if (!isEmail(email))        { showErr('email', 'Enter a valid email address.'); ok = false }
-      else if (!emailVerified)    { showErr('email', 'Please verify your email — click "Send verification code" above.'); ok = false }
-      if (!dob)                   { showErr('dob', 'Enter your date of birth.'); ok = false }
-      else if (!isAdult(dob))     { showErr('dob', 'You must be 18 or older to apply.'); ok = false }
+      if (name.length < 2)    { showErr('fullName', 'Enter your full legal name.'); ok = false }
+      if (!isEmail(email))    { showErr('email', 'Enter a valid email address.'); ok = false }
+      if (!dob)               { showErr('dob', 'Enter your date of birth.'); ok = false }
+      else if (!isAdult(dob)) { showErr('dob', 'You must be 18 or older to apply.'); ok = false }
 
       if (ok) goToStep(2)
     }
