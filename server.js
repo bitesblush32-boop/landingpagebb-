@@ -8,7 +8,15 @@ const { Pool } = require('pg')
 const crypto   = require('crypto')
 const path     = require('path')
 const fs       = require('fs')
-const { Resend } = require('resend')
+const { Resend }    = require('resend')
+const cloudinaryPkg = require('cloudinary')
+const cloudinary    = cloudinaryPkg.v2
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 // ── Multer (in-memory, 5 MB limit) ────────────────────────────────────────────
 
@@ -16,16 +24,6 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
 })
-
-// ── Cloudinary signed upload helper ───────────────────────────────────────────
-
-function cloudinarySign(params) {
-  const str = Object.keys(params).sort()
-    .map(k => `${k}=${params[k]}`).join('&')
-  return crypto.createHash('sha256')
-    .update(str + process.env.CLOUDINARY_API_SECRET)
-    .digest('hex')
-}
 
 const resend   = new Resend(process.env.RESEND_API_KEY)
 const FROM     = process.env.FROM_EMAIL || 'admin@blushbite.co'
@@ -274,28 +272,18 @@ app.post('/api/companions/upload-photo', upload.single('photo'), async (req, res
   if (!req.file.mimetype.startsWith('image/'))
     return res.status(400).json({ error: 'File must be a JPG or PNG image.' })
 
-  const cloud     = process.env.CLOUDINARY_CLOUD_NAME
-  const timestamp = Math.floor(Date.now() / 1000)
-  const params    = { folder: 'companion-applications', timestamp }
-  const signature = cloudinarySign(params)
-
-  const fd = new FormData()
-  fd.append('file', new Blob([req.file.buffer], { type: req.file.mimetype }), req.file.originalname || 'photo.jpg')
-  fd.append('api_key',   process.env.CLOUDINARY_API_KEY)
-  fd.append('timestamp', String(timestamp))
-  fd.append('signature', signature)
-  fd.append('folder',    'companion-applications')
-
   try {
-    const r    = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/image/upload`, { method: 'POST', body: fd })
-    const data = await r.json()
-    if (!r.ok) {
-      console.error('[upload-photo] Cloudinary error:', data)
-      return res.status(500).json({ error: 'Photo upload failed. Please try again.' })
-    }
-    return res.json({ url: data.secure_url })
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: 'companion-applications', resource_type: 'image' },
+        (err, result) => err ? reject(err) : resolve(result)
+      )
+      stream.write(req.file.buffer)
+      stream.end()
+    })
+    return res.json({ url: result.secure_url })
   } catch (err) {
-    console.error('[upload-photo]', err.message)
+    console.error('[upload-photo] Cloudinary error:', err.message, err.http_code)
     return res.status(500).json({ error: 'Photo upload failed. Please try again.' })
   }
 })
