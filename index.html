@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Join BlushBite — Apply as a Companion</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2307090f'/><text x='16' y='22' text-anchor='middle' font-family='Georgia,serif' font-size='18' fill='%23e8607a'>B</text></svg>" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
   <meta name="description"
     content="Build your private world on BlushBite. Apply as a companion — curated, verified, and entirely yours." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -826,6 +826,58 @@
     }
 
     /* Wizard nav */
+    /* ── Photo upload ── */
+    .bb-photo-drop {
+      border: 2px dashed #1c2333;
+      border-radius: 14px;
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      user-select: none;
+    }
+    .bb-photo-drop:hover,
+    .bb-photo-drop.drag-over {
+      border-color: rgba(232,96,122,0.5);
+      background: rgba(232,96,122,0.04);
+    }
+    .bb-photo-drop-icon { font-size: 26px; color: #6b7280; margin-bottom: 8px; }
+    .bb-photo-drop-label { font-size: 13px; color: #6b7280; }
+    .bb-photo-drop-sub { font-size: 11px; color: #4b5563; margin-top: 5px; }
+    .bb-photo-preview {
+      display: none;
+      position: relative;
+      width: 110px;
+      height: 150px;
+      margin: 0 auto;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .bb-photo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .bb-photo-remove {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 22px;
+      height: 22px;
+      background: rgba(7,9,15,0.82);
+      border-radius: 50%;
+      border: 1px solid #1c2333;
+      color: #eeeef0;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0;
+    }
+    .bb-photo-remove:hover { background: rgba(232,96,122,0.6); border-color: #e8607a; }
+
     .bb-wiz-nav {
       display: flex;
       gap: 10px;
@@ -1942,6 +1994,29 @@
           ear.</p>
 
         <div class="bb-field">
+          <label class="bb-field-label">Profile photo <span style="color:#4b5563;font-size:10px;">(optional)</span></label>
+          <div class="bb-photo-drop" id="photoDrop"
+               onclick="document.getElementById('f-photo').click()"
+               ondragover="onPhotoDragOver(event)"
+               ondragleave="onPhotoDragLeave(event)"
+               ondrop="onPhotoDrop(event)">
+            <div id="photoPlaceholder">
+              <div class="bb-photo-drop-icon">📷</div>
+              <div class="bb-photo-drop-label">Click or drag a photo here</div>
+              <div class="bb-photo-drop-sub">JPG or PNG &middot; max 5 MB &middot; face clearly visible</div>
+            </div>
+            <div class="bb-photo-preview" id="photoPreview">
+              <img id="photoPreviewImg" src="" alt="Profile preview" />
+              <button type="button" class="bb-photo-remove" onclick="removePhoto(event)">✕</button>
+            </div>
+          </div>
+          <input type="file" id="f-photo" accept="image/jpeg,image/png,image/webp" style="display:none"
+                 onchange="onPhotoSelect(event)" />
+          <div class="bb-field-hint">A clear, well-lit photo helps our review team — not shown publicly until you go live.</div>
+          <div class="bb-field-err" id="e-photo"></div>
+        </div>
+
+        <div class="bb-field">
           <label class="bb-field-label">Display name <span class="bb-req">*</span></label>
           <input type="text" id="f-displayName" placeholder="The name dreamers will know you by" maxlength="60"
             inputmode="text" autocapitalize="words" />
@@ -2082,7 +2157,61 @@
     function onWhatsappInput() { showErr('whatsapp', '') }
 
     /* ── Pill state ─────────────────────────────────────────────────────────── */
-    var pillState = { 'g-gender': null, 'g-modality': 'in_person' }
+    var pillState        = { 'g-gender': null, 'g-modality': 'in_person' }
+    var selectedPhotoFile = null
+
+    /* ── Photo upload ──────────────────────────────────────────────────────── */
+
+    function onPhotoSelect(e) {
+      var file = e.target.files[0]
+      if (file) setPhotoFile(file)
+    }
+
+    function onPhotoDragOver(e) {
+      e.preventDefault()
+      document.getElementById('photoDrop').classList.add('drag-over')
+    }
+
+    function onPhotoDragLeave(e) {
+      document.getElementById('photoDrop').classList.remove('drag-over')
+    }
+
+    function onPhotoDrop(e) {
+      e.preventDefault()
+      document.getElementById('photoDrop').classList.remove('drag-over')
+      var file = e.dataTransfer && e.dataTransfer.files[0]
+      if (file) setPhotoFile(file)
+    }
+
+    function setPhotoFile(file) {
+      if (!file.type.startsWith('image/')) {
+        document.getElementById('e-photo').textContent = 'Please select a JPG or PNG image.'
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        document.getElementById('e-photo').textContent = 'Photo must be under 5 MB.'
+        return
+      }
+      selectedPhotoFile = file
+      document.getElementById('e-photo').textContent = ''
+      var reader = new FileReader()
+      reader.onload = function(ev) {
+        document.getElementById('photoPreviewImg').src = ev.target.result
+        document.getElementById('photoPlaceholder').style.display = 'none'
+        document.getElementById('photoPreview').style.display    = 'block'
+      }
+      reader.readAsDataURL(file)
+    }
+
+    function removePhoto(e) {
+      e.stopPropagation()
+      selectedPhotoFile = null
+      document.getElementById('f-photo').value = ''
+      document.getElementById('photoPreviewImg').src = ''
+      document.getElementById('photoPlaceholder').style.display = 'block'
+      document.getElementById('photoPreview').style.display    = 'none'
+      document.getElementById('e-photo').textContent = ''
+    }
 
     function togglePill(groupId, value) {
       pillState[groupId] = value
@@ -2225,6 +2354,26 @@
 
       var btn = document.getElementById('submitBtn')
       btn.disabled = true
+
+      // Upload photo first if one was selected
+      var profilePhotoUrl = undefined
+      if (selectedPhotoFile) {
+        btn.innerHTML = '<span class="bb-spinner"></span>Uploading photo…'
+        try {
+          var fd = new FormData()
+          fd.append('photo', selectedPhotoFile)
+          var upRes  = await fetch(API_BASE + '/api/companions/upload-photo', { method: 'POST', body: fd })
+          var upData = await upRes.json()
+          if (!upRes.ok) throw new Error(upData.error || 'Photo upload failed.')
+          profilePhotoUrl = upData.url
+        } catch (err) {
+          document.getElementById('e-photo').textContent = err.message || 'Photo upload failed. Please try again.'
+          btn.disabled = false
+          btn.textContent = 'Submit application'
+          return
+        }
+      }
+
       btn.innerHTML = '<span class="bb-spinner"></span>Submitting…'
 
       var payload = {
@@ -2236,9 +2385,10 @@
         whatsappNumber:  getFullWhatsapp(),
         displayName:     displayName,
         gender:          gender,
-        tagline:         document.getElementById('f-tagline').value.trim() || undefined,
-        bio:             document.getElementById('f-bio').value.trim() || undefined,
-        sessionModality: pillState['g-modality'] || 'in_person'
+        tagline:          document.getElementById('f-tagline').value.trim() || undefined,
+        bio:              document.getElementById('f-bio').value.trim() || undefined,
+        sessionModality:  pillState['g-modality'] || 'in_person',
+        profilePhotoUrl:  profilePhotoUrl,
       }
 
       try {

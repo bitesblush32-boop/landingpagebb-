@@ -3,11 +3,29 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env.local') })
 
 const express  = require('express')
+const multer   = require('multer')
 const { Pool } = require('pg')
 const crypto   = require('crypto')
 const path     = require('path')
 const fs       = require('fs')
 const { Resend } = require('resend')
+
+// ── Multer (in-memory, 5 MB limit) ────────────────────────────────────────────
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+})
+
+// ── Cloudinary signed upload helper ───────────────────────────────────────────
+
+function cloudinarySign(params) {
+  const str = Object.keys(params).sort()
+    .map(k => `${k}=${params[k]}`).join('&')
+  return crypto.createHash('sha256')
+    .update(str + process.env.CLOUDINARY_API_SECRET)
+    .digest('hex')
+}
 
 const resend   = new Resend(process.env.RESEND_API_KEY)
 const FROM     = process.env.FROM_EMAIL || 'admin@blushbite.co'
@@ -244,9 +262,43 @@ app.get('/', (req, res) => {
 app.use(express.static(path.join(__dirname)))
 
 // Preflight (all companion endpoints)
-app.options('/api/companions/apply',      (req, res) => res.set(CORS).status(204).end())
-app.options('/api/companions/send-otp',   (req, res) => res.set(CORS).status(204).end())
-app.options('/api/companions/verify-otp', (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/apply',         (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/send-otp',      (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/verify-otp',    (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/upload-photo',  (req, res) => res.set(CORS).status(204).end())
+
+// POST /api/companions/upload-photo
+app.post('/api/companions/upload-photo', upload.single('photo'), async (req, res) => {
+  res.set(CORS)
+  if (!req.file) return res.status(400).json({ error: 'No photo provided.' })
+  if (!req.file.mimetype.startsWith('image/'))
+    return res.status(400).json({ error: 'File must be a JPG or PNG image.' })
+
+  const cloud     = process.env.CLOUDINARY_CLOUD_NAME
+  const timestamp = Math.floor(Date.now() / 1000)
+  const params    = { folder: 'companion-applications', timestamp }
+  const signature = cloudinarySign(params)
+
+  const fd = new FormData()
+  fd.append('file', new Blob([req.file.buffer], { type: req.file.mimetype }), req.file.originalname || 'photo.jpg')
+  fd.append('api_key',   process.env.CLOUDINARY_API_KEY)
+  fd.append('timestamp', String(timestamp))
+  fd.append('signature', signature)
+  fd.append('folder',    'companion-applications')
+
+  try {
+    const r    = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/image/upload`, { method: 'POST', body: fd })
+    const data = await r.json()
+    if (!r.ok) {
+      console.error('[upload-photo] Cloudinary error:', data)
+      return res.status(500).json({ error: 'Photo upload failed. Please try again.' })
+    }
+    return res.json({ url: data.secure_url })
+  } catch (err) {
+    console.error('[upload-photo]', err.message)
+    return res.status(500).json({ error: 'Photo upload failed. Please try again.' })
+  }
+})
 
 // POST /api/companions/send-otp
 app.post('/api/companions/send-otp', async (req, res) => {
@@ -356,14 +408,15 @@ app.post('/api/companions/apply', async (req, res) => {
       ]
     )
 
-    // Insert companion_profile
-    await client.query(
+    // Insert companion_profile (RETURNING id so we can attach photos)
+    const profileResult = await client.query(
       `INSERT INTO companion_profiles
         (companion_id, bio, tagline, city, gender,
          availability_status, whatsapp_number,
          is_verified, is_live, profile_completeness, is_visible_to_users,
          created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+       RETURNING id`,
       [
         id,
         bio || null, tagline || null, city || null, gender || null,
@@ -372,6 +425,17 @@ app.post('/api/companions/apply', async (req, res) => {
         now, now,
       ]
     )
+    const profileId = profileResult.rows[0].id
+
+    // Insert profile photo if provided
+    if (body.profilePhotoUrl) {
+      await client.query(
+        `INSERT INTO companion_photos
+          (companion_profile_id, url, storage_key, alt_text, sort_order, is_primary, is_approved, created_at)
+         VALUES ($1, $2, '', NULL, 0, true, false, $3)`,
+        [profileId, body.profilePhotoUrl, now]
+      )
+    }
 
     // Insert onboarding progress stages 1 + 2
     await client.query(
