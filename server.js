@@ -106,7 +106,13 @@ function validate(body) {
   if (!whatsappNumber || !/^\+[1-9]\d{6,14}$/.test(whatsappNumber))
     return 'Enter a valid WhatsApp number in E.164 format, e.g. +31612345678.'
 
-  const validGenders = ['woman','man','non_binary','trans_woman','trans_man','other','prefer_not_to_say']
+  const validGenders = [
+    'woman','man','non_binary','genderqueer','genderfluid',
+    'agender','bigender','pangender','two_spirit',
+    'trans_woman','trans_man','demi_girl','demi_boy',
+    'neutrois','androgyne','intersex','questioning',
+    'other','prefer_not_to_say',
+  ]
   if (!gender || !validGenders.includes(gender))
     return 'Please select your gender.'
 
