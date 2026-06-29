@@ -465,7 +465,16 @@ app.post('/api/companions/apply', async (req, res) => {
 
 // ── Start ──────────────────────────────────────────────────────────────────────
 
-const PORT = process.env.PORT || 3001
-app.listen(PORT, () => {
-  console.log(`BlushBite landing running on http://localhost:${PORT}`)
+const net = require('net')
+function findAvailablePort(port) {
+  return new Promise((resolve) => {
+    const s = net.createServer()
+    s.listen(port, () => { const p = s.address().port; s.close(() => resolve(p)) })
+    s.on('error', () => resolve(findAvailablePort(port + 1)))
+  })
+}
+findAvailablePort(parseInt(process.env.PORT) || 3001).then((PORT) => {
+  app.listen(PORT, () => {
+    console.log(`BlushBite landing running on http://localhost:${PORT}`)
+  })
 })
