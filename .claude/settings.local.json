@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\" && graphify update . 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && graphify update . 2>&1)",
+      "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\" -name \"route.ts\" | xargs grep -l \"Unauthorized\\\\|UNAUTH\" 2>/dev/null | head -20)",
+      "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\\\\auth\" -type f 2>/dev/null && find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\\\\companions\\\\auth\" -type f 2>/dev/null && find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\" -name \"route.ts\" | xargs grep -l \"companion\\\\|Companion\" 2>/dev/null | head -30)",
+      "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" -path \"*/api/auth*\" -name \"*.ts\" 2>/dev/null && find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" -name \"auth.ts\" -o -name \"nextauth.ts\" 2>/dev/null | head -10)"
+    ]
+  }
+}

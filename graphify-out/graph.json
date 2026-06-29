@@ -1,0 +1,157 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "server.js",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L1",
+      "id": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "community": 0,
+      "norm_label": "server.js"
+    },
+    {
+      "label": "generateAlias()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L74",
+      "id": "server_generatealias",
+      "community": 0,
+      "norm_label": "generatealias()"
+    },
+    {
+      "label": "isAtLeast18()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L82",
+      "id": "server_isatleast18",
+      "community": 1,
+      "norm_label": "isatleast18()"
+    },
+    {
+      "label": "validate()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L90",
+      "id": "server_validate",
+      "community": 1,
+      "norm_label": "validate()"
+    },
+    {
+      "label": "checkRate()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L134",
+      "id": "server_checkrate",
+      "community": 0,
+      "norm_label": "checkrate()"
+    },
+    {
+      "label": "buildOtpEmail()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L143",
+      "id": "server_buildotpemail",
+      "community": 0,
+      "norm_label": "buildotpemail()"
+    },
+    {
+      "label": "findAvailablePort()",
+      "file_type": "code",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L469",
+      "id": "server_findavailableport",
+      "community": 0,
+      "norm_label": "findavailableport()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L74",
+      "weight": 1.0,
+      "_src": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "_tgt": "server_generatealias",
+      "source": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "target": "server_generatealias",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L82",
+      "weight": 1.0,
+      "_src": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "_tgt": "server_isatleast18",
+      "source": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "target": "server_isatleast18",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L90",
+      "weight": 1.0,
+      "_src": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "_tgt": "server_validate",
+      "source": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "target": "server_validate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L134",
+      "weight": 1.0,
+      "_src": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "_tgt": "server_checkrate",
+      "source": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "target": "server_checkrate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L143",
+      "weight": 1.0,
+      "_src": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "_tgt": "server_buildotpemail",
+      "source": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "target": "server_buildotpemail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L469",
+      "weight": 1.0,
+      "_src": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "_tgt": "server_findavailableport",
+      "source": "c_users_ravi_desai_downloads_blush_landingpagebb_server_js",
+      "target": "server_findavailableport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "C:\\Users\\Ravi Desai\\Downloads\\blush\\landingpagebb-\\server.js",
+      "source_location": "L100",
+      "weight": 1.0,
+      "_src": "server_validate",
+      "_tgt": "server_isatleast18",
+      "source": "server_isatleast18",
+      "target": "server_validate",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": []
+}
