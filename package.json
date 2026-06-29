@@ -4,7 +4,10 @@
   "description": "BlushBite companion landing page — standalone Node.js app",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "lint": "eslint server.js",
+    "lint:fix": "eslint --fix server.js",
+    "format": "prettier --write server.js login.html dashboard.html index.html"
   },
   "dependencies": {
     "cloudinary": "^2.5.1",
@@ -16,5 +19,12 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-n": "^18.2.1",
+    "globals": "^17.7.0",
+    "prettier": "^3.9.3"
   }
 }

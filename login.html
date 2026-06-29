@@ -1,326 +1,384 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="noindex, nofollow" />
-  <title>Companion Login — BlushBite</title>
-  <link rel="icon" href="/favicon.png" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #07090f;
-      color: #eeeef0;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
-    }
-    .card {
-      width: 100%;
-      max-width: 440px;
-      background: #0d1117;
-      border: 1px solid #1c2333;
-      border-radius: 20px;
-      overflow: hidden;
-    }
-    .accent-line {
-      height: 2px;
-      background: linear-gradient(90deg, transparent, #e8607a, transparent);
-    }
-    .card-body { padding: 40px; }
-    .logo {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 20px;
-      font-weight: 400;
-      color: #eeeef0;
-      letter-spacing: 0.03em;
-      margin-bottom: 32px;
-      display: block;
-    }
-    .eyebrow {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #e8607a;
-      margin-bottom: 8px;
-    }
-    h1 {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 26px;
-      font-weight: 400;
-      color: #eeeef0;
-      line-height: 1.3;
-      margin-bottom: 10px;
-    }
-    h1 em { font-style: italic; color: #e8607a; }
-    .subtitle {
-      font-size: 13px;
-      color: #6b7280;
-      line-height: 1.65;
-      margin-bottom: 28px;
-    }
-    label {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #6b7280;
-      margin-bottom: 8px;
-    }
-    input {
-      width: 100%;
-      background: #161d2a;
-      border: 1px solid #1c2333;
-      border-radius: 10px;
-      padding: 12px 14px;
-      font-size: 15px;
-      color: #eeeef0;
-      outline: none;
-      transition: border-color 0.15s;
-      font-family: inherit;
-      -webkit-appearance: none;
-    }
-    input:focus { border-color: rgba(232,96,122,0.5); }
-    input::placeholder { color: #374151; }
-    .btn {
-      width: 100%;
-      padding: 13px;
-      background: #e8607a;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      font-family: inherit;
-      letter-spacing: 0.01em;
-      margin-top: 20px;
-    }
-    .btn:hover:not(:disabled) { opacity: 0.9; }
-    .btn:active:not(:disabled) { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn.secondary {
-      background: transparent;
-      border: 1px solid #1c2333;
-      color: #6b7280;
-      margin-top: 10px;
-    }
-    .btn.secondary:hover:not(:disabled) { border-color: rgba(255,255,255,0.15); color: #eeeef0; opacity: 1; }
-    .error-box {
-      margin-top: 14px;
-      padding: 10px 14px;
-      background: rgba(232,96,122,0.08);
-      border: 1px solid rgba(232,96,122,0.25);
-      border-radius: 8px;
-      font-size: 13px;
-      color: #e8607a;
-      display: none;
-    }
-    .success-note {
-      margin-top: 14px;
-      font-size: 12px;
-      color: #6b7280;
-      text-align: center;
-      display: none;
-    }
-    .otp-inputs {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
-    }
-    .otp-inputs input {
-      flex: 1;
-      text-align: center;
-      font-size: 22px;
-      font-family: 'Courier New', monospace;
-      font-weight: 700;
-      padding: 14px 0;
-      letter-spacing: 0;
-    }
-    .divider { height: 1px; background: #1c2333; margin: 28px 0; }
-    .footer-note {
-      text-align: center;
-      font-size: 11px;
-      color: #374151;
-      line-height: 1.6;
-      margin-top: 24px;
-    }
-    .footer-note a { color: #6b7280; text-decoration: none; }
-    .footer-note a:hover { color: #eeeef0; }
-    /* Steps */
-    #step-email { }
-    #step-otp { display: none; }
-  </style>
-</head>
-<body>
-  <div style="width:100%;max-width:440px;">
-    <div class="card">
-      <div class="accent-line"></div>
-      <div class="card-body">
-        <span class="logo">BlushBite</span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Companion Login — BlushBite</title>
+    <link rel="icon" href="/favicon.png" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #07090f;
+        color: #eeeef0;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+      }
+      .card {
+        width: 100%;
+        max-width: 440px;
+        background: #0d1117;
+        border: 1px solid #1c2333;
+        border-radius: 20px;
+        overflow: hidden;
+      }
+      .accent-line {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #e8607a, transparent);
+      }
+      .card-body {
+        padding: 40px;
+      }
+      .logo {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 20px;
+        font-weight: 400;
+        color: #eeeef0;
+        letter-spacing: 0.03em;
+        margin-bottom: 32px;
+        display: block;
+      }
+      .eyebrow {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #e8607a;
+        margin-bottom: 8px;
+      }
+      h1 {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 26px;
+        font-weight: 400;
+        color: #eeeef0;
+        line-height: 1.3;
+        margin-bottom: 10px;
+      }
+      h1 em {
+        font-style: italic;
+        color: #e8607a;
+      }
+      .subtitle {
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.65;
+        margin-bottom: 28px;
+      }
+      label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        margin-bottom: 8px;
+      }
+      input {
+        width: 100%;
+        background: #161d2a;
+        border: 1px solid #1c2333;
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 15px;
+        color: #eeeef0;
+        outline: none;
+        transition: border-color 0.15s;
+        font-family: inherit;
+        -webkit-appearance: none;
+      }
+      input:focus {
+        border-color: rgba(232, 96, 122, 0.5);
+      }
+      input::placeholder {
+        color: #374151;
+      }
+      .btn {
+        width: 100%;
+        padding: 13px;
+        background: #e8607a;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition:
+          opacity 0.15s,
+          transform 0.1s;
+        font-family: inherit;
+        letter-spacing: 0.01em;
+        margin-top: 20px;
+      }
+      .btn:hover:not(:disabled) {
+        opacity: 0.9;
+      }
+      .btn:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn.secondary {
+        background: transparent;
+        border: 1px solid #1c2333;
+        color: #6b7280;
+        margin-top: 10px;
+      }
+      .btn.secondary:hover:not(:disabled) {
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #eeeef0;
+        opacity: 1;
+      }
+      .error-box {
+        margin-top: 14px;
+        padding: 10px 14px;
+        background: rgba(232, 96, 122, 0.08);
+        border: 1px solid rgba(232, 96, 122, 0.25);
+        border-radius: 8px;
+        font-size: 13px;
+        color: #e8607a;
+        display: none;
+      }
+      .success-note {
+        margin-top: 14px;
+        font-size: 12px;
+        color: #6b7280;
+        text-align: center;
+        display: none;
+      }
+      .otp-inputs {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+      .otp-inputs input {
+        flex: 1;
+        text-align: center;
+        font-size: 22px;
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        padding: 14px 0;
+        letter-spacing: 0;
+      }
+      .divider {
+        height: 1px;
+        background: #1c2333;
+        margin: 28px 0;
+      }
+      .footer-note {
+        text-align: center;
+        font-size: 11px;
+        color: #374151;
+        line-height: 1.6;
+        margin-top: 24px;
+      }
+      .footer-note a {
+        color: #6b7280;
+        text-decoration: none;
+      }
+      .footer-note a:hover {
+        color: #eeeef0;
+      }
+      /* Steps */
+      #step-email {
+      }
+      #step-otp {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="width: 100%; max-width: 440px">
+      <div class="card">
+        <div class="accent-line"></div>
+        <div class="card-body">
+          <span class="logo">BlushBite</span>
 
-        <!-- Step 1: Email -->
-        <div id="step-email">
-          <p class="eyebrow">Companion portal</p>
-          <h1>Welcome <em>back.</em></h1>
-          <p class="subtitle">Enter the email address you used to apply. We'll send you a login code.</p>
-          <label for="email">Email address</label>
-          <input id="email" type="email" inputmode="email" autocomplete="email"
-                 placeholder="you@example.com" autofocus />
-          <button class="btn" id="btn-send" onclick="sendOtp()">Send login code</button>
-          <div class="error-box" id="err-email"></div>
-          <p class="success-note" id="note-sent">Code sent — check your inbox.</p>
-        </div>
-
-        <!-- Step 2: OTP -->
-        <div id="step-otp">
-          <p class="eyebrow">Enter your code</p>
-          <h1>Check your <em>inbox.</em></h1>
-          <p class="subtitle" id="otp-subtitle">We sent a 6-digit code to your email. It expires in 10 minutes.</p>
-          <label>Verification code</label>
-          <div class="otp-inputs">
-            <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
-            <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
-            <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
-            <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
-            <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
-            <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+          <!-- Step 1: Email -->
+          <div id="step-email">
+            <p class="eyebrow">Companion portal</p>
+            <h1>Welcome <em>back.</em></h1>
+            <p class="subtitle">
+              Enter the email address you used to apply. We'll send you a login code.
+            </p>
+            <label for="email">Email address</label>
+            <input
+              id="email"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              autofocus
+            />
+            <button class="btn" id="btn-send" onclick="sendOtp()">Send login code</button>
+            <div class="error-box" id="err-email"></div>
+            <p class="success-note" id="note-sent">Code sent — check your inbox.</p>
           </div>
-          <button class="btn" id="btn-verify" onclick="verifyOtp()" disabled>Enter</button>
-          <button class="btn secondary" onclick="backToEmail()">← Different email</button>
-          <div class="error-box" id="err-otp"></div>
+
+          <!-- Step 2: OTP -->
+          <div id="step-otp">
+            <p class="eyebrow">Enter your code</p>
+            <h1>Check your <em>inbox.</em></h1>
+            <p class="subtitle" id="otp-subtitle">
+              We sent a 6-digit code to your email. It expires in 10 minutes.
+            </p>
+            <label>Verification code</label>
+            <div class="otp-inputs">
+              <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+              <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+              <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+              <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+              <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+              <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+            </div>
+            <button class="btn" id="btn-verify" onclick="verifyOtp()" disabled>Enter</button>
+            <button class="btn secondary" onclick="backToEmail()">← Different email</button>
+            <div class="error-box" id="err-otp"></div>
+          </div>
         </div>
       </div>
+      <p class="footer-note">
+        Don't have an account? <a href="/">Apply to become a companion</a> · Your identity stays
+        private — always.
+      </p>
     </div>
-    <p class="footer-note">
-      Don't have an account? <a href="/">Apply to become a companion</a> · Your identity stays private — always.
-    </p>
-  </div>
 
-  <script>
-    let pendingEmail = ''
+    <script>
+      let pendingEmail = ''
 
-    // ── OTP digit inputs ───────────────────────────────────────────────────────
-    const digits = document.querySelectorAll('.otp-digit')
-    digits.forEach((inp, i) => {
-      inp.addEventListener('input', e => {
-        const v = e.target.value.replace(/\D/g, '')
-        e.target.value = v.slice(-1)
-        if (v && i < digits.length - 1) digits[i + 1].focus()
-        checkOtpReady()
-      })
-      inp.addEventListener('keydown', e => {
-        if (e.key === 'Backspace' && !inp.value && i > 0) digits[i - 1].focus()
-        if (e.key === 'Enter') verifyOtp()
-      })
-      inp.addEventListener('paste', e => {
-        e.preventDefault()
-        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6)
-        pasted.split('').forEach((ch, idx) => { if (digits[idx]) digits[idx].value = ch })
-        if (digits[pasted.length - 1]) digits[Math.min(pasted.length, 5)].focus()
-        checkOtpReady()
-      })
-    })
-
-    function checkOtpReady() {
-      const code = [...digits].map(d => d.value).join('')
-      document.getElementById('btn-verify').disabled = code.length < 6
-    }
-
-    function showError(id, msg) {
-      const el = document.getElementById(id)
-      el.textContent = msg
-      el.style.display = 'block'
-    }
-    function hideError(id) { document.getElementById(id).style.display = 'none' }
-
-    // ── Step 1: Send OTP ───────────────────────────────────────────────────────
-    async function sendOtp() {
-      hideError('err-email')
-      const email = document.getElementById('email').value.trim().toLowerCase()
-      if (!email) return showError('err-email', 'Please enter your email address.')
-
-      const btn = document.getElementById('btn-send')
-      btn.disabled = true
-      btn.textContent = 'Sending…'
-
-      try {
-        const r = await fetch('/api/companions/login/send-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
+      // ── OTP digit inputs ───────────────────────────────────────────────────────
+      const digits = document.querySelectorAll('.otp-digit')
+      digits.forEach((inp, i) => {
+        inp.addEventListener('input', (e) => {
+          const v = e.target.value.replace(/\D/g, '')
+          e.target.value = v.slice(-1)
+          if (v && i < digits.length - 1) digits[i + 1].focus()
+          checkOtpReady()
         })
-        const data = await r.json()
-        if (!r.ok) {
-          showError('err-email', data.error || 'Something went wrong. Please try again.')
+        inp.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !inp.value && i > 0) digits[i - 1].focus()
+          if (e.key === 'Enter') verifyOtp()
+        })
+        inp.addEventListener('paste', (e) => {
+          e.preventDefault()
+          const pasted = (e.clipboardData || window.clipboardData)
+            .getData('text')
+            .replace(/\D/g, '')
+            .slice(0, 6)
+          pasted.split('').forEach((ch, idx) => {
+            if (digits[idx]) digits[idx].value = ch
+          })
+          if (digits[pasted.length - 1]) digits[Math.min(pasted.length, 5)].focus()
+          checkOtpReady()
+        })
+      })
+
+      function checkOtpReady() {
+        const code = [...digits].map((d) => d.value).join('')
+        document.getElementById('btn-verify').disabled = code.length < 6
+      }
+
+      function showError(id, msg) {
+        const el = document.getElementById(id)
+        el.textContent = msg
+        el.style.display = 'block'
+      }
+      function hideError(id) {
+        document.getElementById(id).style.display = 'none'
+      }
+
+      // ── Step 1: Send OTP ───────────────────────────────────────────────────────
+      async function sendOtp() {
+        hideError('err-email')
+        const email = document.getElementById('email').value.trim().toLowerCase()
+        if (!email) return showError('err-email', 'Please enter your email address.')
+
+        const btn = document.getElementById('btn-send')
+        btn.disabled = true
+        btn.textContent = 'Sending…'
+
+        try {
+          const r = await fetch('/api/companions/login/send-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          })
+          const data = await r.json()
+          if (!r.ok) {
+            showError('err-email', data.error || 'Something went wrong. Please try again.')
+            btn.disabled = false
+            btn.textContent = 'Send login code'
+            return
+          }
+          pendingEmail = email
+          document.getElementById('otp-subtitle').textContent =
+            `We sent a 6-digit code to ${email}. It expires in 10 minutes.`
+          document.getElementById('step-email').style.display = 'none'
+          document.getElementById('step-otp').style.display = 'block'
+          digits[0].focus()
+        } catch {
+          showError('err-email', 'Network error. Please check your connection.')
           btn.disabled = false
           btn.textContent = 'Send login code'
-          return
         }
-        pendingEmail = email
-        document.getElementById('otp-subtitle').textContent =
-          `We sent a 6-digit code to ${email}. It expires in 10 minutes.`
-        document.getElementById('step-email').style.display = 'none'
-        document.getElementById('step-otp').style.display = 'block'
-        digits[0].focus()
-      } catch {
-        showError('err-email', 'Network error. Please check your connection.')
-        btn.disabled = false
-        btn.textContent = 'Send login code'
       }
-    }
 
-    // ── Step 2: Verify OTP ─────────────────────────────────────────────────────
-    async function verifyOtp() {
-      hideError('err-otp')
-      const code = [...digits].map(d => d.value).join('')
-      if (code.length < 6) return
+      // ── Step 2: Verify OTP ─────────────────────────────────────────────────────
+      async function verifyOtp() {
+        hideError('err-otp')
+        const code = [...digits].map((d) => d.value).join('')
+        if (code.length < 6) return
 
-      const btn = document.getElementById('btn-verify')
-      btn.disabled = true
-      btn.textContent = 'Verifying…'
+        const btn = document.getElementById('btn-verify')
+        btn.disabled = true
+        btn.textContent = 'Verifying…'
 
-      try {
-        const r = await fetch('/api/companions/login/verify-otp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: pendingEmail, otp: code }),
-        })
-        const data = await r.json()
-        if (!r.ok) {
-          showError('err-otp', data.error || 'Something went wrong. Please try again.')
-          digits.forEach(d => d.value = '')
-          digits[0].focus()
+        try {
+          const r = await fetch('/api/companions/login/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pendingEmail, otp: code }),
+          })
+          const data = await r.json()
+          if (!r.ok) {
+            showError('err-otp', data.error || 'Something went wrong. Please try again.')
+            digits.forEach((d) => (d.value = ''))
+            digits[0].focus()
+            btn.disabled = false
+            btn.textContent = 'Enter'
+            return
+          }
+          btn.textContent = 'Welcome back…'
+          window.location.href = '/dashboard'
+        } catch {
+          showError('err-otp', 'Network error. Please check your connection.')
           btn.disabled = false
           btn.textContent = 'Enter'
-          return
         }
-        btn.textContent = 'Welcome back…'
-        window.location.href = '/dashboard'
-      } catch {
-        showError('err-otp', 'Network error. Please check your connection.')
-        btn.disabled = false
-        btn.textContent = 'Enter'
       }
-    }
 
-    function backToEmail() {
-      document.getElementById('step-otp').style.display = 'none'
-      document.getElementById('step-email').style.display = 'block'
-      document.getElementById('btn-send').disabled = false
-      document.getElementById('btn-send').textContent = 'Send login code'
-      hideError('err-email')
-      digits.forEach(d => d.value = '')
-    }
+      function backToEmail() {
+        document.getElementById('step-otp').style.display = 'none'
+        document.getElementById('step-email').style.display = 'block'
+        document.getElementById('btn-send').disabled = false
+        document.getElementById('btn-send').textContent = 'Send login code'
+        hideError('err-email')
+        digits.forEach((d) => (d.value = ''))
+      }
 
-    // Allow Enter key on email input
-    document.getElementById('email').addEventListener('keydown', e => {
-      if (e.key === 'Enter') sendOtp()
-    })
-  </script>
-</body>
+      // Allow Enter key on email input
+      document.getElementById('email').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendOtp()
+      })
+    </script>
+  </body>
 </html>

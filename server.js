@@ -2,19 +2,19 @@
 
 require('dotenv').config({ path: require('path').join(__dirname, '.env.local') })
 
-const express  = require('express')
-const multer   = require('multer')
+const express = require('express')
+const multer = require('multer')
 const { Pool } = require('pg')
-const crypto   = require('crypto')
-const path     = require('path')
-const fs       = require('fs')
-const { Resend }    = require('resend')
+const crypto = require('crypto')
+const path = require('path')
+const fs = require('fs')
+const { Resend } = require('resend')
 const cloudinaryPkg = require('cloudinary')
-const cloudinary    = cloudinaryPkg.v2
+const cloudinary = cloudinaryPkg.v2
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
@@ -25,8 +25,8 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 })
 
-const resend   = new Resend(process.env.RESEND_API_KEY)
-const FROM     = process.env.FROM_EMAIL || 'admin@blushbite.co'
+const resend = new Resend(process.env.RESEND_API_KEY)
+const FROM = process.env.FROM_EMAIL || 'admin@blushbite.co'
 
 // ── Database ───────────────────────────────────────────────────────────────────
 
@@ -38,41 +38,219 @@ const pool = new Pool({
 // ── Alias generation (ported from apps/web/lib/alias.ts) ──────────────────────
 
 const ADJECTIVES = [
-  'amber','ancient','ashen','bare','bitter','black','blush','bold',
-  'broken','calm','cardinal','carved','close','cold','copper','crimson',
-  'dark','dusk','electric','ember','faded','faint','gilded','glass',
-  'golden','grey','hollow','honest','hushed','idle','ivory','jade',
-  'knowing','late','lavender','lean','light','liminal','lone','lucid',
-  'lunar','marbled','midnight','mild','misty','muted','narrow','night',
-  'northern','oblique','onyx','open','pale','phantom','private','quiet',
-  'raven','raw','restless','rose','rouge','sable','scarlet','secret',
-  'sheer','silent','silver','slow','smoke','soft','solstice','stark',
-  'still','strange','tender','thin','twilight','unnamed','unspoken',
-  'velvet','violet','warm','wandering','winter','worn','woven',
+  'amber',
+  'ancient',
+  'ashen',
+  'bare',
+  'bitter',
+  'black',
+  'blush',
+  'bold',
+  'broken',
+  'calm',
+  'cardinal',
+  'carved',
+  'close',
+  'cold',
+  'copper',
+  'crimson',
+  'dark',
+  'dusk',
+  'electric',
+  'ember',
+  'faded',
+  'faint',
+  'gilded',
+  'glass',
+  'golden',
+  'grey',
+  'hollow',
+  'honest',
+  'hushed',
+  'idle',
+  'ivory',
+  'jade',
+  'knowing',
+  'late',
+  'lavender',
+  'lean',
+  'light',
+  'liminal',
+  'lone',
+  'lucid',
+  'lunar',
+  'marbled',
+  'midnight',
+  'mild',
+  'misty',
+  'muted',
+  'narrow',
+  'night',
+  'northern',
+  'oblique',
+  'onyx',
+  'open',
+  'pale',
+  'phantom',
+  'private',
+  'quiet',
+  'raven',
+  'raw',
+  'restless',
+  'rose',
+  'rouge',
+  'sable',
+  'scarlet',
+  'secret',
+  'sheer',
+  'silent',
+  'silver',
+  'slow',
+  'smoke',
+  'soft',
+  'solstice',
+  'stark',
+  'still',
+  'strange',
+  'tender',
+  'thin',
+  'twilight',
+  'unnamed',
+  'unspoken',
+  'velvet',
+  'violet',
+  'warm',
+  'wandering',
+  'winter',
+  'worn',
+  'woven',
 ]
 
 const NOUNS = [
-  'afternoon','anchor','archive','aria','atlas','autumn','avenue',
-  'bloom','breath','bridge','candle','chapel','chord','coast',
-  'compass','confession','corridor','dawn','desire','door','dusk',
-  'echo','ember','evening','fable','figure','flame','flare',
-  'fog','folio','garden','ghost','glade','glass','grace',
-  'harbour','haven','hour','hush','ink','interval','island',
-  'journal','key','lamp','lantern','library','light','linen',
-  'longing','lullaby','map','meadow','mirror','mist','moon',
-  'muse','myth','night','north','note','notion','novella',
-  'ocean','passage','pause','petal','phrase','pilgrim','place',
-  'plume','portal','prism','quarter','rain','reverie','rhyme',
-  'ridge','ritual','river','room','rose','secret','shade',
-  'shadow','shore','signal','silence','silhouette','smoke','solace',
-  'sonnet','spark','spell','star','station','storm','strand',
-  'study','summer','swan','syntax','thought','thread','tide',
-  'tower','trace','trail','truth','tunnel','twilight','vessel',
-  'vigil','vista','voice','wave','window','wing','winter','wish',
+  'afternoon',
+  'anchor',
+  'archive',
+  'aria',
+  'atlas',
+  'autumn',
+  'avenue',
+  'bloom',
+  'breath',
+  'bridge',
+  'candle',
+  'chapel',
+  'chord',
+  'coast',
+  'compass',
+  'confession',
+  'corridor',
+  'dawn',
+  'desire',
+  'door',
+  'dusk',
+  'echo',
+  'ember',
+  'evening',
+  'fable',
+  'figure',
+  'flame',
+  'flare',
+  'fog',
+  'folio',
+  'garden',
+  'ghost',
+  'glade',
+  'glass',
+  'grace',
+  'harbour',
+  'haven',
+  'hour',
+  'hush',
+  'ink',
+  'interval',
+  'island',
+  'journal',
+  'key',
+  'lamp',
+  'lantern',
+  'library',
+  'light',
+  'linen',
+  'longing',
+  'lullaby',
+  'map',
+  'meadow',
+  'mirror',
+  'mist',
+  'moon',
+  'muse',
+  'myth',
+  'night',
+  'north',
+  'note',
+  'notion',
+  'novella',
+  'ocean',
+  'passage',
+  'pause',
+  'petal',
+  'phrase',
+  'pilgrim',
+  'place',
+  'plume',
+  'portal',
+  'prism',
+  'quarter',
+  'rain',
+  'reverie',
+  'rhyme',
+  'ridge',
+  'ritual',
+  'river',
+  'room',
+  'rose',
+  'secret',
+  'shade',
+  'shadow',
+  'shore',
+  'signal',
+  'silence',
+  'silhouette',
+  'smoke',
+  'solace',
+  'sonnet',
+  'spark',
+  'spell',
+  'star',
+  'station',
+  'storm',
+  'strand',
+  'study',
+  'summer',
+  'swan',
+  'syntax',
+  'thought',
+  'thread',
+  'tide',
+  'tower',
+  'trace',
+  'trail',
+  'truth',
+  'tunnel',
+  'twilight',
+  'vessel',
+  'vigil',
+  'vista',
+  'voice',
+  'wave',
+  'window',
+  'wing',
+  'winter',
+  'wish',
 ]
 
 function generateAlias() {
-  const adj  = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
   const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
   return `@${adj}-${noun}`
 }
@@ -82,60 +260,79 @@ function generateAlias() {
 function isAtLeast18(dob) {
   const date = new Date(dob)
   if (isNaN(date.getTime())) return false
-  const today  = new Date()
+  const today = new Date()
   const cutoff = new Date(date.getFullYear() + 18, date.getMonth(), date.getDate())
   return today >= cutoff
 }
 
 function validate(body) {
-  const { fullName, email, dateOfBirth, country,
-          city, whatsappNumber, displayName, gender, tagline, bio, sessionModality } = body
+  const {
+    fullName,
+    email,
+    dateOfBirth,
+    country,
+    city,
+    whatsappNumber,
+    gender,
+    sessionModality,
+  } = body
 
-  if (!fullName || fullName.trim().length < 2)
-    return 'We need your full legal name.'
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    return 'Enter a valid email address.'
-  if (!dateOfBirth || isNaN(new Date(dateOfBirth).getTime()))
-    return 'Enter a valid date of birth.'
-  if (!isAtLeast18(dateOfBirth))
-    return 'You must be 18 or older to apply.'
-  if (!country || country.trim().length < 1)
-    return 'Please select your country.'
-  if (!city || city.trim().length < 1)
-    return 'Please enter your city.'
+  if (!fullName || fullName.trim().length < 2) return 'We need your full legal name.'
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Enter a valid email address.'
+  if (!dateOfBirth || isNaN(new Date(dateOfBirth).getTime())) return 'Enter a valid date of birth.'
+  if (!isAtLeast18(dateOfBirth)) return 'You must be 18 or older to apply.'
+  if (!country || country.trim().length < 1) return 'Please select your country.'
+  if (!city || city.trim().length < 1) return 'Please enter your city.'
   if (!whatsappNumber || !/^\+[1-9]\d{6,14}$/.test(whatsappNumber))
     return 'Enter a valid WhatsApp number in E.164 format, e.g. +31612345678.'
 
   const validGenders = [
-    'woman','man','non_binary','genderqueer','genderfluid',
-    'agender','bigender','pangender','two_spirit',
-    'trans_woman','trans_man','demi_girl','demi_boy',
-    'neutrois','androgyne','intersex','questioning',
-    'other','prefer_not_to_say',
+    'woman',
+    'man',
+    'non_binary',
+    'genderqueer',
+    'genderfluid',
+    'agender',
+    'bigender',
+    'pangender',
+    'two_spirit',
+    'trans_woman',
+    'trans_man',
+    'demi_girl',
+    'demi_boy',
+    'neutrois',
+    'androgyne',
+    'intersex',
+    'questioning',
+    'other',
+    'prefer_not_to_say',
   ]
-  if (!gender || !validGenders.includes(gender))
-    return 'Please select your gender.'
+  if (!gender || !validGenders.includes(gender)) return 'Please select your gender.'
 
-  const validModalities = ['in_person','online','both']
+  const validModalities = ['in_person', 'online', 'both']
   const modality = sessionModality || 'in_person'
-  if (!validModalities.includes(modality))
-    return 'Invalid session modality.'
+  if (!validModalities.includes(modality)) return 'Invalid session modality.'
 
   return null // no error
 }
 
 // ── OTP store (in-memory, dev only — prod uses Next.js routes) ────────────────
 
-const otpStore  = new Map() // email → { otp, expiry, attempts }
+const otpStore = new Map() // email → { otp, expiry, attempts }
 const rateStore = new Map() // email → { count, windowStart }
-const OTP_TTL    = 10 * 60 * 1000
-const RATE_WIN   = 10 * 60 * 1000
+const OTP_TTL = 10 * 60 * 1000
+const RATE_WIN = 10 * 60 * 1000
 
 function checkRate(email) {
-  const now = Date.now(), e = rateStore.get(email)
-  if (!e || now - e.windowStart > RATE_WIN) { rateStore.set(email, { count: 1, windowStart: now }); return true }
+  const now = Date.now(),
+    e = rateStore.get(email)
+  if (!e || now - e.windowStart > RATE_WIN) {
+    rateStore.set(email, { count: 1, windowStart: now })
+    return true
+  }
   if (e.count >= 3) return false
-  e.count++; return true
+  e.count++
+  return true
 }
 
 // ── Email template ─────────────────────────────────────────────────────────────
@@ -257,19 +454,27 @@ function verifyJwt(token) {
     const parts = (token || '').split('.')
     if (parts.length !== 3) return null
     const [hdr, bdy, sig] = parts
-    const expected = crypto.createHmac('sha256', JWT_SECRET).update(`${hdr}.${bdy}`).digest('base64url')
-    const aBuf = Buffer.from(sig,      'base64url')
+    const expected = crypto
+      .createHmac('sha256', JWT_SECRET)
+      .update(`${hdr}.${bdy}`)
+      .digest('base64url')
+    const aBuf = Buffer.from(sig, 'base64url')
     const bBuf = Buffer.from(expected, 'base64url')
     if (aBuf.length !== bBuf.length || !crypto.timingSafeEqual(aBuf, bBuf)) return null
     const payload = JSON.parse(Buffer.from(bdy, 'base64url').toString())
     if (payload.exp < Math.floor(Date.now() / 1000)) return null
     return payload
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 
 function getCookie(req, name) {
   const raw = req.headers.cookie || ''
-  const match = raw.split(';').map(s => s.trim()).find(s => s.startsWith(`${name}=`))
+  const match = raw
+    .split(';')
+    .map((s) => s.trim())
+    .find((s) => s.startsWith(`${name}=`))
   return match ? match.slice(name.length + 1) : null
 }
 
@@ -278,14 +483,19 @@ function issueSessionCookie(res, companionId, email, name) {
   const token = signJwt({ sub: companionId, email, name, exp })
   const isProd = process.env.NODE_ENV === 'production'
   const cookieName = isProd ? '__Host-bb_session' : 'bb_session'
-  res.setHeader('Set-Cookie',
-    `${cookieName}=${token}; HttpOnly; ${isProd ? 'Secure; ' : ''}SameSite=Strict; Path=/; Max-Age=604800`)
+  res.setHeader(
+    'Set-Cookie',
+    `${cookieName}=${token}; HttpOnly; ${isProd ? 'Secure; ' : ''}SameSite=Strict; Path=/; Max-Age=604800`
+  )
 }
 
 function clearSessionCookie(res) {
   const isProd = process.env.NODE_ENV === 'production'
   const cookieName = isProd ? '__Host-bb_session' : 'bb_session'
-  res.setHeader('Set-Cookie', `${cookieName}=; HttpOnly; ${isProd ? 'Secure; ' : ''}SameSite=Strict; Path=/; Max-Age=0`)
+  res.setHeader(
+    'Set-Cookie',
+    `${cookieName}=; HttpOnly; ${isProd ? 'Secure; ' : ''}SameSite=Strict; Path=/; Max-Age=0`
+  )
 }
 
 function requireSession(req, res, next) {
@@ -299,92 +509,10 @@ function requireSession(req, res, next) {
   next()
 }
 
-// ── Email templates ────────────────────────────────────────────────────────────
-
-function buildApprovalEmail(name) {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>You're in — BlushBite</title></head>
-<body style="margin:0;padding:0;background-color:#07090f;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#07090f;min-height:100vh;">
-    <tr><td align="center" style="padding:48px 16px;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
-        <tr><td style="padding-bottom:32px;"><span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;color:#eeeef0;letter-spacing:0.03em;">BlushBite</span></td></tr>
-        <tr><td style="background-color:#0d1117;border:1px solid #1c2333;border-radius:16px;overflow:hidden;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0">
-            <tr><td style="height:2px;background:linear-gradient(90deg,transparent,#e8607a,transparent);line-height:2px;font-size:2px;">&nbsp;</td></tr>
-          </table>
-          <table width="100%" cellpadding="0" cellspacing="0" border="0">
-            <tr><td style="padding:40px 40px 12px;">
-              <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#6b7280;">Application approved</p>
-              <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:#eeeef0;line-height:1.3;">
-                Welcome to the room, <em style="font-style:italic;color:#e8607a;">${name}.</em>
-              </h1>
-              <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">
-                Your BlushBite companion application has been approved. You can now log in to complete your profile — add photos, set your rates, and go live to dreamers.
-              </p>
-            </td></tr>
-            <tr><td style="padding:0 40px 32px;">
-              <a href="https://blushbite.live/login" style="display:inline-block;background:#e8607a;color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:12px 28px;border-radius:10px;letter-spacing:0.01em;">Set up your profile →</a>
-            </td></tr>
-            <tr><td style="padding:0 40px;"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background-color:#1c2333;font-size:1px;line-height:1px;">&nbsp;</td></tr></table></td></tr>
-            <tr><td style="padding:24px 40px 36px;">
-              <p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">Log in at blushbite.live/login using the email address you applied with. Your identity stays private — always.</p>
-            </td></tr>
-          </table>
-        </td></tr>
-        <tr><td style="padding-top:28px;"><p style="margin:0;font-size:11px;color:#374151;line-height:1.6;">&copy; BlushBite &nbsp;&middot;&nbsp; EU-hosted &nbsp;&middot;&nbsp; Your identity stays private — always.</p></td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`
-}
-
-function buildRejectionEmail(name, reason) {
-  const reasonHtml = reason
-    ? `<p style="margin:16px 0 0;font-size:13px;color:#6b7280;line-height:1.65;background:#111620;border:1px solid #1c2333;border-radius:10px;padding:14px 16px;">${reason}</p>`
-    : ''
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>Your BlushBite application</title></head>
-<body style="margin:0;padding:0;background-color:#07090f;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#07090f;min-height:100vh;">
-    <tr><td align="center" style="padding:48px 16px;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;">
-        <tr><td style="padding-bottom:32px;"><span style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:400;color:#eeeef0;letter-spacing:0.03em;">BlushBite</span></td></tr>
-        <tr><td style="background-color:#0d1117;border:1px solid #1c2333;border-radius:16px;overflow:hidden;">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0">
-            <tr><td style="height:2px;background:linear-gradient(90deg,transparent,#1c2333,transparent);line-height:2px;font-size:2px;">&nbsp;</td></tr>
-          </table>
-          <table width="100%" cellpadding="0" cellspacing="0" border="0">
-            <tr><td style="padding:40px 40px 12px;">
-              <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#6b7280;">Application update</p>
-              <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:400;color:#eeeef0;line-height:1.3;">
-                Thank you for applying, <em style="font-style:italic;color:#c9a96e;">${name}.</em>
-              </h1>
-              <p style="margin:0;font-size:14px;color:#6b7280;line-height:1.7;">After carefully reviewing your application, we're not able to move forward at this time. We appreciate the time you took to apply.${reasonHtml ? '' : ' We wish you all the best.'}</p>
-              ${reasonHtml}
-            </td></tr>
-            <tr><td style="padding:0 40px;height:32px;"></td></tr>
-            <tr><td style="padding:0 40px;"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background-color:#1c2333;font-size:1px;line-height:1px;">&nbsp;</td></tr></table></td></tr>
-            <tr><td style="padding:24px 40px 36px;">
-              <p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">If you have questions, reply to this email. Your identity stays private — always.</p>
-            </td></tr>
-          </table>
-        </td></tr>
-        <tr><td style="padding-top:28px;"><p style="margin:0;font-size:11px;color:#374151;line-height:1.6;">&copy; BlushBite &nbsp;&middot;&nbsp; EU-hosted</p></td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`
-}
-
 // ── CORS headers ───────────────────────────────────────────────────────────────
 
 const CORS = {
-  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 }
@@ -397,8 +525,9 @@ app.use(express.json())
 // Serve index.html with Google Maps key injected from env
 const INDEX_HTML = path.join(__dirname, 'index.html')
 app.get('/', (req, res) => {
-  const key  = process.env.GOOGLE_MAPS_KEY || ''
-  const html = fs.readFileSync(INDEX_HTML, 'utf8')
+  const key = process.env.GOOGLE_MAPS_KEY || ''
+  const html = fs
+    .readFileSync(INDEX_HTML, 'utf8')
     .replace("window.GOOGLE_MAPS_KEY = ''", `window.GOOGLE_MAPS_KEY = '${key}'`)
   res.type('html').send(html)
 })
@@ -426,14 +555,22 @@ app.post('/api/companions/login/send-otp', async (req, res) => {
     return res.status(400).json({ error: 'Enter a valid email address.' })
 
   let client
-  try { client = await pool.connect() } catch {
+  try {
+    client = await pool.connect()
+  } catch {
     return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' })
   }
   try {
-    const { rows } = await client.query('SELECT id FROM companions WHERE email = $1 LIMIT 1', [email])
+    const { rows } = await client.query('SELECT id FROM companions WHERE email = $1 LIMIT 1', [
+      email,
+    ])
     if (rows.length === 0)
-      return res.status(404).json({ error: 'No application found for this email. Please apply first.' })
-  } finally { if (client) client.release() }
+      return res
+        .status(404)
+        .json({ error: 'No application found for this email. Please apply first.' })
+  } finally {
+    if (client) client.release()
+  }
 
   if (!checkRate(email))
     return res.status(429).json({ error: 'Too many code requests. Please wait 10 minutes.' })
@@ -443,10 +580,10 @@ app.post('/api/companions/login/send-otp', async (req, res) => {
 
   try {
     await resend.emails.send({
-      from:    `BlushBite <${FROM}>`,
-      to:      email,
+      from: `BlushBite <${FROM}>`,
+      to: email,
       subject: `${otp} — your BlushBite login code`,
-      html:    buildOtpEmail(otp),
+      html: buildOtpEmail(otp),
     })
   } catch (err) {
     console.error('[login/send-otp] Resend error:', err.message)
@@ -459,7 +596,7 @@ app.post('/api/companions/login/send-otp', async (req, res) => {
 // POST /api/companions/login/verify-otp
 app.post('/api/companions/login/verify-otp', async (req, res) => {
   const email = ((req.body || {}).email || '').toLowerCase().trim()
-  const otp   = String((req.body || {}).otp || '').trim()
+  const otp = String((req.body || {}).otp || '').trim()
   const entry = otpStore.get(email)
   if (!entry)
     return res.status(400).json({ error: 'No code sent for this email. Request a new one.' })
@@ -478,18 +615,23 @@ app.post('/api/companions/login/verify-otp', async (req, res) => {
   otpStore.delete(email)
 
   let client
-  try { client = await pool.connect() } catch {
+  try {
+    client = await pool.connect()
+  } catch {
     return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' })
   }
   try {
     const { rows } = await client.query(
-      'SELECT id, email, name FROM companions WHERE email = $1 LIMIT 1', [email]
+      'SELECT id, email, name FROM companions WHERE email = $1 LIMIT 1',
+      [email]
     )
     if (rows.length === 0) return res.status(404).json({ error: 'Companion not found.' })
     const c = rows[0]
     issueSessionCookie(res, c.id, c.email, c.name)
     return res.json({ ok: true })
-  } finally { if (client) client.release() }
+  } finally {
+    if (client) client.release()
+  }
 })
 
 // POST /api/companions/logout
@@ -501,11 +643,14 @@ app.post('/api/companions/logout', (req, res) => {
 // GET /api/companions/me (session required)
 app.get('/api/companions/me', requireSession, async (req, res) => {
   let client
-  try { client = await pool.connect() } catch {
+  try {
+    client = await pool.connect()
+  } catch {
     return res.status(503).json({ error: 'Database unavailable.' })
   }
   try {
-    const { rows } = await client.query(`
+    const { rows } = await client.query(
+      `
       SELECT
         c.id, c.email, c.name, c.alias, c.companion_stage,
         cp.bio, cp.tagline, cp.city, cp.is_live, cp.is_verified,
@@ -519,7 +664,9 @@ app.get('/api/companions/me', requireSession, async (req, res) => {
       LEFT JOIN companion_onboarding_progress cop
              ON cop.companion_id = c.id AND cop.stage = 7
       WHERE c.id = $1
-    `, [req.companion.sub])
+    `,
+      [req.companion.sub]
+    )
 
     if (rows.length === 0) return res.status(404).json({ error: 'Not found.' })
     const row = rows[0]
@@ -530,35 +677,51 @@ app.get('/api/companions/me', requireSession, async (req, res) => {
     else if (row.review_status === 'completed' && row.is_live) status = 'approved'
 
     return res.json({ ...row, status })
-  } finally { if (client) client.release() }
+  } finally {
+    if (client) client.release()
+  }
 })
 
 // GET /api/companions/photos (session required)
 app.get('/api/companions/photos', requireSession, async (req, res) => {
   let client
-  try { client = await pool.connect() } catch {
+  try {
+    client = await pool.connect()
+  } catch {
     return res.status(503).json({ error: 'Database unavailable.' })
   }
   try {
-    const { rows } = await client.query(`
+    const { rows } = await client.query(
+      `
       SELECT cp.id, cp.url, cp.is_primary, cp.sort_order, cp.created_at
       FROM companion_photos cp
       JOIN companion_profiles prof ON prof.id = cp.companion_profile_id
       WHERE prof.companion_id = $1 AND cp.deleted_at IS NULL
       ORDER BY cp.sort_order ASC, cp.created_at ASC
-    `, [req.companion.sub])
+    `,
+      [req.companion.sub]
+    )
     return res.json(rows)
-  } finally { if (client) client.release() }
+  } finally {
+    if (client) client.release()
+  }
 })
 
 // PATCH /api/companions/profile (session required)
 app.patch('/api/companions/profile', requireSession, async (req, res) => {
   const {
-    bio, tagline, city, availability_status, session_modality,
-    whatsapp_number, instagram_handle, website_url, hourly_rate,
+    bio,
+    tagline,
+    city,
+    availability_status,
+    session_modality,
+    whatsapp_number,
+    instagram_handle,
+    website_url,
+    hourly_rate,
   } = req.body || {}
 
-  const AVAIL   = ['available', 'busy', 'offline']
+  const AVAIL = ['available', 'busy', 'offline']
   const MODALITY = ['in_person', 'online', 'both']
 
   if (availability_status && !AVAIL.includes(availability_status))
@@ -570,14 +733,19 @@ app.patch('/api/companions/profile', requireSession, async (req, res) => {
       return res.status(400).json({ error: 'Hourly rate must be a positive number.' })
   }
   if (whatsapp_number && !/^\+[1-9]\d{6,14}$/.test(whatsapp_number))
-    return res.status(400).json({ error: 'Invalid WhatsApp number. Use E.164 format, e.g. +31612345678.' })
+    return res
+      .status(400)
+      .json({ error: 'Invalid WhatsApp number. Use E.164 format, e.g. +31612345678.' })
 
   let client
-  try { client = await pool.connect() } catch {
+  try {
+    client = await pool.connect()
+  } catch {
     return res.status(503).json({ error: 'Database unavailable.' })
   }
   try {
-    await client.query(`
+    await client.query(
+      `
       UPDATE companion_profiles SET
         bio                 = COALESCE($1, bio),
         tagline             = COALESCE($2, tagline),
@@ -590,19 +758,22 @@ app.patch('/api/companions/profile', requireSession, async (req, res) => {
         hourly_rate         = COALESCE($9::numeric, hourly_rate),
         updated_at          = NOW()
       WHERE companion_id = $10
-    `, [
-      bio        ?? null,
-      tagline    ?? null,
-      city       ?? null,
-      availability_status ?? null,
-      session_modality    ?? null,
-      whatsapp_number     ?? null,
-      instagram_handle    ?? null,
-      website_url         ?? null,
-      (hourly_rate !== '' && hourly_rate !== null && hourly_rate !== undefined)
-        ? parseFloat(hourly_rate) : null,
-      req.companion.sub,
-    ])
+    `,
+      [
+        bio ?? null,
+        tagline ?? null,
+        city ?? null,
+        availability_status ?? null,
+        session_modality ?? null,
+        whatsapp_number ?? null,
+        instagram_handle ?? null,
+        website_url ?? null,
+        hourly_rate !== '' && hourly_rate !== null && hourly_rate !== undefined
+          ? parseFloat(hourly_rate)
+          : null,
+        req.companion.sub,
+      ]
+    )
 
     if (whatsapp_number) {
       await client.query(
@@ -611,7 +782,9 @@ app.patch('/api/companions/profile', requireSession, async (req, res) => {
       )
     }
     return res.json({ ok: true })
-  } finally { if (client) client.release() }
+  } finally {
+    if (client) client.release()
+  }
 })
 
 // POST /api/companions/photos/set-primary (session required)
@@ -620,30 +793,37 @@ app.post('/api/companions/photos/set-primary', requireSession, async (req, res) 
   if (!photoId) return res.status(400).json({ error: 'photoId required.' })
 
   let client
-  try { client = await pool.connect() } catch {
+  try {
+    client = await pool.connect()
+  } catch {
     return res.status(503).json({ error: 'Database unavailable.' })
   }
   try {
     // Verify the photo belongs to this companion
-    const check = await client.query(`
+    const check = await client.query(
+      `
       SELECT cp.id FROM companion_photos cp
       JOIN companion_profiles prof ON prof.id = cp.companion_profile_id
       WHERE cp.id = $1 AND prof.companion_id = $2 AND cp.deleted_at IS NULL
-    `, [photoId, req.companion.sub])
-    if (check.rows.length === 0)
-      return res.status(404).json({ error: 'Photo not found.' })
+    `,
+      [photoId, req.companion.sub]
+    )
+    if (check.rows.length === 0) return res.status(404).json({ error: 'Photo not found.' })
 
-    await client.query(`
+    await client.query(
+      `
       UPDATE companion_photos SET is_primary = false
       WHERE companion_profile_id = (
         SELECT id FROM companion_profiles WHERE companion_id = $1
       )
-    `, [req.companion.sub])
-    await client.query(
-      'UPDATE companion_photos SET is_primary = true WHERE id = $1', [photoId]
+    `,
+      [req.companion.sub]
     )
+    await client.query('UPDATE companion_photos SET is_primary = true WHERE id = $1', [photoId])
     return res.json({ ok: true })
-  } finally { if (client) client.release() }
+  } finally {
+    if (client) client.release()
+  }
 })
 
 // DELETE /api/companions/photos/:photoId (session required)
@@ -651,31 +831,38 @@ app.delete('/api/companions/photos/:photoId', requireSession, async (req, res) =
   const { photoId } = req.params
 
   let client
-  try { client = await pool.connect() } catch {
+  try {
+    client = await pool.connect()
+  } catch {
     return res.status(503).json({ error: 'Database unavailable.' })
   }
   try {
-    const { rowCount } = await client.query(`
+    const { rowCount } = await client.query(
+      `
       UPDATE companion_photos SET deleted_at = NOW()
       WHERE id = $1
         AND companion_profile_id = (
           SELECT id FROM companion_profiles WHERE companion_id = $2
         )
         AND deleted_at IS NULL
-    `, [photoId, req.companion.sub])
+    `,
+      [photoId, req.companion.sub]
+    )
     if (rowCount === 0) return res.status(404).json({ error: 'Photo not found.' })
     return res.json({ ok: true })
-  } finally { if (client) client.release() }
+  } finally {
+    if (client) client.release()
+  }
 })
 
 // Preflight (all companion endpoints)
-app.options('/api/companions/apply',                  (req, res) => res.set(CORS).status(204).end())
-app.options('/api/companions/send-otp',               (req, res) => res.set(CORS).status(204).end())
-app.options('/api/companions/verify-otp',             (req, res) => res.set(CORS).status(204).end())
-app.options('/api/companions/upload-photo',           (req, res) => res.set(CORS).status(204).end())
-app.options('/api/companions/login/send-otp',         (req, res) => res.set(CORS).status(204).end())
-app.options('/api/companions/login/verify-otp',       (req, res) => res.set(CORS).status(204).end())
-app.options('/api/companions/photos/set-primary',     (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/apply', (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/send-otp', (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/verify-otp', (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/upload-photo', (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/login/send-otp', (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/login/verify-otp', (req, res) => res.set(CORS).status(204).end())
+app.options('/api/companions/photos/set-primary', (req, res) => res.set(CORS).status(204).end())
 
 // POST /api/companions/upload-photo
 // When called with a valid session cookie, saves the photo to companion_photos.
@@ -695,7 +882,7 @@ app.post('/api/companions/upload-photo', upload.single('photo'), async (req, res
     uploadResult = await new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         { folder: 'companion-applications', resource_type: 'image' },
-        (err, r) => err ? reject(err) : resolve(r)
+        (err, r) => (err ? reject(err) : resolve(r))
       )
       stream.write(req.file.buffer)
       stream.end()
@@ -705,26 +892,34 @@ app.post('/api/companions/upload-photo', upload.single('photo'), async (req, res
     return res.status(500).json({ error: 'Photo upload failed. Please try again.' })
   }
 
-  const url        = uploadResult.secure_url
+  const url = uploadResult.secure_url
   const storageKey = uploadResult.public_id || ''
 
   // If logged-in companion is uploading, persist to companion_photos
   if (sessionPayload) {
     let client
-    try { client = await pool.connect() } catch {
+    try {
+      client = await pool.connect()
+    } catch {
       return res.status(503).json({ error: 'Database unavailable.' })
     }
     try {
       // Count existing photos to enforce max 8
-      const countRes = await client.query(`
+      const countRes = await client.query(
+        `
         SELECT COUNT(*) AS cnt FROM companion_photos cp
         JOIN companion_profiles prof ON prof.id = cp.companion_profile_id
         WHERE prof.companion_id = $1 AND cp.deleted_at IS NULL
-      `, [sessionPayload.sub])
+      `,
+        [sessionPayload.sub]
+      )
       if (parseInt(countRes.rows[0].cnt) >= 8)
-        return res.status(400).json({ error: 'Maximum 8 photos allowed. Delete one to upload more.' })
+        return res
+          .status(400)
+          .json({ error: 'Maximum 8 photos allowed. Delete one to upload more.' })
 
-      const photoRes = await client.query(`
+      const photoRes = await client.query(
+        `
         INSERT INTO companion_photos
           (companion_profile_id, url, storage_key, sort_order, is_primary, is_approved, created_at)
         SELECT
@@ -738,11 +933,15 @@ app.post('/api/companions/upload-photo', upload.single('photo'), async (req, res
         FROM companion_profiles prof
         WHERE prof.companion_id = $1
         RETURNING id
-      `, [sessionPayload.sub, url, storageKey])
+      `,
+        [sessionPayload.sub, url, storageKey]
+      )
 
       const photoId = photoRes.rows[0]?.id
       return res.json({ url, photoId })
-    } finally { if (client) client.release() }
+    } finally {
+      if (client) client.release()
+    }
   }
 
   // Application flow (no session): just return the URL
@@ -763,10 +962,10 @@ app.post('/api/companions/send-otp', async (req, res) => {
 
   try {
     await resend.emails.send({
-      from:    `BlushBite <${FROM}>`,
-      to:      email,
+      from: `BlushBite <${FROM}>`,
+      to: email,
       subject: `${otp} — your BlushBite verification code`,
-      html:    buildOtpEmail(otp),
+      html: buildOtpEmail(otp),
     })
   } catch (err) {
     console.error('[send-otp] Resend error:', err.message)
@@ -780,12 +979,26 @@ app.post('/api/companions/send-otp', async (req, res) => {
 app.post('/api/companions/verify-otp', (req, res) => {
   res.set(CORS)
   const email = ((req.body || {}).email || '').toLowerCase().trim()
-  const otp   = String((req.body || {}).otp || '').trim()
+  const otp = String((req.body || {}).otp || '').trim()
   const entry = otpStore.get(email)
-  if (!entry)          return res.status(400).json({ verified: false, error: 'No code sent for this email. Request a new one.' })
-  if (Date.now() > entry.expiry) { otpStore.delete(email); return res.status(400).json({ verified: false, error: 'Code expired. Request a new one.' }) }
-  if (entry.attempts >= 5) { otpStore.delete(email); return res.status(400).json({ verified: false, error: 'Too many attempts. Request a new code.' }) }
-  if (entry.otp !== otp) { entry.attempts++; return res.status(400).json({ verified: false, error: 'That code is incorrect.' }) }
+  if (!entry)
+    return res
+      .status(400)
+      .json({ verified: false, error: 'No code sent for this email. Request a new one.' })
+  if (Date.now() > entry.expiry) {
+    otpStore.delete(email)
+    return res.status(400).json({ verified: false, error: 'Code expired. Request a new one.' })
+  }
+  if (entry.attempts >= 5) {
+    otpStore.delete(email)
+    return res
+      .status(400)
+      .json({ verified: false, error: 'Too many attempts. Request a new code.' })
+  }
+  if (entry.otp !== otp) {
+    entry.attempts++
+    return res.status(400).json({ verified: false, error: 'That code is incorrect.' })
+  }
   otpStore.delete(email)
   return res.json({ verified: true })
 })
@@ -801,14 +1014,21 @@ app.post('/api/companions/apply', async (req, res) => {
   }
 
   const {
-    fullName, email, dateOfBirth,
-    country, city, whatsappNumber,
-    displayName, gender, tagline, bio,
+    fullName,
+    email,
+    dateOfBirth,
+    country,
+    city,
+    whatsappNumber,
+    displayName,
+    gender,
+    tagline,
+    bio,
   } = body
   const cleanEmail = email.toLowerCase().trim()
-  const cleanName  = fullName.trim()
-  const now        = new Date()
-  const id         = crypto.randomUUID()
+  const cleanName = fullName.trim()
+  const now = new Date()
+  const id = crypto.randomUUID()
 
   let client
   try {
@@ -820,23 +1040,22 @@ app.post('/api/companions/apply', async (req, res) => {
 
   try {
     // Check duplicate email
-    const existing = await client.query(
-      'SELECT id FROM companions WHERE email = $1 LIMIT 1',
-      [cleanEmail]
-    )
+    const existing = await client.query('SELECT id FROM companions WHERE email = $1 LIMIT 1', [
+      cleanEmail,
+    ])
     if (existing.rows.length > 0) {
       return res.status(409).json({
-        error: 'An application with this email already exists. Check your inbox or contact support.',
+        error:
+          'An application with this email already exists. Check your inbox or contact support.',
       })
     }
 
     // Generate unique alias
     let alias = generateAlias()
     for (let i = 0; i < 10; i++) {
-      const conflict = await client.query(
-        'SELECT id FROM companions WHERE alias = $1 LIMIT 1',
-        [alias]
-      )
+      const conflict = await client.query('SELECT id FROM companions WHERE alias = $1 LIMIT 1', [
+        alias,
+      ])
       if (conflict.rows.length === 0) break
       alias = generateAlias()
     }
@@ -851,9 +1070,18 @@ app.post('/api/companions/apply', async (req, res) => {
          onboarding_complete, created_at, updated_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
       [
-        id, cleanEmail, displayOrFirst, alias, cleanName,
-        dateOfBirth, country, whatsappNumber || null, 3,
-        false, now, now,
+        id,
+        cleanEmail,
+        displayOrFirst,
+        alias,
+        cleanName,
+        dateOfBirth,
+        country,
+        whatsappNumber || null,
+        3,
+        false,
+        now,
+        now,
       ]
     )
 
@@ -868,10 +1096,18 @@ app.post('/api/companions/apply', async (req, res) => {
        RETURNING id`,
       [
         id,
-        bio || null, tagline || null, city || null, gender || null,
-        'offline', whatsappNumber || null,
-        false, false, 0, false,
-        now, now,
+        bio || null,
+        tagline || null,
+        city || null,
+        gender || null,
+        'offline',
+        whatsappNumber || null,
+        false,
+        false,
+        0,
+        false,
+        now,
+        now,
       ]
     )
     const profileId = profileResult.rows[0].id
@@ -924,7 +1160,10 @@ const net = require('net')
 function findAvailablePort(port) {
   return new Promise((resolve) => {
     const s = net.createServer()
-    s.listen(port, () => { const p = s.address().port; s.close(() => resolve(p)) })
+    s.listen(port, () => {
+      const p = s.address().port
+      s.close(() => resolve(p))
+    })
     s.on('error', () => resolve(findAvailablePort(port + 1)))
   })
 }

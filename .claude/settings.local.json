@@ -5,7 +5,21 @@
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && graphify update . 2>&1)",
       "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\" -name \"route.ts\" | xargs grep -l \"Unauthorized\\\\|UNAUTH\" 2>/dev/null | head -20)",
       "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\\\\auth\" -type f 2>/dev/null && find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\\\\companions\\\\auth\" -type f 2>/dev/null && find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\api\" -name \"route.ts\" | xargs grep -l \"companion\\\\|Companion\" 2>/dev/null | head -30)",
-      "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" -path \"*/api/auth*\" -name \"*.ts\" 2>/dev/null && find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" -name \"auth.ts\" -o -name \"nextauth.ts\" 2>/dev/null | head -10)"
+      "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" -path \"*/api/auth*\" -name \"*.ts\" 2>/dev/null && find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" -name \"auth.ts\" -o -name \"nextauth.ts\" 2>/dev/null | head -10)",
+      "Bash(find \"C:/Users/Ravi Desai/Downloads/BlushBite/apps/web/.next\" -maxdepth 3 -name \".eslintrc*\" 2>/dev/null | head -5)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && npm install --save-dev globals eslint-config-prettier 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add -D prettier eslint-config-prettier 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && npm run lint:fix 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm lint:fix 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint --fix 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm add -D @typescript-eslint/eslint-plugin @typescript-eslint/parser 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint 2>&1 | head -60)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint 2>&1 | head -80)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && pnpm remove @typescript-eslint/eslint-plugin @typescript-eslint/parser 2>&1 | tail -5)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint 2>&1 | grep -E \"^\\\\./\" | head -40)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint 2>&1 | grep -E \"Error:\" | head -20)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint 2>&1 | tail -20)",
+      "Bash(grep -rl \"import Image from 'next/image'\" \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\" \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\" 2>/dev/null)"
     ]
   }
 }

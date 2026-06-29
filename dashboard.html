@@ -1,463 +1,629 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="noindex, nofollow" />
-  <title>Dashboard — BlushBite</title>
-  <link rel="icon" href="/favicon.png" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #07090f;
-      color: #eeeef0;
-      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-      min-height: 100vh;
-    }
-    /* ── Header ── */
-    .header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(7,9,15,0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid #1c2333;
-      padding: 0 20px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .header-logo {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 18px;
-      font-weight: 400;
-      color: #eeeef0;
-      letter-spacing: 0.03em;
-    }
-    .header-right { display: flex; align-items: center; gap: 12px; }
-    .alias-badge {
-      font-size: 11px;
-      color: #6b7280;
-      background: #111620;
-      border: 1px solid #1c2333;
-      border-radius: 20px;
-      padding: 4px 10px;
-    }
-    .logout-btn {
-      font-size: 12px;
-      color: #6b7280;
-      background: transparent;
-      border: 1px solid #1c2333;
-      border-radius: 8px;
-      padding: 5px 12px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .logout-btn:hover { color: #eeeef0; border-color: rgba(255,255,255,0.15); }
-
-    /* ── Tab nav ── */
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid #1c2333;
-      background: #07090f;
-      padding: 0 20px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .tabs::-webkit-scrollbar { display: none; }
-    .tab {
-      flex-shrink: 0;
-      padding: 14px 16px;
-      font-size: 13px;
-      color: #6b7280;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: color 0.15s, border-color 0.15s;
-      white-space: nowrap;
-      background: transparent;
-      border-top: none;
-      border-left: none;
-      border-right: none;
-      font-family: inherit;
-    }
-    .tab.active { color: #e8607a; border-bottom-color: #e8607a; }
-    .tab:hover:not(.active) { color: #eeeef0; }
-    .tab:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    /* ── Content ── */
-    .content { max-width: 680px; margin: 0 auto; padding: 28px 20px 80px; }
-    .panel { display: none; }
-    .panel.active { display: block; }
-
-    /* ── Status cards ── */
-    .status-card {
-      border-radius: 16px;
-      padding: 28px;
-      border: 1px solid;
-      margin-bottom: 20px;
-    }
-    .status-card.pending {
-      background: rgba(251,191,36,0.05);
-      border-color: rgba(251,191,36,0.2);
-    }
-    .status-card.approved {
-      background: rgba(34,197,94,0.05);
-      border-color: rgba(34,197,94,0.2);
-    }
-    .status-card.rejected {
-      background: rgba(248,113,113,0.05);
-      border-color: rgba(248,113,113,0.2);
-    }
-    .status-icon { font-size: 28px; margin-bottom: 12px; display: block; }
-    .status-title { font-family: Georgia, serif; font-size: 20px; font-weight: 400; margin-bottom: 8px; }
-    .status-body { font-size: 13px; color: #6b7280; line-height: 1.65; }
-    .status-reason {
-      margin-top: 14px;
-      font-size: 13px;
-      color: #6b7280;
-      background: #111620;
-      border: 1px solid #1c2333;
-      border-radius: 10px;
-      padding: 12px 16px;
-      line-height: 1.6;
-    }
-
-    /* ── Progress bar ── */
-    .progress-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
-    .progress-bar-bg { flex: 1; height: 6px; background: #1c2333; border-radius: 3px; overflow: hidden; }
-    .progress-bar-fill { height: 100%; background: #e8607a; border-radius: 3px; transition: width 0.6s ease; }
-    .progress-pct { font-size: 13px; color: #e8607a; font-weight: 500; flex-shrink: 0; min-width: 36px; text-align: right; }
-
-    /* ── Form fields ── */
-    .field { margin-bottom: 20px; }
-    .field label {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #6b7280;
-      margin-bottom: 7px;
-    }
-    .field input, .field textarea, .field select {
-      width: 100%;
-      background: #111620;
-      border: 1px solid #1c2333;
-      border-radius: 10px;
-      padding: 11px 14px;
-      font-size: 14px;
-      color: #eeeef0;
-      outline: none;
-      transition: border-color 0.15s;
-      font-family: inherit;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    .field textarea { resize: vertical; min-height: 90px; line-height: 1.55; }
-    .field input:focus, .field textarea:focus, .field select:focus { border-color: rgba(232,96,122,0.5); }
-    .field input::placeholder, .field textarea::placeholder { color: #374151; }
-    .field select option { background: #111620; }
-    .save-indicator { font-size: 11px; color: #374151; margin-top: 6px; height: 16px; transition: color 0.3s; }
-    .save-indicator.saving { color: #c9a96e; }
-    .save-indicator.saved { color: #22c55e; }
-
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
-
-    .section-title {
-      font-family: Georgia, serif;
-      font-size: 17px;
-      font-weight: 400;
-      color: #eeeef0;
-      margin-bottom: 18px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #1c2333;
-    }
-    .section-title em { font-style: italic; color: #e8607a; }
-
-    /* ── Photos ── */
-    .photo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .photo-item {
-      position: relative;
-      aspect-ratio: 3/4;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #111620;
-      border: 1px solid #1c2333;
-    }
-    .photo-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .photo-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .photo-item:hover .photo-overlay { opacity: 1; }
-    .photo-btn {
-      font-size: 11px;
-      padding: 5px 12px;
-      border-radius: 20px;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      transition: opacity 0.15s;
-    }
-    .photo-btn.primary-btn { background: rgba(201,169,110,0.2); color: #c9a96e; outline: 1px solid rgba(201,169,110,0.4); }
-    .photo-btn.delete-btn { background: rgba(248,113,113,0.15); color: #f87171; outline: 1px solid rgba(248,113,113,0.3); }
-    .primary-badge {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      font-size: 9px;
-      background: rgba(201,169,110,0.9);
-      color: #000;
-      padding: 2px 7px;
-      border-radius: 10px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-    .upload-box {
-      aspect-ratio: 3/4;
-      border-radius: 12px;
-      border: 1px dashed #1c2333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: border-color 0.15s;
-      background: transparent;
-      color: #6b7280;
-      font-family: inherit;
-    }
-    .upload-box:hover { border-color: rgba(232,96,122,0.4); color: #e8607a; }
-    .upload-icon { font-size: 22px; }
-    .upload-label { font-size: 12px; }
-    #file-input { display: none; }
-
-    /* ── Save btn ── */
-    .save-btn {
-      padding: 11px 24px;
-      background: #e8607a;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      font-family: inherit;
-      transition: opacity 0.15s;
-    }
-    .save-btn:hover { opacity: 0.85; }
-    .save-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-    /* ── Toast ── */
-    .toast {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: #111620;
-      border: 1px solid #1c2333;
-      border-radius: 10px;
-      padding: 11px 20px;
-      font-size: 13px;
-      color: #eeeef0;
-      opacity: 0;
-      transition: opacity 0.2s, transform 0.2s;
-      pointer-events: none;
-      white-space: nowrap;
-      z-index: 9999;
-    }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .toast.error { border-color: rgba(232,96,122,0.4); color: #e8607a; }
-
-    /* ── Loading skeleton ── */
-    .skeleton { background: #111620; border-radius: 8px; animation: pulse 1.4s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  </style>
-</head>
-<body>
-
-  <!-- Header -->
-  <header class="header">
-    <span class="header-logo">BlushBite</span>
-    <div class="header-right">
-      <span class="alias-badge" id="alias-display"></span>
-      <button class="logout-btn" onclick="logout()">Sign out</button>
-    </div>
-  </header>
-
-  <!-- Tabs -->
-  <nav class="tabs">
-    <button class="tab active" id="tab-status"   onclick="switchTab('status')">Status</button>
-    <button class="tab"        id="tab-profile"  onclick="switchTab('profile')"  disabled>Profile</button>
-    <button class="tab"        id="tab-photos"   onclick="switchTab('photos')"   disabled>Photos</button>
-    <button class="tab"        id="tab-settings" onclick="switchTab('settings')" disabled>Settings</button>
-  </nav>
-
-  <!-- Content -->
-  <main class="content">
-
-    <!-- ── Status panel ── -->
-    <section class="panel active" id="panel-status">
-      <div id="status-loading">
-        <div class="skeleton" style="height:120px;margin-bottom:16px;"></div>
-        <div class="skeleton" style="height:60px;"></div>
-      </div>
-      <div id="status-content" style="display:none;"></div>
-    </section>
-
-    <!-- ── Profile panel ── -->
-    <section class="panel" id="panel-profile">
-      <p class="section-title">Your <em>profile</em></p>
-
-      <div class="field">
-        <label>Display name</label>
-        <input id="field-name" type="text" placeholder="How dreamers know you" />
-      </div>
-      <div class="field">
-        <label>Vibe headline</label>
-        <input id="field-tagline" type="text" maxlength="300" placeholder="One line that captures your essence" />
-      </div>
-      <div class="field">
-        <label>About you</label>
-        <textarea id="field-bio" maxlength="2000" placeholder="Write as if you're whispering it…"></textarea>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>City</label>
-          <input id="field-city" type="text" placeholder="Amsterdam, Paris…" />
-        </div>
-        <div class="field">
-          <label>Hourly rate (€)</label>
-          <input id="field-rate" type="number" min="0" step="1" placeholder="e.g. 280" />
-        </div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Session type</label>
-          <select id="field-modality">
-            <option value="in_person">In person</option>
-            <option value="online">Online</option>
-            <option value="both">Both</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Availability</label>
-          <select id="field-avail">
-            <option value="available">Available</option>
-            <option value="busy">Busy</option>
-            <option value="offline">Offline</option>
-          </select>
-        </div>
-      </div>
-      <button class="save-btn" id="btn-save-profile" onclick="saveProfile()">Save profile</button>
-      <div class="save-indicator" id="profile-save-indicator"></div>
-    </section>
-
-    <!-- ── Photos panel ── -->
-    <section class="panel" id="panel-photos">
-      <p class="section-title">Your <em>photos</em></p>
-      <p style="font-size:13px;color:#6b7280;margin-bottom:20px;line-height:1.6;">
-        Upload up to 8 photos. Your primary photo is shown first to dreamers.
-        Photos are reviewed before going live.
-      </p>
-      <div class="photo-grid" id="photo-grid">
-        <div class="skeleton" style="aspect-ratio:3/4;border-radius:12px;"></div>
-        <div class="skeleton" style="aspect-ratio:3/4;border-radius:12px;"></div>
-        <div class="skeleton" style="aspect-ratio:3/4;border-radius:12px;"></div>
-      </div>
-      <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" />
-    </section>
-
-    <!-- ── Settings panel ── -->
-    <section class="panel" id="panel-settings">
-      <p class="section-title">Connect &amp; <em>settings</em></p>
-
-      <div class="field">
-        <label>WhatsApp number</label>
-        <input id="field-whatsapp" type="tel" inputmode="tel" placeholder="+31612345678" />
-      </div>
-      <div class="field">
-        <label>Instagram handle (optional)</label>
-        <input id="field-instagram" type="text" placeholder="@yourhandle" />
-      </div>
-      <div class="field">
-        <label>Website (optional)</label>
-        <input id="field-website" type="url" placeholder="https://…" />
-      </div>
-      <button class="save-btn" id="btn-save-settings" onclick="saveSettings()">Save settings</button>
-      <div class="save-indicator" id="settings-save-indicator"></div>
-    </section>
-
-  </main>
-
-  <!-- Toast -->
-  <div class="toast" id="toast"></div>
-
-  <script>
-    // ── State ──────────────────────────────────────────────────────────────────
-    let companion = null
-
-    // ── Boot ───────────────────────────────────────────────────────────────────
-    async function boot() {
-      try {
-        const r = await fetch('/api/companions/me')
-        if (r.status === 401) { window.location.href = '/login'; return }
-        if (!r.ok) throw new Error('Failed to load profile')
-        companion = await r.json()
-      } catch {
-        showToast('Could not load your profile. Refresh to try again.', true)
-        return
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Dashboard — BlushBite</title>
+    <link rel="icon" href="/favicon.png" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #07090f;
+        color: #eeeef0;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        min-height: 100vh;
+      }
+      /* ── Header ── */
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(7, 9, 15, 0.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid #1c2333;
+        padding: 0 20px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .header-logo {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 18px;
+        font-weight: 400;
+        color: #eeeef0;
+        letter-spacing: 0.03em;
+      }
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .alias-badge {
+        font-size: 11px;
+        color: #6b7280;
+        background: #111620;
+        border: 1px solid #1c2333;
+        border-radius: 20px;
+        padding: 4px 10px;
+      }
+      .logout-btn {
+        font-size: 12px;
+        color: #6b7280;
+        background: transparent;
+        border: 1px solid #1c2333;
+        border-radius: 8px;
+        padding: 5px 12px;
+        cursor: pointer;
+        font-family: inherit;
+        transition:
+          color 0.15s,
+          border-color 0.15s;
+      }
+      .logout-btn:hover {
+        color: #eeeef0;
+        border-color: rgba(255, 255, 255, 0.15);
       }
 
-      // Alias badge
-      if (companion.alias) document.getElementById('alias-display').textContent = companion.alias
-
-      // Render status
-      renderStatus()
-
-      // Pre-fill forms
-      if (companion.status === 'approved') {
-        fillForms()
-        loadPhotos()
-        // Enable tabs
-        document.getElementById('tab-profile').disabled  = false
-        document.getElementById('tab-photos').disabled   = false
-        document.getElementById('tab-settings').disabled = false
+      /* ── Tab nav ── */
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid #1c2333;
+        background: #07090f;
+        padding: 0 20px;
+        overflow-x: auto;
+        scrollbar-width: none;
       }
-    }
+      .tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .tab {
+        flex-shrink: 0;
+        padding: 14px 16px;
+        font-size: 13px;
+        color: #6b7280;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition:
+          color 0.15s,
+          border-color 0.15s;
+        white-space: nowrap;
+        background: transparent;
+        border-top: none;
+        border-left: none;
+        border-right: none;
+        font-family: inherit;
+      }
+      .tab.active {
+        color: #e8607a;
+        border-bottom-color: #e8607a;
+      }
+      .tab:hover:not(.active) {
+        color: #eeeef0;
+      }
+      .tab:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
 
-    // ── Status render ──────────────────────────────────────────────────────────
-    function renderStatus() {
-      document.getElementById('status-loading').style.display = 'none'
-      const container = document.getElementById('status-content')
-      container.style.display = 'block'
+      /* ── Content ── */
+      .content {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 28px 20px 80px;
+      }
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+      }
 
-      const s = companion.status
+      /* ── Status cards ── */
+      .status-card {
+        border-radius: 16px;
+        padding: 28px;
+        border: 1px solid;
+        margin-bottom: 20px;
+      }
+      .status-card.pending {
+        background: rgba(251, 191, 36, 0.05);
+        border-color: rgba(251, 191, 36, 0.2);
+      }
+      .status-card.approved {
+        background: rgba(34, 197, 94, 0.05);
+        border-color: rgba(34, 197, 94, 0.2);
+      }
+      .status-card.rejected {
+        background: rgba(248, 113, 113, 0.05);
+        border-color: rgba(248, 113, 113, 0.2);
+      }
+      .status-icon {
+        font-size: 28px;
+        margin-bottom: 12px;
+        display: block;
+      }
+      .status-title {
+        font-family: Georgia, serif;
+        font-size: 20px;
+        font-weight: 400;
+        margin-bottom: 8px;
+      }
+      .status-body {
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.65;
+      }
+      .status-reason {
+        margin-top: 14px;
+        font-size: 13px;
+        color: #6b7280;
+        background: #111620;
+        border: 1px solid #1c2333;
+        border-radius: 10px;
+        padding: 12px 16px;
+        line-height: 1.6;
+      }
 
-      if (s === 'pending') {
-        container.innerHTML = `
+      /* ── Progress bar ── */
+      .progress-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .progress-bar-bg {
+        flex: 1;
+        height: 6px;
+        background: #1c2333;
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        background: #e8607a;
+        border-radius: 3px;
+        transition: width 0.6s ease;
+      }
+      .progress-pct {
+        font-size: 13px;
+        color: #e8607a;
+        font-weight: 500;
+        flex-shrink: 0;
+        min-width: 36px;
+        text-align: right;
+      }
+
+      /* ── Form fields ── */
+      .field {
+        margin-bottom: 20px;
+      }
+      .field label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        margin-bottom: 7px;
+      }
+      .field input,
+      .field textarea,
+      .field select {
+        width: 100%;
+        background: #111620;
+        border: 1px solid #1c2333;
+        border-radius: 10px;
+        padding: 11px 14px;
+        font-size: 14px;
+        color: #eeeef0;
+        outline: none;
+        transition: border-color 0.15s;
+        font-family: inherit;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .field textarea {
+        resize: vertical;
+        min-height: 90px;
+        line-height: 1.55;
+      }
+      .field input:focus,
+      .field textarea:focus,
+      .field select:focus {
+        border-color: rgba(232, 96, 122, 0.5);
+      }
+      .field input::placeholder,
+      .field textarea::placeholder {
+        color: #374151;
+      }
+      .field select option {
+        background: #111620;
+      }
+      .save-indicator {
+        font-size: 11px;
+        color: #374151;
+        margin-top: 6px;
+        height: 16px;
+        transition: color 0.3s;
+      }
+      .save-indicator.saving {
+        color: #c9a96e;
+      }
+      .save-indicator.saved {
+        color: #22c55e;
+      }
+
+      .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      @media (max-width: 480px) {
+        .field-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .section-title {
+        font-family: Georgia, serif;
+        font-size: 17px;
+        font-weight: 400;
+        color: #eeeef0;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #1c2333;
+      }
+      .section-title em {
+        font-style: italic;
+        color: #e8607a;
+      }
+
+      /* ── Photos ── */
+      .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .photo-item {
+        position: relative;
+        aspect-ratio: 3/4;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #111620;
+        border: 1px solid #1c2333;
+      }
+      .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .photo-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .photo-item:hover .photo-overlay {
+        opacity: 1;
+      }
+      .photo-btn {
+        font-size: 11px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        transition: opacity 0.15s;
+      }
+      .photo-btn.primary-btn {
+        background: rgba(201, 169, 110, 0.2);
+        color: #c9a96e;
+        outline: 1px solid rgba(201, 169, 110, 0.4);
+      }
+      .photo-btn.delete-btn {
+        background: rgba(248, 113, 113, 0.15);
+        color: #f87171;
+        outline: 1px solid rgba(248, 113, 113, 0.3);
+      }
+      .primary-badge {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        font-size: 9px;
+        background: rgba(201, 169, 110, 0.9);
+        color: #000;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      .upload-box {
+        aspect-ratio: 3/4;
+        border-radius: 12px;
+        border: 1px dashed #1c2333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: border-color 0.15s;
+        background: transparent;
+        color: #6b7280;
+        font-family: inherit;
+      }
+      .upload-box:hover {
+        border-color: rgba(232, 96, 122, 0.4);
+        color: #e8607a;
+      }
+      .upload-icon {
+        font-size: 22px;
+      }
+      .upload-label {
+        font-size: 12px;
+      }
+      #file-input {
+        display: none;
+      }
+
+      /* ── Save btn ── */
+      .save-btn {
+        padding: 11px 24px;
+        background: #e8607a;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: inherit;
+        transition: opacity 0.15s;
+      }
+      .save-btn:hover {
+        opacity: 0.85;
+      }
+      .save-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* ── Toast ── */
+      .toast {
+        position: fixed;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #111620;
+        border: 1px solid #1c2333;
+        border-radius: 10px;
+        padding: 11px 20px;
+        font-size: 13px;
+        color: #eeeef0;
+        opacity: 0;
+        transition:
+          opacity 0.2s,
+          transform 0.2s;
+        pointer-events: none;
+        white-space: nowrap;
+        z-index: 9999;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      .toast.error {
+        border-color: rgba(232, 96, 122, 0.4);
+        color: #e8607a;
+      }
+
+      /* ── Loading skeleton ── */
+      .skeleton {
+        background: #111620;
+        border-radius: 8px;
+        animation: pulse 1.4s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <span class="header-logo">BlushBite</span>
+      <div class="header-right">
+        <span class="alias-badge" id="alias-display"></span>
+        <button class="logout-btn" onclick="logout()">Sign out</button>
+      </div>
+    </header>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab active" id="tab-status" onclick="switchTab('status')">Status</button>
+      <button class="tab" id="tab-profile" onclick="switchTab('profile')" disabled>Profile</button>
+      <button class="tab" id="tab-photos" onclick="switchTab('photos')" disabled>Photos</button>
+      <button class="tab" id="tab-settings" onclick="switchTab('settings')" disabled>
+        Settings
+      </button>
+    </nav>
+
+    <!-- Content -->
+    <main class="content">
+      <!-- ── Status panel ── -->
+      <section class="panel active" id="panel-status">
+        <div id="status-loading">
+          <div class="skeleton" style="height: 120px; margin-bottom: 16px"></div>
+          <div class="skeleton" style="height: 60px"></div>
+        </div>
+        <div id="status-content" style="display: none"></div>
+      </section>
+
+      <!-- ── Profile panel ── -->
+      <section class="panel" id="panel-profile">
+        <p class="section-title">Your <em>profile</em></p>
+
+        <div class="field">
+          <label>Display name</label>
+          <input id="field-name" type="text" placeholder="How dreamers know you" />
+        </div>
+        <div class="field">
+          <label>Vibe headline</label>
+          <input
+            id="field-tagline"
+            type="text"
+            maxlength="300"
+            placeholder="One line that captures your essence"
+          />
+        </div>
+        <div class="field">
+          <label>About you</label>
+          <textarea
+            id="field-bio"
+            maxlength="2000"
+            placeholder="Write as if you're whispering it…"
+          ></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>City</label>
+            <input id="field-city" type="text" placeholder="Amsterdam, Paris…" />
+          </div>
+          <div class="field">
+            <label>Hourly rate (€)</label>
+            <input id="field-rate" type="number" min="0" step="1" placeholder="e.g. 280" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Session type</label>
+            <select id="field-modality">
+              <option value="in_person">In person</option>
+              <option value="online">Online</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Availability</label>
+            <select id="field-avail">
+              <option value="available">Available</option>
+              <option value="busy">Busy</option>
+              <option value="offline">Offline</option>
+            </select>
+          </div>
+        </div>
+        <button class="save-btn" id="btn-save-profile" onclick="saveProfile()">Save profile</button>
+        <div class="save-indicator" id="profile-save-indicator"></div>
+      </section>
+
+      <!-- ── Photos panel ── -->
+      <section class="panel" id="panel-photos">
+        <p class="section-title">Your <em>photos</em></p>
+        <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px; line-height: 1.6">
+          Upload up to 8 photos. Your primary photo is shown first to dreamers. Photos are reviewed
+          before going live.
+        </p>
+        <div class="photo-grid" id="photo-grid">
+          <div class="skeleton" style="aspect-ratio: 3/4; border-radius: 12px"></div>
+          <div class="skeleton" style="aspect-ratio: 3/4; border-radius: 12px"></div>
+          <div class="skeleton" style="aspect-ratio: 3/4; border-radius: 12px"></div>
+        </div>
+        <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" />
+      </section>
+
+      <!-- ── Settings panel ── -->
+      <section class="panel" id="panel-settings">
+        <p class="section-title">Connect &amp; <em>settings</em></p>
+
+        <div class="field">
+          <label>WhatsApp number</label>
+          <input id="field-whatsapp" type="tel" inputmode="tel" placeholder="+31612345678" />
+        </div>
+        <div class="field">
+          <label>Instagram handle (optional)</label>
+          <input id="field-instagram" type="text" placeholder="@yourhandle" />
+        </div>
+        <div class="field">
+          <label>Website (optional)</label>
+          <input id="field-website" type="url" placeholder="https://…" />
+        </div>
+        <button class="save-btn" id="btn-save-settings" onclick="saveSettings()">
+          Save settings
+        </button>
+        <div class="save-indicator" id="settings-save-indicator"></div>
+      </section>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+      // ── State ──────────────────────────────────────────────────────────────────
+      let companion = null
+
+      // ── Boot ───────────────────────────────────────────────────────────────────
+      async function boot() {
+        try {
+          const r = await fetch('/api/companions/me')
+          if (r.status === 401) {
+            window.location.href = '/login'
+            return
+          }
+          if (!r.ok) throw new Error('Failed to load profile')
+          companion = await r.json()
+        } catch {
+          showToast('Could not load your profile. Refresh to try again.', true)
+          return
+        }
+
+        // Alias badge
+        if (companion.alias) document.getElementById('alias-display').textContent = companion.alias
+
+        // Render status
+        renderStatus()
+
+        // Pre-fill forms
+        if (companion.status === 'approved') {
+          fillForms()
+          loadPhotos()
+          // Enable tabs
+          document.getElementById('tab-profile').disabled = false
+          document.getElementById('tab-photos').disabled = false
+          document.getElementById('tab-settings').disabled = false
+        }
+      }
+
+      // ── Status render ──────────────────────────────────────────────────────────
+      function renderStatus() {
+        document.getElementById('status-loading').style.display = 'none'
+        const container = document.getElementById('status-content')
+        container.style.display = 'block'
+
+        const s = companion.status
+
+        if (s === 'pending') {
+          container.innerHTML = `
           <div class="status-card pending">
             <span class="status-icon">⏳</span>
             <div class="status-title" style="color:#fbbf24;">Under review</div>
@@ -470,8 +636,8 @@
             Applied at ${companion.alias ? `<span style="color:#6b7280;">${escHtml(companion.alias)}</span>` : 'your alias is being generated'}.
           </div>
         `
-      } else if (s === 'rejected') {
-        container.innerHTML = `
+        } else if (s === 'rejected') {
+          container.innerHTML = `
           <div class="status-card rejected">
             <span class="status-icon">✦</span>
             <div class="status-title" style="color:#f87171;">Application not approved</div>
@@ -485,9 +651,9 @@
             If you believe this was an error or your circumstances have changed, reach out to us.
           </p>
         `
-      } else if (s === 'approved') {
-        const pct = companion.profile_completeness || 0
-        container.innerHTML = `
+        } else if (s === 'approved') {
+          const pct = companion.profile_completeness || 0
+          container.innerHTML = `
           <div class="status-card approved">
             <span class="status-icon">✦</span>
             <div class="status-title" style="color:#22c55e;">You're in</div>
@@ -507,127 +673,139 @@
             ${!companion.is_visible_to_users ? 'Your profile goes live once our team approves your photos.' : '<strong style="color:#22c55e;">Your profile is live.</strong>'}
           </p>
         `
-      }
-    }
-
-    // ── Fill forms ────────────────────────────────────────────────────────────
-    function fillForms() {
-      setVal('field-name',      companion.name || '')
-      setVal('field-tagline',   companion.tagline || '')
-      setVal('field-bio',       companion.bio || '')
-      setVal('field-city',      companion.city || '')
-      setVal('field-rate',      companion.hourly_rate || '')
-      setVal('field-modality',  companion.session_modality || 'in_person')
-      setVal('field-avail',     companion.availability_status || 'offline')
-      setVal('field-whatsapp',  companion.profile_whatsapp || '')
-      setVal('field-instagram', companion.instagram_handle || '')
-      setVal('field-website',   companion.website_url || '')
-    }
-
-    function setVal(id, val) {
-      const el = document.getElementById(id)
-      if (el) el.value = val
-    }
-
-    // ── Save profile ──────────────────────────────────────────────────────────
-    async function saveProfile() {
-      const btn = document.getElementById('btn-save-profile')
-      const ind = document.getElementById('profile-save-indicator')
-      btn.disabled = true
-      ind.textContent = 'Saving…'
-      ind.className = 'save-indicator saving'
-
-      const body = {
-        bio:                 document.getElementById('field-bio').value || null,
-        tagline:             document.getElementById('field-tagline').value || null,
-        city:                document.getElementById('field-city').value || null,
-        availability_status: document.getElementById('field-avail').value || null,
-        session_modality:    document.getElementById('field-modality').value || null,
-        hourly_rate:         document.getElementById('field-rate').value || null,
-      }
-
-      try {
-        const r = await fetch('/api/companions/profile', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        })
-        if (!r.ok) {
-          const d = await r.json()
-          ind.textContent = d.error || 'Error saving.'
-          ind.className = 'save-indicator'
-          showToast(d.error || 'Could not save. Try again.', true)
-        } else {
-          ind.textContent = 'Saved'
-          ind.className = 'save-indicator saved'
-          setTimeout(() => { ind.textContent = ''; ind.className = 'save-indicator' }, 2500)
         }
-      } catch {
-        ind.textContent = 'Network error.'
-        ind.className = 'save-indicator'
-        showToast('Network error. Check your connection.', true)
-      } finally { btn.disabled = false }
-    }
-
-    // ── Save settings ─────────────────────────────────────────────────────────
-    async function saveSettings() {
-      const btn = document.getElementById('btn-save-settings')
-      const ind = document.getElementById('settings-save-indicator')
-      btn.disabled = true
-      ind.textContent = 'Saving…'
-      ind.className = 'save-indicator saving'
-
-      const whatsapp  = document.getElementById('field-whatsapp').value.trim()
-      const instagram = document.getElementById('field-instagram').value.trim()
-      const website   = document.getElementById('field-website').value.trim()
-
-      if (whatsapp && !/^\+[1-9]\d{6,14}$/.test(whatsapp)) {
-        ind.textContent = 'Invalid WhatsApp number. Use format +31612345678.'
-        ind.className = 'save-indicator'
-        btn.disabled = false
-        return
       }
 
-      try {
-        const r = await fetch('/api/companions/profile', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            whatsapp_number:  whatsapp  || null,
-            instagram_handle: instagram || null,
-            website_url:      website   || null,
-          }),
-        })
-        if (!r.ok) {
-          const d = await r.json()
-          ind.textContent = d.error || 'Error saving.'
-          ind.className = 'save-indicator'
-        } else {
-          ind.textContent = 'Saved'
-          ind.className = 'save-indicator saved'
-          setTimeout(() => { ind.textContent = ''; ind.className = 'save-indicator' }, 2500)
+      // ── Fill forms ────────────────────────────────────────────────────────────
+      function fillForms() {
+        setVal('field-name', companion.name || '')
+        setVal('field-tagline', companion.tagline || '')
+        setVal('field-bio', companion.bio || '')
+        setVal('field-city', companion.city || '')
+        setVal('field-rate', companion.hourly_rate || '')
+        setVal('field-modality', companion.session_modality || 'in_person')
+        setVal('field-avail', companion.availability_status || 'offline')
+        setVal('field-whatsapp', companion.profile_whatsapp || '')
+        setVal('field-instagram', companion.instagram_handle || '')
+        setVal('field-website', companion.website_url || '')
+      }
+
+      function setVal(id, val) {
+        const el = document.getElementById(id)
+        if (el) el.value = val
+      }
+
+      // ── Save profile ──────────────────────────────────────────────────────────
+      async function saveProfile() {
+        const btn = document.getElementById('btn-save-profile')
+        const ind = document.getElementById('profile-save-indicator')
+        btn.disabled = true
+        ind.textContent = 'Saving…'
+        ind.className = 'save-indicator saving'
+
+        const body = {
+          bio: document.getElementById('field-bio').value || null,
+          tagline: document.getElementById('field-tagline').value || null,
+          city: document.getElementById('field-city').value || null,
+          availability_status: document.getElementById('field-avail').value || null,
+          session_modality: document.getElementById('field-modality').value || null,
+          hourly_rate: document.getElementById('field-rate').value || null,
         }
-      } catch {
-        ind.textContent = 'Network error.'
-        ind.className = 'save-indicator'
-      } finally { btn.disabled = false }
-    }
 
-    // ── Photos ────────────────────────────────────────────────────────────────
-    async function loadPhotos() {
-      const grid = document.getElementById('photo-grid')
-      try {
-        const r = await fetch('/api/companions/photos')
-        const photos = await r.json()
-        renderPhotos(photos)
-      } catch {
-        grid.innerHTML = '<p style="font-size:13px;color:#6b7280;">Could not load photos.</p>'
+        try {
+          const r = await fetch('/api/companions/profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          })
+          if (!r.ok) {
+            const d = await r.json()
+            ind.textContent = d.error || 'Error saving.'
+            ind.className = 'save-indicator'
+            showToast(d.error || 'Could not save. Try again.', true)
+          } else {
+            ind.textContent = 'Saved'
+            ind.className = 'save-indicator saved'
+            setTimeout(() => {
+              ind.textContent = ''
+              ind.className = 'save-indicator'
+            }, 2500)
+          }
+        } catch {
+          ind.textContent = 'Network error.'
+          ind.className = 'save-indicator'
+          showToast('Network error. Check your connection.', true)
+        } finally {
+          btn.disabled = false
+        }
       }
-    }
 
-    function renderPhotos(photos) {
-      const grid = document.getElementById('photo-grid')
-      let html = photos.map(p => `
+      // ── Save settings ─────────────────────────────────────────────────────────
+      async function saveSettings() {
+        const btn = document.getElementById('btn-save-settings')
+        const ind = document.getElementById('settings-save-indicator')
+        btn.disabled = true
+        ind.textContent = 'Saving…'
+        ind.className = 'save-indicator saving'
+
+        const whatsapp = document.getElementById('field-whatsapp').value.trim()
+        const instagram = document.getElementById('field-instagram').value.trim()
+        const website = document.getElementById('field-website').value.trim()
+
+        if (whatsapp && !/^\+[1-9]\d{6,14}$/.test(whatsapp)) {
+          ind.textContent = 'Invalid WhatsApp number. Use format +31612345678.'
+          ind.className = 'save-indicator'
+          btn.disabled = false
+          return
+        }
+
+        try {
+          const r = await fetch('/api/companions/profile', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              whatsapp_number: whatsapp || null,
+              instagram_handle: instagram || null,
+              website_url: website || null,
+            }),
+          })
+          if (!r.ok) {
+            const d = await r.json()
+            ind.textContent = d.error || 'Error saving.'
+            ind.className = 'save-indicator'
+          } else {
+            ind.textContent = 'Saved'
+            ind.className = 'save-indicator saved'
+            setTimeout(() => {
+              ind.textContent = ''
+              ind.className = 'save-indicator'
+            }, 2500)
+          }
+        } catch {
+          ind.textContent = 'Network error.'
+          ind.className = 'save-indicator'
+        } finally {
+          btn.disabled = false
+        }
+      }
+
+      // ── Photos ────────────────────────────────────────────────────────────────
+      async function loadPhotos() {
+        const grid = document.getElementById('photo-grid')
+        try {
+          const r = await fetch('/api/companions/photos')
+          const photos = await r.json()
+          renderPhotos(photos)
+        } catch {
+          grid.innerHTML = '<p style="font-size:13px;color:#6b7280;">Could not load photos.</p>'
+        }
+      }
+
+      function renderPhotos(photos) {
+        const grid = document.getElementById('photo-grid')
+        let html = photos
+          .map(
+            (p) => `
         <div class="photo-item" data-id="${p.id}">
           <img src="${escHtml(p.url)}" alt="Companion photo" loading="lazy" />
           ${p.is_primary ? '<span class="primary-badge">Primary</span>' : ''}
@@ -636,95 +814,118 @@
             <button class="photo-btn delete-btn" onclick="deletePhoto('${p.id}')">Delete</button>
           </div>
         </div>
-      `).join('')
+      `
+          )
+          .join('')
 
-      if (photos.length < 8) {
-        html += `
+        if (photos.length < 8) {
+          html += `
           <button class="upload-box" onclick="document.getElementById('file-input').click()">
             <span class="upload-icon">+</span>
             <span class="upload-label">Add photo</span>
           </button>
         `
+        }
+        grid.innerHTML = html
       }
-      grid.innerHTML = html
-    }
 
-    // File upload
-    document.getElementById('file-input').addEventListener('change', async (e) => {
-      const file = e.target.files[0]
-      if (!file) return
-      e.target.value = ''
+      // File upload
+      document.getElementById('file-input').addEventListener('change', async (e) => {
+        const file = e.target.files[0]
+        if (!file) return
+        e.target.value = ''
 
-      showToast('Uploading…')
-      const fd = new FormData()
-      fd.append('photo', file)
+        showToast('Uploading…')
+        const fd = new FormData()
+        fd.append('photo', file)
 
-      try {
-        const r = await fetch('/api/companions/upload-photo', { method: 'POST', body: fd })
-        const d = await r.json()
-        if (!r.ok) { showToast(d.error || 'Upload failed.', true); return }
-        showToast('Photo uploaded. Awaiting review.')
-        loadPhotos()
-      } catch {
-        showToast('Network error during upload.', true)
-      }
-    })
-
-    async function setPrimary(photoId) {
-      try {
-        const r = await fetch('/api/companions/photos/set-primary', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ photoId }),
-        })
-        if (!r.ok) { const d = await r.json(); showToast(d.error || 'Error.', true); return }
-        showToast('Primary photo updated.')
-        loadPhotos()
-      } catch { showToast('Network error.', true) }
-    }
-
-    async function deletePhoto(photoId) {
-      if (!confirm('Delete this photo?')) return
-      try {
-        const r = await fetch(`/api/companions/photos/${photoId}`, { method: 'DELETE' })
-        if (!r.ok) { const d = await r.json(); showToast(d.error || 'Error.', true); return }
-        showToast('Photo deleted.')
-        loadPhotos()
-      } catch { showToast('Network error.', true) }
-    }
-
-    // ── Tabs ──────────────────────────────────────────────────────────────────
-    const TABS = ['status', 'profile', 'photos', 'settings']
-    function switchTab(name) {
-      TABS.forEach(t => {
-        document.getElementById(`tab-${t}`).classList.toggle('active', t === name)
-        document.getElementById(`panel-${t}`).classList.toggle('active', t === name)
+        try {
+          const r = await fetch('/api/companions/upload-photo', { method: 'POST', body: fd })
+          const d = await r.json()
+          if (!r.ok) {
+            showToast(d.error || 'Upload failed.', true)
+            return
+          }
+          showToast('Photo uploaded. Awaiting review.')
+          loadPhotos()
+        } catch {
+          showToast('Network error during upload.', true)
+        }
       })
-    }
 
-    // ── Logout ────────────────────────────────────────────────────────────────
-    async function logout() {
-      await fetch('/api/companions/logout', { method: 'POST' })
-      window.location.href = '/login'
-    }
+      async function setPrimary(photoId) {
+        try {
+          const r = await fetch('/api/companions/photos/set-primary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photoId }),
+          })
+          if (!r.ok) {
+            const d = await r.json()
+            showToast(d.error || 'Error.', true)
+            return
+          }
+          showToast('Primary photo updated.')
+          loadPhotos()
+        } catch {
+          showToast('Network error.', true)
+        }
+      }
 
-    // ── Toast ─────────────────────────────────────────────────────────────────
-    let toastTimer = null
-    function showToast(msg, isError = false) {
-      const el = document.getElementById('toast')
-      el.textContent = msg
-      el.className = 'toast show' + (isError ? ' error' : '')
-      clearTimeout(toastTimer)
-      toastTimer = setTimeout(() => { el.className = 'toast' }, 3000)
-    }
+      async function deletePhoto(photoId) {
+        if (!confirm('Delete this photo?')) return
+        try {
+          const r = await fetch(`/api/companions/photos/${photoId}`, { method: 'DELETE' })
+          if (!r.ok) {
+            const d = await r.json()
+            showToast(d.error || 'Error.', true)
+            return
+          }
+          showToast('Photo deleted.')
+          loadPhotos()
+        } catch {
+          showToast('Network error.', true)
+        }
+      }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    function escHtml(str) {
-      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
-    }
+      // ── Tabs ──────────────────────────────────────────────────────────────────
+      const TABS = ['status', 'profile', 'photos', 'settings']
+      function switchTab(name) {
+        TABS.forEach((t) => {
+          document.getElementById(`tab-${t}`).classList.toggle('active', t === name)
+          document.getElementById(`panel-${t}`).classList.toggle('active', t === name)
+        })
+      }
 
-    // ── Init ──────────────────────────────────────────────────────────────────
-    boot()
-  </script>
-</body>
+      // ── Logout ────────────────────────────────────────────────────────────────
+      async function logout() {
+        await fetch('/api/companions/logout', { method: 'POST' })
+        window.location.href = '/login'
+      }
+
+      // ── Toast ─────────────────────────────────────────────────────────────────
+      let toastTimer = null
+      function showToast(msg, isError = false) {
+        const el = document.getElementById('toast')
+        el.textContent = msg
+        el.className = 'toast show' + (isError ? ' error' : '')
+        clearTimeout(toastTimer)
+        toastTimer = setTimeout(() => {
+          el.className = 'toast'
+        }, 3000)
+      }
+
+      // ── Helpers ───────────────────────────────────────────────────────────────
+      function escHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+      }
+
+      // ── Init ──────────────────────────────────────────────────────────────────
+      boot()
+    </script>
+  </body>
 </html>
