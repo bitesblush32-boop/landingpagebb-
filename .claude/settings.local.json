@@ -19,7 +19,18 @@
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint 2>&1 | grep -E \"^\\\\./\" | head -40)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint 2>&1 | grep -E \"Error:\" | head -20)",
       "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\" && node_modules/.bin/next lint 2>&1 | tail -20)",
-      "Bash(grep -rl \"import Image from 'next/image'\" \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\" \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\" 2>/dev/null)"
+      "Bash(grep -rl \"import Image from 'next/image'\" \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\components\" \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\" 2>/dev/null)",
+      "Bash(ls \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\" 2>/dev/null || dir /b \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\")",
+      "Bash(find \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(companion\\)\" -type f 2>/dev/null | head -60)",
+      "Bash(head -100 \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\BlushBite\\\\apps\\\\web\\\\app\\\\\\(companion\\)\\\\companion\\\\profile\\\\settings\\\\page.tsx\" 2>/dev/null | cat)",
+      "Bash(cmd //c \"rd /s /q \\\\\"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\\\\node_modules\\\\\"\")",
+      "Bash(powershell -Command \"Remove-Item -Recurse -Force 'C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\\\\node_modules' -ErrorAction SilentlyContinue; Remove-Item -Force 'C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\\\\package-lock.json' -ErrorAction SilentlyContinue; Write-Host 'Done'\")",
+      "Bash(powershell -Command \"Test-Path 'C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\\\\node_modules'\")",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && npm install 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && npm run build 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && npm install @eslint/eslintrc 2>&1 | tail -5)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && npx next build --no-lint 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\Ravi Desai\\\\Downloads\\\\blush\\\\landingpagebb-\" && set NODE_OPTIONS=--max-old-space-size=4096 && npx next build --no-lint 2>&1)"
     ]
   }
 }

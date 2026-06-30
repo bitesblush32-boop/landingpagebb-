@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #07090f;
+  --color-bg2: #0d1117;
+  --color-card: #111620;
+  --color-card2: #161d2a;
+  --color-border: #1c2333;
+  --color-accent: #e8607a;
+  --color-accent2: #c4485e;
+  --color-gold: #c9a96e;
+  --color-text: #eeeef0;
+  --color-muted: #6b7280;
+  --color-green: #22c55e;
+  --color-amber: #f59e0b;
+  --color-red: #f87171;
+
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #07090f;
+  color: #eeeef0;
+  font-family: "DM Sans", "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+}
+
+button,
+a,
+[role="button"],
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #07090f; }
+::-webkit-scrollbar-thumb { background: #1c2333; border-radius: 2px; }
+
+/* ── Focus ring ──────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid rgba(232, 96, 122, 0.6);
+  outline-offset: 2px;
+}
+
+/* ── Shimmer animation ───────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #111620 25%, #1c2333 50%, #111620 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

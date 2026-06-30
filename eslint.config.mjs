@@ -1,23 +1,17 @@
-import pluginN from 'eslint-plugin-n'
-import globals from 'globals'
-import eslintConfigPrettier from 'eslint-config-prettier'
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
+import { FlatCompat } from '@eslint/eslintrc'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+const compat = new FlatCompat({ baseDirectory: __dirname })
 
 export default [
-  pluginN.configs['flat/recommended-script'],
+  ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
-    languageOptions: {
-      ecmaVersion: 2022,
-      globals: {
-        ...globals.node,
-        ...globals.commonjs,
-      },
-    },
     rules: {
       'no-console': 'off',
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'n/no-unpublished-require': 'off',
-      'n/no-missing-require': 'off',
     },
   },
-  eslintConfigPrettier,
 ]
