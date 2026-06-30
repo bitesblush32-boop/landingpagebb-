@@ -9,7 +9,10 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-async function uploadToCloudinary(buffer: Buffer, folder: string): Promise<{ url: string; publicId: string }> {
+async function uploadToCloudinary(
+  buffer: Buffer,
+  folder: string
+): Promise<{ url: string; publicId: string }> {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder, resource_type: 'image' },
@@ -31,8 +34,10 @@ export async function POST(req: NextRequest) {
 
   const file = formData.get('photo') as File | null
   if (!file) return NextResponse.json({ error: 'No photo provided.' }, { status: 400 })
-  if (!file.type.startsWith('image/')) return NextResponse.json({ error: 'File must be an image.' }, { status: 400 })
-  if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: 'File must be under 5 MB.' }, { status: 400 })
+  if (!file.type.startsWith('image/'))
+    return NextResponse.json({ error: 'File must be an image.' }, { status: 400 })
+  if (file.size > 5 * 1024 * 1024)
+    return NextResponse.json({ error: 'File must be under 5 MB.' }, { status: 400 })
 
   const buffer = Buffer.from(await file.arrayBuffer())
   let url: string
@@ -58,7 +63,10 @@ export async function POST(req: NextRequest) {
         [session.sub]
       )
       if (parseInt(String(countRes.rows[0].cnt)) >= 8) {
-        return NextResponse.json({ error: 'Maximum 8 photos allowed. Delete one to upload more.' }, { status: 400 })
+        return NextResponse.json(
+          { error: 'Maximum 8 photos allowed. Delete one to upload more.' },
+          { status: 400 }
+        )
       }
 
       const photoRes = await client.query(

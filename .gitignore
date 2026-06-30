@@ -2,9 +2,11 @@
 node_modules/
 .pnp
 .pnp.js
-
-# Next.js build output
+.next
 .next/
+# Next.js build output
+.next/*
+.next/types/
 out/
 build/
 dist/
@@ -59,3 +61,9 @@ coverage/
 
 # Debug
 .pnpm-debug.log*
+
+# Graphify cache
+graphify-out/cache/
+
+# Local Claude settings
+.claude/settings.local.json

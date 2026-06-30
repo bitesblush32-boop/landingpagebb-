@@ -33,7 +33,10 @@ export async function POST(req: NextRequest) {
     [session.sub]
   )
   if (statusRows.length > 0 && statusRows[0].review_status !== 'rejected') {
-    return NextResponse.json({ error: 'Re-apply is only available after rejection.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Re-apply is only available after rejection.' },
+      { status: 400 }
+    )
   }
 
   const body: Record<string, unknown> = await req.json().catch(() => ({}))
@@ -51,8 +54,15 @@ export async function POST(req: NextRequest) {
          whatsapp_number = COALESCE($6, whatsapp_number),
          updated_at      = NOW()
        WHERE companion_id = $7`,
-      [city ?? null, gender ?? null, tagline ?? null, bio ?? null,
-       session_modality ?? null, whatsapp_number ?? null, session.sub]
+      [
+        city ?? null,
+        gender ?? null,
+        tagline ?? null,
+        bio ?? null,
+        session_modality ?? null,
+        whatsapp_number ?? null,
+        session.sub,
+      ]
     )
 
     // Insert a new pending review row for stage 7
@@ -65,10 +75,13 @@ export async function POST(req: NextRequest) {
 
     // Notify admin
     const meRows = await query<{ email: string; name: string }>(
-      'SELECT email, name FROM companions WHERE id = $1', [session.sub]
+      'SELECT email, name FROM companions WHERE id = $1',
+      [session.sub]
     )
     if (meRows.length > 0) {
-      sendAdminReapplyNotification(session.sub, meRows[0].email, meRows[0].name).catch(console.error)
+      sendAdminReapplyNotification(session.sub, meRows[0].email, meRows[0].name).catch(
+        console.error
+      )
     }
 
     return NextResponse.json({ ok: true })

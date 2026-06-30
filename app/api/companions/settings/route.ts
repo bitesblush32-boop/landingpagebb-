@@ -27,7 +27,10 @@ export async function PATCH(req: NextRequest) {
   const { whatsapp_number, instagram_handle, website_url, is_live } = body
 
   if (whatsapp_number && !/^\+[1-9]\d{6,14}$/.test(String(whatsapp_number))) {
-    return NextResponse.json({ error: 'Invalid WhatsApp number. Use E.164 format.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Invalid WhatsApp number. Use E.164 format.' },
+      { status: 400 }
+    )
   }
 
   const client = await pool.connect()
@@ -75,17 +78,22 @@ export async function POST(req: NextRequest) {
   try {
     if (current_password) {
       const rows = await client.query<{ hashed_password: string | null }>(
-        'SELECT hashed_password FROM companions WHERE id = $1', [session.sub]
+        'SELECT hashed_password FROM companions WHERE id = $1',
+        [session.sub]
       )
       const existing = rows.rows[0]?.hashed_password
       if (existing) {
         const ok = await bcrypt.compare(String(current_password), existing)
-        if (!ok) return NextResponse.json({ error: 'Current password is incorrect.' }, { status: 400 })
+        if (!ok)
+          return NextResponse.json({ error: 'Current password is incorrect.' }, { status: 400 })
       }
     }
 
     const hashed = await bcrypt.hash(String(new_password), 12)
-    await client.query('UPDATE companions SET hashed_password = $1, updated_at = NOW() WHERE id = $2', [hashed, session.sub])
+    await client.query(
+      'UPDATE companions SET hashed_password = $1, updated_at = NOW() WHERE id = $2',
+      [hashed, session.sub]
+    )
     return NextResponse.json({ ok: true })
   } finally {
     client.release()

@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
        WHERE cp.id = $1 AND prof.companion_id = $2 AND cp.deleted_at IS NULL`,
       [photoId, session.sub]
     )
-    if (check.rows.length === 0) return NextResponse.json({ error: 'Photo not found.' }, { status: 404 })
+    if (check.rows.length === 0)
+      return NextResponse.json({ error: 'Photo not found.' }, { status: 404 })
 
     await client.query(
       `UPDATE companion_photos SET is_primary = false

@@ -5,23 +5,21 @@
 
 interface OtpEntry {
   otp: string
-  expiry: number  // ms since epoch
+  expiry: number // ms since epoch
   attempts: number
 }
 
 interface RateEntry {
   count: number
-  windowStart: number  // ms since epoch
+  windowStart: number // ms since epoch
 }
 
-const OTP_TTL = 10 * 60 * 1000      // 10 minutes
-const RATE_WINDOW = 10 * 60 * 1000  // 10 minutes
+const OTP_TTL = 10 * 60 * 1000 // 10 minutes
+const RATE_WINDOW = 10 * 60 * 1000 // 10 minutes
 const RATE_MAX = 3
 
 declare global {
-  // eslint-disable-next-line no-var
   var _otpStore: Map<string, OtpEntry> | undefined
-  // eslint-disable-next-line no-var
   var _rateStore: Map<string, RateEntry> | undefined
 }
 

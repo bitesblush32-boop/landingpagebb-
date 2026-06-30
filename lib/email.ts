@@ -21,7 +21,11 @@ export async function sendApprovalEmail(to: string, firstName: string): Promise<
   })
 }
 
-export async function sendRejectionEmail(to: string, firstName: string, reason?: string): Promise<void> {
+export async function sendRejectionEmail(
+  to: string,
+  firstName: string,
+  reason?: string
+): Promise<void> {
   await resend.emails.send({
     from: `BlushBite <${FROM}>`,
     to,
@@ -30,7 +34,11 @@ export async function sendRejectionEmail(to: string, firstName: string, reason?:
   })
 }
 
-export async function sendAdminReapplyNotification(companionId: string, email: string, name: string): Promise<void> {
+export async function sendAdminReapplyNotification(
+  companionId: string,
+  email: string,
+  name: string
+): Promise<void> {
   const adminEmail = process.env.ADMIN_EMAIL ?? FROM
   await resend.emails.send({
     from: `BlushBite System <${FROM}>`,
@@ -60,7 +68,9 @@ ${content}
 }
 
 function otpEmailHtml(otp: string): string {
-  return card('#e8607a', `
+  return card(
+    '#e8607a',
+    `
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="padding:40px 40px 12px;">
   <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6b7280;">Companion application</p>
@@ -75,11 +85,14 @@ function otpEmailHtml(otp: string): string {
 </td></tr>
 <tr><td style="padding:0 40px;"><table width="100%"><tr><td style="height:1px;background:#1c2333;font-size:1px;">&nbsp;</td></tr></table></td></tr>
 <tr><td style="padding:24px 40px 36px;"><p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">If you did not request this code, ignore this email — your address will not be used without it.</p></td></tr>
-</table>`)
+</table>`
+  )
 }
 
 function approvalEmailHtml(name: string): string {
-  return card('#e8607a', `
+  return card(
+    '#e8607a',
+    `
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="padding:40px 40px 12px;">
   <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6b7280;">Application approved</p>
@@ -91,14 +104,17 @@ function approvalEmailHtml(name: string): string {
 </td></tr>
 <tr><td style="padding:0 40px;"><table width="100%"><tr><td style="height:1px;background:#1c2333;font-size:1px;">&nbsp;</td></tr></table></td></tr>
 <tr><td style="padding:24px 40px 36px;"><p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">Log in at blushbite.live/login using the email you applied with. Your identity stays private — always.</p></td></tr>
-</table>`)
+</table>`
+  )
 }
 
 function rejectionEmailHtml(name: string, reason?: string): string {
   const reasonHtml = reason
     ? `<p style="margin:16px 0 0;font-size:13px;color:#6b7280;background:#111620;border:1px solid #1c2333;border-radius:10px;padding:14px 16px;">${reason}</p>`
     : ''
-  return card('#1c2333', `
+  return card(
+    '#1c2333',
+    `
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="padding:40px 40px 12px;">
   <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6b7280;">Application update</p>
@@ -109,5 +125,6 @@ function rejectionEmailHtml(name: string, reason?: string): string {
 <tr><td style="padding:0 40px;height:32px;"></td></tr>
 <tr><td style="padding:0 40px;"><table width="100%"><tr><td style="height:1px;background:#1c2333;font-size:1px;">&nbsp;</td></tr></table></td></tr>
 <tr><td style="padding:24px 40px 36px;"><p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">If you have questions, reply to this email. Your identity stays private — always.</p></td></tr>
-</table>`)
+</table>`
+  )
 }

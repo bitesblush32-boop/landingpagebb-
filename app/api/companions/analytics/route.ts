@@ -11,7 +11,8 @@ export async function GET() {
     'SELECT id, is_visible_to_users FROM companion_profiles WHERE companion_id = $1',
     [session.sub]
   )
-  if (profileRows.length === 0) return NextResponse.json({ error: 'Profile not found.' }, { status: 404 })
+  if (profileRows.length === 0)
+    return NextResponse.json({ error: 'Profile not found.' }, { status: 404 })
   const profileId = profileRows[0].id
 
   // Aggregate analytics events — table may not exist yet, so handle gracefully
@@ -58,18 +59,21 @@ export async function GET() {
       ),
     ])
 
-    return NextResponse.json({
-      views_today: parseInt(viewsToday[0]?.cnt ?? '0'),
-      views_week: parseInt(viewsWeek[0]?.cnt ?? '0'),
-      views_month: parseInt(viewsMonth[0]?.cnt ?? '0'),
-      whatsapp_clicks: parseInt(waClicks[0]?.cnt ?? '0'),
-      bridge_clicks: parseInt(bridgeClicks[0]?.cnt ?? '0'),
-      bookings_pending: 0,
-      daily: chart.map(r => ({ date: r.date, views: parseInt(r.count) })),
-      is_visible_to_users: profileRows[0].is_visible_to_users,
-    }, {
-      headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' },
-    })
+    return NextResponse.json(
+      {
+        views_today: parseInt(viewsToday[0]?.cnt ?? '0'),
+        views_week: parseInt(viewsWeek[0]?.cnt ?? '0'),
+        views_month: parseInt(viewsMonth[0]?.cnt ?? '0'),
+        whatsapp_clicks: parseInt(waClicks[0]?.cnt ?? '0'),
+        bridge_clicks: parseInt(bridgeClicks[0]?.cnt ?? '0'),
+        bookings_pending: 0,
+        daily: chart.map((r) => ({ date: r.date, views: parseInt(r.count) })),
+        is_visible_to_users: profileRows[0].is_visible_to_users,
+      },
+      {
+        headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' },
+      }
+    )
   } catch {
     // analytics_events table may not exist in all environments
     return NextResponse.json({

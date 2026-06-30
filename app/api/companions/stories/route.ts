@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
   const { title, content, excerpt } = body
 
   if (!content || String(content).trim().length < 20) {
-    return NextResponse.json({ error: 'Story content must be at least 20 characters.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Story content must be at least 20 characters.' },
+      { status: 400 }
+    )
   }
 
   const id = randomUUID()

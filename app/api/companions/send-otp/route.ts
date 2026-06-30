@@ -10,7 +10,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
   }
   if (!checkRate(email)) {
-    return NextResponse.json({ error: 'Too many code requests. Please wait 10 minutes.' }, { status: 429 })
+    return NextResponse.json(
+      { error: 'Too many code requests. Please wait 10 minutes.' },
+      { status: 429 }
+    )
   }
 
   const otp = generateOtp()
@@ -20,7 +23,10 @@ export async function POST(req: NextRequest) {
     await sendOtpEmail(email, otp)
   } catch (err) {
     console.error('[send-otp]', err)
-    return NextResponse.json({ error: 'Could not send the code. Please try again.' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Could not send the code. Please try again.' },
+      { status: 500 }
+    )
   }
 
   return NextResponse.json({ sent: true })

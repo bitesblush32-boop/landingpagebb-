@@ -29,7 +29,14 @@ export async function PATCH(req: NextRequest) {
       `UPDATE companion_profiles
        SET city = $1, whatsapp_number = $2, gender = $3, tagline = $4, bio = $5
        WHERE companion_id = $6`,
-      [city || null, whatsapp_number || null, gender || null, tagline || null, bio || null, session.sub]
+      [
+        city || null,
+        whatsapp_number || null,
+        gender || null,
+        tagline || null,
+        bio || null,
+        session.sub,
+      ]
     ),
   ])
 

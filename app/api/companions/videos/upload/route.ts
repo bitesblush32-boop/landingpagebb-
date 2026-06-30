@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
     [session.sub]
   )
   if (parseInt(countRows[0].cnt) >= 3) {
-    return NextResponse.json({ error: 'Maximum 3 videos allowed. Delete one to upload more.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Maximum 3 videos allowed. Delete one to upload more.' },
+      { status: 400 }
+    )
   }
 
   const formData = await req.formData().catch(() => null)
@@ -29,22 +32,33 @@ export async function POST(req: NextRequest) {
 
   const file = formData.get('video') as File | null
   if (!file) return NextResponse.json({ error: 'No video provided.' }, { status: 400 })
-  if (!file.type.startsWith('video/')) return NextResponse.json({ error: 'File must be a video.' }, { status: 400 })
-  if (file.size > 50 * 1024 * 1024) return NextResponse.json({ error: 'Video must be under 50 MB.' }, { status: 400 })
+  if (!file.type.startsWith('video/'))
+    return NextResponse.json({ error: 'File must be a video.' }, { status: 400 })
+  if (file.size > 50 * 1024 * 1024)
+    return NextResponse.json({ error: 'Video must be under 50 MB.' }, { status: 400 })
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
-  let url: string, publicId: string, duration: number | null = null, thumbnailUrl: string | null = null
+  let url: string,
+    publicId: string,
+    duration: number | null = null,
+    thumbnailUrl: string | null = null
 
   try {
-    const result = await new Promise<{ secure_url: string; public_id: string; duration?: number }>((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: 'companion-videos', resource_type: 'video', eager: [{ format: 'jpg', start_offset: '0' }] },
-        (err, r) => (err || !r ? reject(err) : resolve(r))
-      )
-      stream.write(buffer)
-      stream.end()
-    })
+    const result = await new Promise<{ secure_url: string; public_id: string; duration?: number }>(
+      (resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: 'companion-videos',
+            resource_type: 'video',
+            eager: [{ format: 'jpg', start_offset: '0' }],
+          },
+          (err, r) => (err || !r ? reject(err) : resolve(r))
+        )
+        stream.write(buffer)
+        stream.end()
+      }
+    )
     url = result.secure_url
     publicId = result.public_id
     duration = result.duration ? Math.round(result.duration) : null

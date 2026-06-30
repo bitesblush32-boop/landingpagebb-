@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { pool } from '@/lib/db'
 import { getSession } from '@/lib/session'
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -27,7 +24,8 @@ export async function PATCH(
        WHERE id = $3 AND companion_id = $4`,
       [status ?? null, companion_notes ?? null, id, session.sub]
     )
-    if (res.rowCount === 0) return NextResponse.json({ error: 'Booking not found.' }, { status: 404 })
+    if (res.rowCount === 0)
+      return NextResponse.json({ error: 'Booking not found.' }, { status: 404 })
     return NextResponse.json({ ok: true })
   } finally {
     client.release()

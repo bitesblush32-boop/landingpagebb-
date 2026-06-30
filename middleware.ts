@@ -6,8 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const JWT_SECRET = process.env.COMPANION_JWT_SECRET ?? ''
 
 // Must mirror lib/session.ts
-const COOKIE_NAME =
-  process.env.NODE_ENV === 'production' ? '__Host-bb_session' : 'bb_session'
+const COOKIE_NAME = process.env.NODE_ENV === 'production' ? '__Host-bb_session' : 'bb_session'
 
 interface SessionPayload {
   sub: string
@@ -16,11 +15,11 @@ interface SessionPayload {
   exp: number
 }
 
-function b64urlToBytes(str: string): Uint8Array {
+function b64urlToBytes(str: string): Uint8Array<ArrayBuffer> {
   const base64 = str.replace(/-/g, '+').replace(/_/g, '/')
   const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
   const binary = atob(padded)
-  return Uint8Array.from(binary, c => c.charCodeAt(0))
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0)) as Uint8Array<ArrayBuffer>
 }
 
 function b64urlToString(str: string): string {
@@ -40,14 +39,14 @@ async function verifyJwt(token: string | undefined): Promise<SessionPayload | nu
       new TextEncoder().encode(JWT_SECRET),
       { name: 'HMAC', hash: 'SHA-256' },
       false,
-      ['verify'],
+      ['verify']
     )
 
     const valid = await crypto.subtle.verify(
       'HMAC',
       key,
       b64urlToBytes(sig),
-      new TextEncoder().encode(`${hdr}.${bdy}`),
+      new TextEncoder().encode(`${hdr}.${bdy}`)
     )
     if (!valid) return null
 
@@ -72,15 +71,13 @@ const PUBLIC_API = [
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  const isProtected = PROTECTED.some(p => pathname === p || pathname.startsWith(p + '/'))
+  const isProtected = PROTECTED.some((p) => pathname === p || pathname.startsWith(p + '/'))
   const isProtectedApi =
-    pathname.startsWith('/api/companions/') &&
-    !PUBLIC_API.some(p => pathname.startsWith(p))
+    pathname.startsWith('/api/companions/') && !PUBLIC_API.some((p) => pathname.startsWith(p))
 
   if (!isProtected && !isProtectedApi) return NextResponse.next()
 
-  const token =
-    req.cookies.get(COOKIE_NAME)?.value ?? req.cookies.get('bb_session')?.value
+  const token = req.cookies.get(COOKIE_NAME)?.value ?? req.cookies.get('bb_session')?.value
 
   const payload = await verifyJwt(token)
 

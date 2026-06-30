@@ -1,7 +1,6 @@
 import { Pool } from 'pg'
 
 declare global {
-  // eslint-disable-next-line no-var
   var _pgPool: Pool | undefined
 }
 
@@ -11,7 +10,7 @@ function createPool(): Pool {
     connectionString: process.env.DATABASE_URL,
     max: 10,
     idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 10_000,   // Railway proxy needs more time
+    connectionTimeoutMillis: 10_000, // Railway proxy needs more time
     keepAlive: true,
     keepAliveInitialDelayMillis: 10_000,
     // Railway always requires SSL on the public proxy, even in dev

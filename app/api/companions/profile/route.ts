@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { pool } from '@/lib/db'
+import { query } from '@/lib/db'
 import { getSession } from '@/lib/session'
+
+export async function GET() {
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const rows = await query<Record<string, unknown>>(
+    `SELECT cp.ethnicity, cp.languages, cp.vibe_tags, cp.currency,
+            cp.height_cm, cp.body_type, cp.eye_color, cp.hair_color, cp.skin_color,
+            cp.session_modality, cp.hourly_rate::text AS hourly_rate,
+            cp.instagram_handle, cp.website_url
+     FROM companion_profiles cp
+     WHERE cp.companion_id = $1`,
+    [session.sub]
+  )
+  if (rows.length === 0) return NextResponse.json({})
+  return NextResponse.json(rows[0])
+}
 
 export async function PATCH(req: NextRequest) {
   const session = await getSession()
@@ -8,23 +26,44 @@ export async function PATCH(req: NextRequest) {
 
   const body: Record<string, unknown> = await req.json().catch(() => ({}))
   const {
-    bio, tagline, city, availability_status, session_modality,
-    whatsapp_number, instagram_handle, website_url, hourly_rate,
-    gender, height_cm, body_type, eye_color, hair_color, skin_color,
+    display_name,
+    bio,
+    tagline,
+    city,
+    availability_status,
+    session_modality,
+    whatsapp_number,
+    instagram_handle,
+    website_url,
+    hourly_rate,
+    gender,
+    height_cm,
+    body_type,
+    eye_color,
+    hair_color,
+    skin_color,
+    ethnicity,
+    languages,
+    vibe_tags,
+    currency,
   } = body
 
-  const AVAIL = ['available','busy','offline']
-  const MODALITY = ['in_person','online','both']
+  const AVAIL = ['available', 'busy', 'offline']
+  const MODALITY = ['in_person', 'online', 'both']
   if (availability_status && !AVAIL.includes(String(availability_status)))
     return NextResponse.json({ error: 'Invalid availability status.' }, { status: 400 })
   if (session_modality && !MODALITY.includes(String(session_modality)))
     return NextResponse.json({ error: 'Invalid session modality.' }, { status: 400 })
   if (hourly_rate !== undefined && hourly_rate !== null && hourly_rate !== '') {
     const r = parseFloat(String(hourly_rate))
-    if (isNaN(r) || r < 0) return NextResponse.json({ error: 'Hourly rate must be a positive number.' }, { status: 400 })
+    if (isNaN(r) || r < 0)
+      return NextResponse.json({ error: 'Hourly rate must be a positive number.' }, { status: 400 })
   }
   if (whatsapp_number && !/^\+[1-9]\d{6,14}$/.test(String(whatsapp_number)))
-    return NextResponse.json({ error: 'Invalid WhatsApp number. Use E.164 format.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'Invalid WhatsApp number. Use E.164 format.' },
+      { status: 400 }
+    )
 
   const client = await pool.connect()
   try {
@@ -45,19 +84,41 @@ export async function PATCH(req: NextRequest) {
          eye_color           = COALESCE($13, eye_color),
          hair_color          = COALESCE($14, hair_color),
          skin_color          = COALESCE($15, skin_color),
+         ethnicity           = COALESCE($16, ethnicity),
+         languages           = COALESCE($17, languages),
+         vibe_tags           = COALESCE($18, vibe_tags),
+         currency            = COALESCE($19, currency),
          updated_at          = NOW()
-       WHERE companion_id = $16`,
+       WHERE companion_id = $20`,
       [
-        bio ?? null, tagline ?? null, city ?? null, availability_status ?? null,
-        session_modality ?? null, whatsapp_number ?? null, instagram_handle ?? null,
+        bio ?? null,
+        tagline ?? null,
+        city ?? null,
+        availability_status ?? null,
+        session_modality ?? null,
+        whatsapp_number ?? null,
+        instagram_handle ?? null,
         website_url ?? null,
-        (hourly_rate !== '' && hourly_rate != null) ? parseFloat(String(hourly_rate)) : null,
+        hourly_rate !== '' && hourly_rate != null ? parseFloat(String(hourly_rate)) : null,
         gender ?? null,
         height_cm != null ? parseInt(String(height_cm)) : null,
-        body_type ?? null, eye_color ?? null, hair_color ?? null, skin_color ?? null,
+        body_type ?? null,
+        eye_color ?? null,
+        hair_color ?? null,
+        skin_color ?? null,
+        ethnicity ?? null,
+        languages != null ? JSON.stringify(languages) : null,
+        vibe_tags != null ? JSON.stringify(vibe_tags) : null,
+        currency ?? null,
         session.sub,
       ]
     )
+    if (display_name != null) {
+      await client.query('UPDATE companions SET alias = $1, updated_at = NOW() WHERE id = $2', [
+        String(display_name) || null,
+        session.sub,
+      ])
+    }
     if (whatsapp_number) {
       await client.query(
         'UPDATE companions SET whatsapp_number = $1, updated_at = NOW() WHERE id = $2',

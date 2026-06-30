@@ -266,16 +266,8 @@ function isAtLeast18(dob) {
 }
 
 function validate(body) {
-  const {
-    fullName,
-    email,
-    dateOfBirth,
-    country,
-    city,
-    whatsappNumber,
-    gender,
-    sessionModality,
-  } = body
+  const { fullName, email, dateOfBirth, country, city, whatsappNumber, gender, sessionModality } =
+    body
 
   if (!fullName || fullName.trim().length < 2) return 'We need your full legal name.'
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Enter a valid email address.'
