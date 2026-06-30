@@ -59,14 +59,13 @@ export async function GET() {
     ])
 
     return NextResponse.json({
-      profile_views: {
-        today: parseInt(viewsToday[0]?.cnt ?? '0'),
-        week: parseInt(viewsWeek[0]?.cnt ?? '0'),
-        month: parseInt(viewsMonth[0]?.cnt ?? '0'),
-      },
-      whatsapp_clicks: { month: parseInt(waClicks[0]?.cnt ?? '0') },
-      bridge_clicks: { month: parseInt(bridgeClicks[0]?.cnt ?? '0') },
-      chart: chart.map(r => ({ date: r.date, count: parseInt(r.count) })),
+      views_today: parseInt(viewsToday[0]?.cnt ?? '0'),
+      views_week: parseInt(viewsWeek[0]?.cnt ?? '0'),
+      views_month: parseInt(viewsMonth[0]?.cnt ?? '0'),
+      whatsapp_clicks: parseInt(waClicks[0]?.cnt ?? '0'),
+      bridge_clicks: parseInt(bridgeClicks[0]?.cnt ?? '0'),
+      bookings_pending: 0,
+      daily: chart.map(r => ({ date: r.date, views: parseInt(r.count) })),
       is_visible_to_users: profileRows[0].is_visible_to_users,
     }, {
       headers: { 'Cache-Control': 's-maxage=60, stale-while-revalidate=300' },
@@ -74,10 +73,13 @@ export async function GET() {
   } catch {
     // analytics_events table may not exist in all environments
     return NextResponse.json({
-      profile_views: { today: 0, week: 0, month: 0 },
-      whatsapp_clicks: { month: 0 },
-      bridge_clicks: { month: 0 },
-      chart: [],
+      views_today: 0,
+      views_week: 0,
+      views_month: 0,
+      whatsapp_clicks: 0,
+      bridge_clicks: 0,
+      bookings_pending: 0,
+      daily: [],
       is_visible_to_users: profileRows[0].is_visible_to_users,
     })
   }
