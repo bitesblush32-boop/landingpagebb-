@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { getExampleNumber, isValidPhoneNumber } from 'libphonenumber-js'
 import type { CountryCode } from 'libphonenumber-js'
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const phoneExamples = require('libphonenumber-js/examples.mobile.json')
+import phoneExamples from 'libphonenumber-js/examples.mobile.json'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 

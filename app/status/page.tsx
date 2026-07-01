@@ -30,7 +30,9 @@ function StatusContent() {
   const fireConfetti = useCallback(async () => {
     if (confettiFired) return
     setConfettiFired(true)
-    const { default: confetti } = await import('canvas-confetti')
+    const mod = await import('canvas-confetti')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const confetti = (mod.default ?? (mod as any)) as (options?: object) => void
     confetti({
       particleCount: 120,
       spread: 80,
