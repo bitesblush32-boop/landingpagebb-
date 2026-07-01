@@ -31,7 +31,12 @@ export function generateOtp(): string {
 }
 
 export function storeOtp(email: string, otp: string): void {
-  otpStore.set(email, { otp, expiry: Date.now() + OTP_TTL, attempts: 0 })
+  // Sweep expired entries to prevent unbounded memory growth
+  const now = Date.now()
+  for (const [key, entry] of otpStore) {
+    if (now > entry.expiry) otpStore.delete(key)
+  }
+  otpStore.set(email, { otp, expiry: now + OTP_TTL, attempts: 0 })
 }
 
 export function verifyOtp(email: string, otp: string): { ok: boolean; error?: string } {

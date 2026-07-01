@@ -162,6 +162,7 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<Filter>('pending')
   const [acting, setActing] = useState<string | null>(null)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetch('/api/companions/bookings')
@@ -172,12 +173,18 @@ export default function BookingsPage() {
 
   async function respond(id: string, action: 'accepted' | 'declined') {
     setActing(id)
+    setError('')
     try {
-      await fetch(`/api/companions/bookings/${id}`, {
+      const r = await fetch(`/api/companions/bookings/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: action }),
       })
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}))
+        setError((d as { error?: string }).error ?? 'Failed to update booking.')
+        return
+      }
       setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: action } : b)))
     } finally {
       setActing(null)
@@ -195,6 +202,22 @@ export default function BookingsPage() {
           {bookings.filter((b) => b.status === 'pending').length} pending requests
         </p>
       </div>
+
+      {error && (
+        <div
+          style={{
+            background: 'rgba(248,113,113,.08)',
+            border: '1px solid rgba(248,113,113,.25)',
+            borderRadius: 10,
+            padding: '10px 14px',
+            fontSize: 13,
+            color: '#f87171',
+            marginBottom: 16,
+          }}
+        >
+          {error}
+        </div>
+      )}
 
       <div style={S.tabs}>
         <button style={S.tab(filter === 'pending')} onClick={() => setFilter('pending')}>

@@ -28,11 +28,12 @@ async function uploadToCloudinary(
 
 export async function POST(req: NextRequest) {
   const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const formData = await req.formData().catch(() => null)
   if (!formData) return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
 
-  const file = formData.get('photo') as File | null
+  const file = formData.get('file') as File | null
   if (!file) return NextResponse.json({ error: 'No photo provided.' }, { status: 400 })
   if (!file.type.startsWith('image/'))
     return NextResponse.json({ error: 'File must be an image.' }, { status: 400 })

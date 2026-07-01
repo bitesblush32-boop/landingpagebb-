@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 
 const JWT_SECRET = process.env.COMPANION_JWT_SECRET ?? process.env.JWT_SECRET ?? ''
+if (!JWT_SECRET) throw new Error('COMPANION_JWT_SECRET env var is not set')
 const IS_PROD = process.env.NODE_ENV === 'production'
 
 export const COOKIE_NAME = IS_PROD ? '__Host-bb_session' : 'bb_session'

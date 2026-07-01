@@ -6,6 +6,7 @@ interface Story {
   id: string
   title: string
   excerpt: string | null
+  body?: string | null
   moderation_status: string
   created_at: string
   updated_at: string
@@ -168,13 +169,23 @@ export default function StoriesPage() {
     setShowModal(true)
   }
 
-  function openEdit(s: Story) {
+  async function openEdit(s: Story) {
     setEditing(s)
     setStTitle(s.title)
     setStExcerpt(s.excerpt ?? '')
     setStContent('')
     setError('')
     setShowModal(true)
+    // Fetch full story content for editing
+    try {
+      const r = await fetch(`/api/companions/stories/${s.id}`)
+      if (r.ok) {
+        const full = await r.json()
+        setStContent(full.body ?? '')
+      }
+    } catch {
+      // Non-fatal — companion can still retype content
+    }
   }
 
   async function save() {
@@ -182,7 +193,7 @@ export default function StoriesPage() {
       setError('Title is required.')
       return
     }
-    if (!editing && !stContent.trim()) {
+    if (!stContent.trim()) {
       setError('Content is required.')
       return
     }
@@ -192,7 +203,7 @@ export default function StoriesPage() {
       const url = editing ? `/api/companions/stories/${editing.id}` : '/api/companions/stories'
       const method = editing ? 'PATCH' : 'POST'
       const body = editing
-        ? { title: stTitle, excerpt: stExcerpt || undefined }
+        ? { title: stTitle, excerpt: stExcerpt || undefined, content: stContent || undefined }
         : { title: stTitle, excerpt: stExcerpt || undefined, content: stContent }
       const r = await fetch(url, {
         method,
@@ -351,18 +362,14 @@ export default function StoriesPage() {
               placeholder="A teasing one-line preview…"
               maxLength={500}
             />
-            {!editing && (
-              <>
-                <label style={S.label}>Content</label>
-                <textarea
-                  style={{ ...S.textarea, minHeight: 200 }}
-                  value={stContent}
-                  onChange={(e) => setStContent(e.target.value)}
-                  placeholder="Write your story here…"
-                  maxLength={20000}
-                />
-              </>
-            )}
+            <label style={S.label}>Content</label>
+            <textarea
+              style={{ ...S.textarea, minHeight: 200 }}
+              value={stContent}
+              onChange={(e) => setStContent(e.target.value)}
+              placeholder="Write your story here…"
+              maxLength={20000}
+            />
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 style={{

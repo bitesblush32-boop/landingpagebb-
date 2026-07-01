@@ -78,7 +78,13 @@ export async function POST(req: NextRequest) {
        RETURNING id`,
       [session.sub, url, publicId, thumbnailUrl, duration]
     )
-    return NextResponse.json({ url, thumbnailUrl, videoId: res.rows[0]?.id })
+    if (res.rows.length === 0) {
+      return NextResponse.json(
+        { error: 'Profile not found. Cannot save video.' },
+        { status: 500 }
+      )
+    }
+    return NextResponse.json({ url, thumbnailUrl, videoId: res.rows[0].id })
   } finally {
     client.release()
   }

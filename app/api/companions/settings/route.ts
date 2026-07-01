@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const { whatsapp_number, instagram_handle, website_url, is_live } = body
 
-  if (whatsapp_number && !/^\+[1-9]\d{6,14}$/.test(String(whatsapp_number))) {
+  if (whatsapp_number && !/^\+[1-9]\d{7,14}$/.test(String(whatsapp_number))) {
     return NextResponse.json(
       { error: 'Invalid WhatsApp number. Use E.164 format.' },
       { status: 400 }

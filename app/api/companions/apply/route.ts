@@ -23,7 +23,7 @@ function validate(body: Record<string, unknown>): string | null {
   if (!isAtLeast18(String(dateOfBirth))) return 'You must be 18 or older to apply.'
   if (!country || String(country).trim().length < 1) return 'Please select your country.'
   if (!city || String(city).trim().length < 1) return 'Please enter your city.'
-  if (whatsappNumber && !/^\+[1-9]\d{6,14}$/.test(String(whatsappNumber))) {
+  if (whatsappNumber && !/^\+[1-9]\d{7,14}$/.test(String(whatsappNumber))) {
     return 'Invalid WhatsApp number. Use E.164 format, e.g. +31612345678.'
   }
   const VALID_GENDERS = [
@@ -109,6 +109,8 @@ export async function POST(req: NextRequest) {
       (displayName && String(displayName).trim()) || cleanName.split(' ')[0] || cleanName
     )
 
+    await client.query('BEGIN')
+
     await client.query(
       `INSERT INTO companions
         (id, email, name, alias, full_name, date_of_birth, country, whatsapp_number,
@@ -179,11 +181,14 @@ export async function POST(req: NextRequest) {
       [id, now]
     )
 
+    await client.query('COMMIT')
+
     // Issue session cookie so companion lands on /status automatically
     const res = NextResponse.json({ success: true, redirectTo: '/status?new=1' }, { status: 201 })
     res.headers.set('Set-Cookie', buildSessionCookie(id, cleanEmail, displayOrFirst))
     return res
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => {})
     console.error('[apply]', err)
     return NextResponse.json(
       { error: 'Something went wrong creating your account. Please try again.' },

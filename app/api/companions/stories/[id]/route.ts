@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { pool } from '@/lib/db'
 import { getSession } from '@/lib/session'
 
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { id } = await params
+  const client = await pool.connect()
+  try {
+    const res = await client.query(
+      `SELECT id, title, body, excerpt, moderation_status, created_at, updated_at
+       FROM stories
+       WHERE id = $1 AND author_companion_id = $2 AND deleted_at IS NULL`,
+      [id, session.sub]
+    )
+    if (res.rows.length === 0) return NextResponse.json({ error: 'Story not found.' }, { status: 404 })
+    return NextResponse.json(res.rows[0])
+  } finally {
+    client.release()
+  }
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

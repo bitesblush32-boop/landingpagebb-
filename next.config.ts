@@ -19,6 +19,10 @@ const nextConfig: NextConfig = {
         source: '/(login|status|reapply)',
         headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
       },
+      {
+        source: '/:file(logo.png|logo_light.png|og-image.png|favicon.png)',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
     ]
   },
 }

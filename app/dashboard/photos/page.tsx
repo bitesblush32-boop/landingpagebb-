@@ -159,17 +159,27 @@ export default function PhotosPage() {
   }
 
   async function setPrimary(id: string) {
-    await fetch('/api/companions/photos/set-primary', {
+    const r = await fetch('/api/companions/photos/set-primary', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}))
+      setError((d as { error?: string }).error ?? 'Failed to set primary photo.')
+      return
+    }
     setPhotos((prev) => prev.map((p) => ({ ...p, is_primary: p.id === id })))
   }
 
   async function deletePhoto(id: string) {
     if (!confirm('Delete this photo?')) return
-    await fetch(`/api/companions/photos/${id}`, { method: 'DELETE' })
+    const r = await fetch(`/api/companions/photos/${id}`, { method: 'DELETE' })
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}))
+      setError((d as { error?: string }).error ?? 'Failed to delete photo.')
+      return
+    }
     setPhotos((prev) => prev.filter((p) => p.id !== id))
   }
 
