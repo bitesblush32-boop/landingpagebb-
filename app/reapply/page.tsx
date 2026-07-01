@@ -191,7 +191,7 @@ export default function ReapplyPage() {
     return (
       <div style={S.page}>
         <div style={S.wrap}>
-          <img src="/logo.png" alt="BlushBite" style={{ height: 36, marginBottom: 32, display: 'block' }} />
+          <img src="/logo.png" alt="BlushBite" style={{ height: 70, marginBottom: 32, display: 'block' }} />
           <div
             style={{
               height: 200,
@@ -208,7 +208,7 @@ export default function ReapplyPage() {
   return (
     <div style={S.page}>
       <div style={S.wrap}>
-        <img src="/logo.png" alt="BlushBite" style={{ height: 36, marginBottom: 32, display: 'block' }} />
+        <img src="/logo.png" alt="BlushBite" style={{ height: 70, marginBottom: 32, display: 'block' }} />
         <div style={S.card}>
           <div
             style={{

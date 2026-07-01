@@ -124,7 +124,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         className="bb-sidebar"
       >
         <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid #1c2333' }}>
-          <img src="/logo.png" alt="BlushBite" style={{ height: 28, marginBottom: 16, display: 'block' }} />
+          <img src="/logo.png" alt="BlushBite" style={{ height: 70, marginBottom: 16, display: 'block' }} />
           {me && (
             <div>
               <div style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0', marginBottom: 2 }}>

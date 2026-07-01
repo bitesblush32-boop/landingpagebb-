@@ -1349,9 +1349,7 @@ export default function HomePage() {
           borderBottom: '1px solid #1c2333',
         }}
       >
-        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20, color: '#eeeef0' }}>
-          BlushBite
-        </span>
+        <img src="/logo.png" alt="BlushBite" style={{ height: 70, display: 'block' }} />
         <div className="flex items-center gap-3">
           <a
             href="/login"
@@ -1694,7 +1692,7 @@ export default function HomePage() {
         style={{ borderTop: '1px solid #1c2333', color: '#4b5563' }}
       >
         <p className="mb-1.5">
-          <span style={{ fontFamily: 'var(--font-serif)', color: '#eeeef0' }}>BlushBite</span>
+          <img src="/logo.png" alt="BlushBite" style={{ height: 70, display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }} />
           {' · '}EU-hosted · GDPR compliant
         </p>
         <p>Your real name and data are never shared with dreamers.</p>
