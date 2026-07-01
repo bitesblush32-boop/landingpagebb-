@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { getExampleNumber, isValidPhoneNumber } from 'libphonenumber-js'
 import type { CountryCode } from 'libphonenumber-js'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -1340,6 +1341,58 @@ export default function HomePage() {
     <div
       style={{ background: '#07090f', color: '#eeeef0', minHeight: '100vh', overflowX: 'hidden' }}
     >
+      {/* ── JSON-LD structured data ── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@graph': [
+              {
+                '@type': 'Organization',
+                '@id': 'https://blushbite.live/#organization',
+                name: 'BlushBite',
+                url: 'https://blushbite.live',
+                logo: { '@type': 'ImageObject', url: 'https://blushbite.live/logo.png' },
+                description:
+                  'BlushBite is a premium adult companion platform hosted in the EU. Companions apply, build their profile, and connect with verified clients.',
+                areaServed: 'Worldwide',
+                knowsAbout: ['companion services', 'adult entertainment', 'escort platform'],
+                contactPoint: {
+                  '@type': 'ContactPoint',
+                  contactType: 'applications',
+                  email: 'hello@blushbite.co',
+                },
+              },
+              {
+                '@type': 'WebSite',
+                '@id': 'https://blushbite.live/#website',
+                url: 'https://blushbite.live',
+                name: 'BlushBite — Companion Portal',
+                publisher: { '@id': 'https://blushbite.live/#organization' },
+                inLanguage: 'en',
+              },
+              {
+                '@type': 'WebPage',
+                '@id': 'https://blushbite.live/#webpage',
+                url: 'https://blushbite.live',
+                name: 'Apply as a Companion — BlushBite',
+                isPartOf: { '@id': 'https://blushbite.live/#website' },
+                about: { '@id': 'https://blushbite.live/#organization' },
+                description:
+                  'Apply to join BlushBite as a companion. Build your private profile, post your stories and media, and connect with verified clients across Europe.',
+                inLanguage: 'en',
+                potentialAction: {
+                  '@type': 'RegisterAction',
+                  target: 'https://blushbite.live/#apply',
+                  name: 'Apply as a Companion',
+                },
+              },
+            ],
+          }),
+        }}
+      />
+
       {/* ── Nav ── */}
       <nav
         className="fixed top-0 left-0 right-0 z-[900] flex items-center justify-between px-4 sm:px-8 h-16"
@@ -1349,7 +1402,7 @@ export default function HomePage() {
           borderBottom: '1px solid #1c2333',
         }}
       >
-        <img src="/logo.png" alt="BlushBite" style={{ height: 70, display: 'block' }} />
+        <Image src="/logo.png" alt="BlushBite" width={200} height={70} style={{ height: 70, width: 'auto', display: 'block' }} />
         <div className="flex items-center gap-3">
           <a
             href="/login"
@@ -1692,7 +1745,7 @@ export default function HomePage() {
         style={{ borderTop: '1px solid #1c2333', color: '#4b5563' }}
       >
         <p className="mb-1.5">
-          <img src="/logo.png" alt="BlushBite" style={{ height: 70, display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }} />
+          <Image src="/logo.png" alt="BlushBite" width={60} height={20} style={{ height: 20, width: 'auto', display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }} />
           {' · '}EU-hosted · GDPR compliant
         </p>
         <p>Your real name and data are never shared with dreamers.</p>

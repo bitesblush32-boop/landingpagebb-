@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface CompanionMe {
   id: string
@@ -159,7 +160,7 @@ function StatusContent() {
     return (
       <div style={S.page}>
         <div style={S.wrap}>
-          <img src="/logo.png" alt="BlushBite" style={{ height: 70, marginBottom: 32, display: 'block' }} />
+          <Image src="/logo.png" alt="BlushBite" width={200} height={70} style={{ height: 70, width: 'auto', marginBottom: 32, display: 'block' }} />
           <div style={S.shimmer} />
         </div>
       </div>
@@ -171,7 +172,7 @@ function StatusContent() {
   return (
     <div style={S.page}>
       <div style={S.wrap}>
-        <img src="/logo.png" alt="BlushBite" style={{ height: 70, marginBottom: 32, display: 'block' }} />
+        <Image src="/logo.png" alt="BlushBite" width={200} height={70} style={{ height: 70, width: 'auto', marginBottom: 32, display: 'block' }} />
         <div style={S.card}>
           {me.status === 'pending' && (
             <>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 const GENDERS = [
   'woman',
@@ -191,7 +192,7 @@ export default function ReapplyPage() {
     return (
       <div style={S.page}>
         <div style={S.wrap}>
-          <img src="/logo.png" alt="BlushBite" style={{ height: 70, marginBottom: 32, display: 'block' }} />
+          <Image src="/logo.png" alt="BlushBite" width={200} height={70} style={{ height: 70, width: 'auto', marginBottom: 32, display: 'block' }} />
           <div
             style={{
               height: 200,
@@ -208,7 +209,7 @@ export default function ReapplyPage() {
   return (
     <div style={S.page}>
       <div style={S.wrap}>
-        <img src="/logo.png" alt="BlushBite" style={{ height: 70, marginBottom: 32, display: 'block' }} />
+        <Image src="/logo.png" alt="BlushBite" width={200} height={70} style={{ height: 70, width: 'auto', marginBottom: 32, display: 'block' }} />
         <div style={S.card}>
           <div
             style={{
