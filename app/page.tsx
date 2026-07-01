@@ -1355,8 +1355,13 @@ export default function HomePage() {
         <div className="flex items-center gap-3">
           <a
             href="/login"
-            className="hidden sm:block text-[13px]"
-            style={{ color: '#6b7280', textDecoration: 'none' }}
+            className="text-[13px] font-medium rounded-full px-3 min-h-[36px] inline-flex items-center transition-all duration-[150ms] active:scale-95"
+            style={{
+              color: '#eeeef0',
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              textDecoration: 'none',
+            }}
           >
             Sign in
           </a>

@@ -22,7 +22,25 @@ export async function POST(req: NextRequest) {
   }
 
   const c = rows[0]
-  const res = NextResponse.json({ ok: true })
+
+  // Determine where to send the companion after login
+  const statusRows = await query<{ review_status: string; is_live: boolean }>(
+    `SELECT cop.status AS review_status, COALESCE(cp.is_live, false) AS is_live
+     FROM companion_onboarding_progress cop
+     LEFT JOIN companion_profiles cp ON cp.companion_id = cop.companion_id
+     WHERE cop.companion_id = $1 AND cop.stage = 7
+     LIMIT 1`,
+    [c.id]
+  )
+
+  let redirectTo = '/status'
+  if (statusRows.length > 0) {
+    const { review_status, is_live } = statusRows[0]
+    if (review_status === 'completed' && is_live) redirectTo = '/dashboard'
+    else if (review_status === 'rejected') redirectTo = '/reapply'
+  }
+
+  const res = NextResponse.json({ ok: true, redirectTo })
   res.headers.set('Set-Cookie', buildSessionCookie(c.id, c.email, c.name ?? ''))
   return res
 }

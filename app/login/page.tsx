@@ -91,7 +91,8 @@ function LoginForm() {
         return
       }
       setVerified(true)
-      setTimeout(() => router.push(next), 900)
+      const destination = data.redirectTo ?? next
+      setTimeout(() => { window.location.href = destination }, 900)
     } finally {
       setLoading(false)
     }
@@ -217,13 +218,20 @@ function LoginForm() {
                 <button
                   onClick={sendCode}
                   disabled={loading}
-                  className="w-full rounded-xl text-[15px] font-medium min-h-[52px] transition-all duration-[150ms] active:scale-[0.98] active:opacity-90 disabled:opacity-60 cursor-pointer"
-                  style={{ background: '#e8607a', color: '#fff', border: 'none' }}
+                  className="w-full rounded-xl text-[15px] min-h-[52px] transition-all duration-[150ms] active:scale-[0.98] active:opacity-90 disabled:opacity-60 cursor-pointer"
+                  style={{
+                    background: '#f0ece4',
+                    color: '#0d1117',
+                    border: 'none',
+                    fontWeight: 600,
+                    letterSpacing: '0.03em',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.35)',
+                  }}
                   onMouseOver={(e) => {
-                    if (!loading) (e.currentTarget as HTMLElement).style.background = '#d45469'
+                    if (!loading) (e.currentTarget as HTMLElement).style.background = '#e2ddd6'
                   }}
                   onMouseOut={(e) => {
-                    ;(e.currentTarget as HTMLElement).style.background = '#e8607a'
+                    ;(e.currentTarget as HTMLElement).style.background = '#f0ece4'
                   }}
                 >
                   {loading ? 'Sending…' : 'Send login code'}
@@ -340,8 +348,15 @@ function LoginForm() {
                     <button
                       onClick={() => verifyCode()}
                       disabled={loading || digits.join('').length < 6}
-                      className="w-full rounded-xl text-[15px] font-medium min-h-[52px] transition-all duration-[150ms] active:scale-[0.98] disabled:opacity-40 cursor-pointer mb-5"
-                      style={{ background: '#e8607a', color: '#fff', border: 'none' }}
+                      className="w-full rounded-xl text-[15px] min-h-[52px] transition-all duration-[150ms] active:scale-[0.98] disabled:opacity-40 cursor-pointer mb-5"
+                      style={{
+                        background: '#f0ece4',
+                        color: '#0d1117',
+                        border: 'none',
+                        fontWeight: 600,
+                        letterSpacing: '0.03em',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.35)',
+                      }}
                     >
                       {loading ? 'Verifying…' : 'Enter'}
                     </button>
