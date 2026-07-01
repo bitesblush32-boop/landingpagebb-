@@ -14,7 +14,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const res = await client.query(
       `UPDATE stories SET
          title    = COALESCE($1, title),
-         content  = COALESCE($2, content),
+         body     = COALESCE($2, body),
          excerpt  = COALESCE($3, excerpt),
          moderation_status = 'pending',
          updated_at = NOW()

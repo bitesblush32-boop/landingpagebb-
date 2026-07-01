@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
          status = COALESCE($1, status),
          companion_notes = COALESCE($2, companion_notes),
          updated_at = NOW()
-       WHERE id = $3 AND companion_id = $4`,
+       WHERE id = $3 AND companion_profile_id = (SELECT id FROM companion_profiles WHERE companion_id = $4)`,
       [status ?? null, companion_notes ?? null, id, session.sub]
     )
     if (res.rowCount === 0)

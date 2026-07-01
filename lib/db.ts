@@ -19,8 +19,6 @@ function createPool(): Pool {
 }
 
 // Singleton — reused across hot-reloads in dev and across requests in prod
-// Setting to undefined forces a fresh pool when this module is re-evaluated
-global._pgPool = undefined
 export const pool: Pool = global._pgPool ?? (global._pgPool = createPool())
 
 /** Convenience: run a query with automatic connection management */

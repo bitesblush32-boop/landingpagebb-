@@ -111,7 +111,7 @@ export async function DELETE() {
       [session.sub]
     )
     await client.query(
-      `UPDATE companions SET deactivated_at = NOW(), updated_at = NOW() WHERE id = $1`,
+      `UPDATE companions SET onboarding_complete = false, updated_at = NOW() WHERE id = $1`,
       [session.sub]
     )
     return NextResponse.json({ ok: true })

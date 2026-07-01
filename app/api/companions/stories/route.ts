@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   try {
     await client.query(
       `INSERT INTO stories
-        (id, title, content, excerpt, author_companion_id, moderation_status,
+        (id, title, body, excerpt, author_companion_id, moderation_status,
          like_count, view_count, comment_count, save_count, created_at, updated_at)
        VALUES ($1,$2,$3,$4,$5,'pending',0,0,0,0,NOW(),NOW())`,
       [id, title ?? null, content, excerpt ?? null, session.sub]
