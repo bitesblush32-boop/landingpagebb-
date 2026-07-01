@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   title: 'BlushBite — Apply as a Companion',
   description:
     'Build your private world on BlushBite. Apply as a companion — curated, verified, and entirely yours.',
-  icons: { icon: '/favicon.png' },
+  icons: { icon: '/favicon.png', apple: '/logo.png' },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

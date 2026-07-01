@@ -35,11 +35,7 @@
         justify-content: space-between;
       }
       .header-logo {
-        font-family: Georgia, 'Times New Roman', serif;
-        font-size: 18px;
-        font-weight: 400;
-        color: #eeeef0;
-        letter-spacing: 0.03em;
+        display: block;
       }
       .header-right {
         display: flex;
@@ -452,7 +448,7 @@
   <body>
     <!-- Header -->
     <header class="header">
-      <span class="header-logo">BlushBite</span>
+      <img src="/logo.png" alt="BlushBite" class="header-logo" style="height:28px;" />
       <div class="header-right">
         <span class="alias-badge" id="alias-display"></span>
         <button class="logout-btn" onclick="logout()">Sign out</button>

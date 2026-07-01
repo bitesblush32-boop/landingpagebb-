@@ -92,13 +92,6 @@ export default function ReapplyPage() {
       padding: '32px 16px',
     },
     wrap: { width: '100%', maxWidth: 520 },
-    logo: {
-      fontFamily: 'var(--font-serif)',
-      fontSize: 20,
-      color: '#eeeef0',
-      display: 'block',
-      marginBottom: 32,
-    },
     card: {
       background: '#0d1117',
       border: '1px solid #1c2333',
@@ -198,7 +191,7 @@ export default function ReapplyPage() {
     return (
       <div style={S.page}>
         <div style={S.wrap}>
-          <span style={S.logo}>BlushBite</span>
+          <img src="/logo.png" alt="BlushBite" style={{ height: 36, marginBottom: 32, display: 'block' }} />
           <div
             style={{
               height: 200,
@@ -215,7 +208,7 @@ export default function ReapplyPage() {
   return (
     <div style={S.page}>
       <div style={S.wrap}>
-        <span style={S.logo}>BlushBite</span>
+        <img src="/logo.png" alt="BlushBite" style={{ height: 36, marginBottom: 32, display: 'block' }} />
         <div style={S.card}>
           <div
             style={{
