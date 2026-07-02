@@ -111,6 +111,8 @@ export const metadata: Metadata = {
     rating: 'adult',
     'RTA-label': 'RTA-5042-1996-1400-1577-RTA',
   },
+
+  themeColor: '#07090f',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
