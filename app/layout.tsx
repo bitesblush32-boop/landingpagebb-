@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Playfair_Display, DM_Sans } from 'next/font/google'
 import './globals.css'
+import { AgeGate } from '@/components/AgeGate'
+import { CookieBanner } from '@/components/CookieBanner'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -115,10 +117,35 @@ export const metadata: Metadata = {
   themeColor: '#07090f',
 }
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'BlushBite',
+  url: 'https://blushbite.live',
+  logo: 'https://blushbite.live/logo.png',
+  description:
+    'A private platform where adult companions advertise their time and companionship. EU-hosted, GDPR compliant, Netherlands.',
+  areaServed: 'Worldwide',
+  address: {
+    '@type': 'PostalAddress',
+    addressCountry: 'NL',
+  },
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
-      <body>{children}</body>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
+      <body>
+        <AgeGate />
+        <CookieBanner />
+        {children}
+      </body>
     </html>
   )
 }
