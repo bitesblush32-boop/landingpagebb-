@@ -9,21 +9,29 @@
 
 ## UNDERSTANDING THE CURRENT SYSTEM (Read Before Any Changes)
 
-### Current Registration Flow (what exists today)
+### Current Registration Flow (UPDATED — as built)
 ```
-1. Landing page (app/page.tsx) — 3-step wizard
-   Step 1: fullName, email, dateOfBirth, country, city, whatsappNumber
-   Step 2: displayName, gender, tagline, bio
-   Step 3: photo upload (optional)
+1. Root page (app/page.tsx) — server component, renders GenderPickerClient
+   - Shows female/male/shemale community picker
+   - 3-layer device binding: localStorage → fingerprint DB lookup → picker
+   - Authenticated users bypass picker → /dashboard
 
-2. POST /api/companions/apply/route.ts
-   - Validates fields
-   - Creates companions row (companion_stage=3, onboarding_complete=false)
-   - Creates companion_profiles row (is_live=false, is_visible_to_users=false, is_verified=false)
-   - Creates companion_photos row if photo provided (is_approved=false)
-   - Inserts companion_onboarding_progress stages 1 + 2 as 'completed'
-   - Sets session cookie
-   - Returns redirectTo: '/status?new=1'
+2. Community landing pages (app/[gender]/page.tsx + GenderLanding.tsx)
+   - /female, /male, /shemale — separate SEO-optimised landing pages
+   - 2-step apply form: (displayName + email + 18+agree + Terms) → OTP → create account
+
+3. POST /api/companions/apply/route.ts
+   - Validates displayName, email, agreeToTerms only
+   - Creates companions row (companion_stage=3, onboarding_complete=false, gender_community set)
+   - Creates companion_profiles row (is_live=TRUE, is_visible_to_users=TRUE)
+   - Inserts companion_onboarding_progress stages 1, 2, 7 as 'completed' (auto-approved)
+   - Sets session cookie + bb_community cookie
+   - Returns redirectTo: '/dashboard?welcome=1'
+
+4. Device binding (NEW)
+   - app/api/device/bind — POST: stores fingerprint_hash → community mapping
+   - app/api/device/community-lookup — GET: lookup community by fingerprint
+   - device_community_bindings table in DB
 
 3. /status page (app/status/page.tsx)
    - Fetches /api/companions/me
@@ -673,13 +681,408 @@ export default function sitemap() {
 }
 ```
 
-### E5. Geographic Landing Pages (Medium Term)
-Create `app/companions/[country]/[city]/page.tsx` as SSG:
-- Fetches approved, live companions in that city
-- SEO title: "[City] Companions — BlushBite"
-- Breadcrumb schema: BlushBite > Companions > [Country] > [City]
-- Start with: amsterdam, berlin, london, paris, brussels (EU focus)
-- Later: bangalore, mumbai, delhi (if India expansion planned)
+### E5. Geographic Landing Pages — Auto-Created on Companion Registration
+
+**The MassageRepublic play, applied to BlushBite.**
+
+MassageRepublic has 10,000+ city pages. Each one ranks for `"[city] escort"`, `"companions in [city]"`, `"time and companionship [city]"`. This is their entire organic acquisition engine. We replicate this exactly.
+
+---
+
+#### URL Structure
+
+```
+blushbite.co/[country-slug]/[city-slug]
+
+Examples:
+  blushbite.co/netherlands/amsterdam
+  blushbite.co/india/pune
+  blushbite.co/india/bangalore
+  blushbite.co/india/assam
+  blushbite.co/germany/berlin
+  blushbite.co/united-kingdom/london
+  blushbite.co/france/paris
+  blushbite.co/belgium/brussels
+```
+
+No `/companions/` prefix — clean, direct, one-level country/city. Matches MassageRepublic's exact URL hierarchy.
+
+---
+
+#### How City Pages Get Created (Auto-Trigger)
+
+**A city page does NOT need manual creation.** It auto-exists for any city that has at least one live companion.
+
+The flow:
+```
+1. Companion registers on blushbite.live → enters city = "Pune", country = "India"
+2. apply/route.ts slugifies: city_slug = "pune", country_slug = "india"
+   and writes city_slug + country_slug to companion_profiles row
+3. blushbite.co/[country]/[city]/page.tsx queries:
+   SELECT * FROM companion_profiles
+   WHERE country_slug = $1 AND city_slug = $2
+   AND is_live = true AND is_visible_to_users = true
+4. Page exists and is indexable the moment the first companion in that city goes live
+5. generateStaticParams() builds the list of all city pages at build time + ISR
+   refreshes hourly — new cities appear within 1 hour without a redeploy
+```
+
+**Result:** Assam gets its first companion → `blushbite.co/india/assam` is live within the hour. Zero manual work.
+
+---
+
+#### DB Migration (blushbite.live + blushbite.co — shared DB)
+
+```sql
+-- Add slug columns to companion_profiles
+ALTER TABLE companion_profiles
+  ADD COLUMN IF NOT EXISTS city_slug VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS country_slug VARCHAR(100);
+
+-- Index for fast geo queries (used by every city page)
+CREATE INDEX IF NOT EXISTS idx_companion_profiles_geo
+  ON companion_profiles(country_slug, city_slug)
+  WHERE is_live = true AND is_visible_to_users = true;
+
+-- Backfill existing rows (run once after migration)
+UPDATE companion_profiles cp
+SET
+  city_slug = lower(regexp_replace(
+    unaccent(trim(cp.city)), '[^a-z0-9]+', '-', 'g'
+  )),
+  country_slug = lower(regexp_replace(
+    unaccent(trim(c.country)), '[^a-z0-9]+', '-', 'g'
+  ))
+FROM companions c
+WHERE cp.companion_id = c.id
+  AND cp.city IS NOT NULL
+  AND c.country IS NOT NULL;
+```
+
+---
+
+#### E5a. Slug Helper — `lib/slug.ts` (blushbite.live)
+
+New file to create:
+
+```typescript
+// lib/slug.ts
+export function toSlug(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD')                        // decompose accented chars
+    .replace(/[\u0300-\u036f]/g, '')         // strip diacritics (é→e, ü→u)
+    .replace(/[^a-z0-9]+/g, '-')            // non-alphanumeric → hyphen
+    .replace(/^-+|-+$/g, '')                 // trim leading/trailing hyphens
+}
+
+// "New Delhi" → "new-delhi"
+// "São Paulo" → "sao-paulo"
+// "Bengaluru" → "bengaluru"
+// "United Kingdom" → "united-kingdom"
+```
+
+---
+
+#### E5b. Write Slugs on Registration — `app/api/companions/apply/route.ts` (blushbite.live)
+
+In the existing `apply/route.ts`, after the `companion_profiles` INSERT, also write the slugs.
+
+**Change the INSERT query to include city_slug and country_slug:**
+
+```typescript
+// In the INSERT INTO companion_profiles VALUES block, add these two columns:
+// city_slug and country_slug computed from city and country
+
+import { toSlug } from '@/lib/slug'
+
+// Before the INSERT:
+const citySlug = city ? toSlug(String(city)) : null
+const countrySlug = country ? toSlug(String(country)) : null
+
+// Add to the INSERT columns and VALUES:
+// columns: ..., city_slug, country_slug
+// values:  ..., $15,       $16
+// params:  ..., citySlug,  countrySlug
+```
+
+Also add slug writes to the profile PATCH route (`app/api/companions/profile/route.ts`) so updating city/country later also updates the slugs.
+
+---
+
+#### E5c. Geographic Page — `app/[country]/[city]/page.tsx` (blushbite.co)
+
+**This lives in the blushbite.co codebase — note for that session.**
+
+```typescript
+// app/[country]/[city]/page.tsx
+// Server Component — SSG + ISR
+
+import type { Metadata } from 'next'
+import { query } from '@/lib/db'
+import { notFound } from 'next/navigation'
+
+// Build static params from all live city+country combos in DB
+export async function generateStaticParams() {
+  const rows = await query<{ country_slug: string; city_slug: string }>(
+    `SELECT DISTINCT country_slug, city_slug
+     FROM companion_profiles
+     WHERE is_live = true
+       AND is_visible_to_users = true
+       AND country_slug IS NOT NULL
+       AND city_slug IS NOT NULL`
+  )
+  return rows.map(r => ({ country: r.country_slug, city: r.city_slug }))
+}
+
+// Revalidate hourly — new companion registrations appear within 1 hour
+export const revalidate = 3600
+
+// SEO metadata per page
+export async function generateMetadata(
+  { params }: { params: { country: string; city: string } }
+): Promise<Metadata> {
+  const cityDisplay = params.city.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  const countryDisplay = params.country.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  return {
+    title: `${cityDisplay} Companions — Time & Companionship | BlushBite`,
+    description: `Browse companions in ${cityDisplay}, ${countryDisplay} available for time and companionship. Verified profiles. BlushBite — EU-hosted, GDPR compliant.`,
+    alternates: {
+      canonical: `https://blushbite.co/${params.country}/${params.city}`,
+    },
+    robots: { index: true, follow: true },
+  }
+}
+
+export default async function CityPage(
+  { params }: { params: { country: string; city: string } }
+) {
+  const cityDisplay = params.city.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  const countryDisplay = params.country.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+
+  const companions = await query(
+    `SELECT c.name, c.alias, cp.tagline, cp.bio, cp.city, cp.gender,
+            cp.hourly_rate, cp.currency, cp.availability_status,
+            ph.url as primary_photo
+     FROM companion_profiles cp
+     JOIN companions c ON c.id = cp.companion_id
+     LEFT JOIN companion_photos ph
+       ON ph.companion_profile_id = cp.id
+       AND ph.is_primary = true
+       AND ph.deleted_at IS NULL
+       AND ph.is_approved = true
+     WHERE cp.country_slug = $1
+       AND cp.city_slug = $2
+       AND cp.is_live = true
+       AND cp.is_visible_to_users = true
+     ORDER BY cp.profile_completeness DESC, cp.updated_at DESC`,
+    [params.country, params.city]
+  )
+
+  // 404 if no companions in this city yet
+  if (companions.length === 0) notFound()
+
+  // JSON-LD: BreadcrumbList (MassageRepublic pattern)
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'BlushBite', item: 'https://blushbite.co' },
+      { '@type': 'ListItem', position: 2, name: countryDisplay,
+        item: `https://blushbite.co/${params.country}` },
+      { '@type': 'ListItem', position: 3, name: `${cityDisplay} Companions`,
+        item: `https://blushbite.co/${params.country}/${params.city}` },
+    ],
+  }
+
+  // JSON-LD: ItemList of companions
+  const listingJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: `Companions in ${cityDisplay}`,
+    description: `Adults advertising their time and companionship in ${cityDisplay}, ${countryDisplay}`,
+    numberOfItems: companions.length,
+  }
+
+  return (
+    <>
+      <script type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(listingJsonLd) }} />
+
+      {/* Page content — companion grid + SEO copy */}
+      {/* H1 MUST contain the city name + "time and companionship" framing */}
+      <h1>{cityDisplay} — Time & Companionship</h1>
+      <p>
+        {companions.length} companion{companions.length !== 1 ? 's' : ''} available in {cityDisplay}, {countryDisplay}.
+        This website only allows adult individuals to advertise their time and companionship
+        to other adult individuals.
+      </p>
+
+      {/* Companion cards grid */}
+      {/* ... */}
+    </>
+  )
+}
+```
+
+---
+
+#### E5d. Country Index Page — `app/[country]/page.tsx` (blushbite.co)
+
+One level up — lists all cities in a country that have live companions.
+
+```
+blushbite.co/india → lists: Pune · Bangalore · Mumbai · Assam · ...
+blushbite.co/netherlands → lists: Amsterdam · Rotterdam · The Hague · ...
+```
+
+```typescript
+// Query for country index:
+SELECT DISTINCT city_slug, city, COUNT(*) as companion_count
+FROM companion_profiles
+WHERE country_slug = $1
+  AND is_live = true AND is_visible_to_users = true
+GROUP BY city_slug, city
+ORDER BY companion_count DESC
+
+// SEO title: "India Companions — Browse by City | BlushBite"
+// BreadcrumbList: BlushBite → India
+```
+
+---
+
+#### E5e. Sitemap Integration (blushbite.co)
+
+Dynamic sitemap that includes every live city page:
+
+```typescript
+// app/sitemap.ts (blushbite.co)
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const staticPages = [
+    { url: 'https://blushbite.co', lastModified: new Date(), priority: 1.0 },
+    { url: 'https://blushbite.co/terms', lastModified: new Date(), priority: 0.3 },
+    { url: 'https://blushbite.co/privacy', lastModified: new Date(), priority: 0.3 },
+  ]
+
+  // Fetch all live city combinations
+  const cityRows = await query<{
+    country_slug: string; city_slug: string; last_active: Date
+  }>(
+    `SELECT DISTINCT country_slug, city_slug,
+       MAX(updated_at) as last_active
+     FROM companion_profiles
+     WHERE is_live = true AND is_visible_to_users = true
+       AND country_slug IS NOT NULL AND city_slug IS NOT NULL
+     GROUP BY country_slug, city_slug`
+  )
+
+  const cityPages = cityRows.map(r => ({
+    url: `https://blushbite.co/${r.country_slug}/${r.city_slug}`,
+    lastModified: r.last_active,
+    changeFrequency: 'daily' as const,
+    priority: 0.8,
+  }))
+
+  // Country index pages
+  const countryRows = await query<{ country_slug: string }>(
+    `SELECT DISTINCT country_slug FROM companion_profiles
+     WHERE is_live = true AND is_visible_to_users = true
+       AND country_slug IS NOT NULL`
+  )
+  const countryPages = countryRows.map(r => ({
+    url: `https://blushbite.co/${r.country_slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
+  }))
+
+  return [...staticPages, ...countryPages, ...cityPages]
+}
+```
+
+---
+
+#### E5f. SEO Copy Pattern (MassageRepublic framing — required on every city page)
+
+Every city page MUST include this exact language pattern to satisfy Google SafeSearch and Netherlands DSA safe harbour:
+
+```
+DISCLAIMER (shown above the fold, small text):
+"This website only allows adult individuals to advertise their time and
+companionship to other adult individuals. BlushBite is an advertising
+platform only. Users are responsible for compliance with all local laws."
+
+H1: "[City] — Time & Companionship"
+H2: "Companions available in [City], [Country]"
+Meta description: "Browse companions in [City] available for time and
+companionship. Verified profiles. EU-hosted · GDPR compliant · BlushBite."
+```
+
+**Never use on public/indexable pages:** "escort", "sex", "sexual services", "prostitution", "adult services". Only: "time", "companionship", "companion", "advertise", "private".
+
+---
+
+#### E5g. robots.txt addition (blushbite.co)
+
+```
+User-agent: *
+Allow: /
+Allow: /[country]/
+Allow: /[country]/[city]/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /admin/
+Sitemap: https://blushbite.co/sitemap.xml
+```
+
+---
+
+#### E5h. Implementation Files Summary
+
+**blushbite.live (this codebase):**
+```
+lib/slug.ts                               — NEW: toSlug() helper
+app/api/companions/apply/route.ts         — MODIFY: add city_slug + country_slug on INSERT
+app/api/companions/profile/route.ts       — MODIFY: update slugs on PATCH of city/country
+```
+
+**Database (shared — run once):**
+```sql
+ALTER TABLE companion_profiles ADD city_slug, ADD country_slug;
+CREATE INDEX idx_companion_profiles_geo ...;
+UPDATE companion_profiles ... (backfill)
+```
+
+**blushbite.co (separate codebase — note for that session):**
+```
+app/[country]/page.tsx                    — NEW: country index (lists cities)
+app/[country]/[city]/page.tsx             — NEW: city page (lists companions)
+app/sitemap.ts                            — MODIFY: add dynamic geo pages
+public/robots.txt                         — MODIFY: allow geo routes
+```
+
+---
+
+#### E5i. Priority Start Cities
+
+When deploying, these 10 cities will have the most search volume to capture first:
+
+| Country | City | Target keyword | Slug |
+|---|---|---|---|
+| Netherlands | Amsterdam | amsterdam companions | `/netherlands/amsterdam` |
+| Germany | Berlin | berlin time and companionship | `/germany/berlin` |
+| United Kingdom | London | london companions | `/united-kingdom/london` |
+| France | Paris | paris companionship | `/france/paris` |
+| Belgium | Brussels | brussels escorts companionship | `/belgium/brussels` |
+| India | Bangalore | bangalore companions shemale | `/india/bangalore` |
+| India | Mumbai | mumbai time companionship | `/india/mumbai` |
+| India | Delhi | delhi escorts companionship | `/india/delhi` |
+| India | Pune | pune companions | `/india/pune` |
+| Switzerland | Zurich | zurich companionship | `/switzerland/zurich` |
+
+Once these 10 have even 1–2 live companions each, the pages are indexable and ranking begins.
 
 ---
 
@@ -823,56 +1226,118 @@ For taken_down: show red "Profile paused — contact support" badge.
 
 ## EXECUTION ORDER (Priority Sequence)
 
-```
-SPRINT 1 — Legal Foundation (Do Before Any Marketing — 2-3 days)
-  [ ] C1 — Age gate component (AgeGate.tsx)
-  [ ] C2 — Terms & Conditions page (app/terms/page.tsx)
-  [ ] C3 — Privacy Policy page (app/privacy/page.tsx)
-  [ ] C4 — Cookie consent banner (CookieBanner.tsx)
-  [ ] C5 — Footer links updated on landing page
+Legend: [x] = done | [ ] = pending | [~] = partially done
 
-SPRINT 2 — Instant Live (Core Flow Change — 1-2 days)
-  [ ] A1 — apply/route.ts: set is_live=true, is_visible_to_users=true, insert stage 7, redirectTo /dashboard?welcome=1
-  [ ] A2 — me/route.ts: change status logic (approved by default, taken_down state)
-  [ ] A3 — login/verify-otp/route.ts: default redirect to /dashboard
-  [ ] A4 — dashboard/layout.tsx: remove lock logic, all nav unlocked
-  [ ] A5 — page.tsx: update success screen copy
-  [ ] A6 — status/page.tsx: add taken_down state, remove pending state
+```
+SPRINT 0 — Gender Community System (COMPLETE)
+  [x] Gender picker root page (app/page.tsx → GenderPickerClient.tsx)
+  [x] Community landing pages app/[gender]/page.tsx + GenderLanding.tsx
+  [x] 3-layer device binding: localStorage + fingerprint + DB
+  [x] app/api/device/bind and app/api/device/community-lookup
+  [x] device_community_bindings table in DB (migration run)
+  [x] companions.gender_community column in DB (migration run)
+  [x] middleware.ts: / route → authenticated → /dashboard, cookie → /community
+  [x] lib/session.ts: buildCommunityCookie() helper
+  [x] apply/route.ts: gender_community, bb_community cookie on response
+  [x] login/verify-otp/route.ts: bb_community cookie on response
+  [x] sitemap.ts: /female, /male, /shemale as priority-1 entries
+
+SPRINT 1 — Legal Foundation (Do Before Any Marketing)
+  [x] C1 — Age gate component (components/AgeGate.tsx) — built + wired in layout.tsx
+  [x] C2 — Terms & Conditions page (app/terms/page.tsx) — page exists
+  [x] C3 — Privacy Policy page (app/privacy/page.tsx) — page exists
+  [x] C4 — Cookie consent banner (components/CookieBanner.tsx) — built + wired in layout.tsx
+  [x] C5 — Footer links in GenderLanding.tsx — terms, privacy, guidelines linked
+
+SPRINT 2 — Instant Live (Core Flow Change)
+  [x] A1 — apply/route.ts: is_live=true, is_visible_to_users=true, stage 7 auto-complete, redirectTo /dashboard?welcome=1
+  [x] A2 — me/route.ts: taken_down when review_status=completed & is_live=false
+  [x] A3 — login/verify-otp/route.ts: already defaults to /dashboard, only /reapply for rejected
+  [x] A4 — dashboard/layout.tsx: no lock logic present — all nav freely accessible
+  [x] A5 — Success state: GenderLanding ApplyForm shows "Your stage is waiting" + dashboard link
+  [x] A6 / H2 — status/page.tsx: taken_down state added, pending removed
   [ ] NOTE admin panel (blushbite.co): change Approve→TakeDown in that codebase separately
 
-SPRINT 3 — Onboarding Simplification (1-2 days)
-  [ ] B1 — Rewrite app/page.tsx wizard to 2-step (email+name+agree → OTP)
-  [ ] B2 — Update apply/route.ts validate() — remove required checks on fullName, DOB, country, city
-  [ ] B3 — Update dashboard/profile/page.tsx — add fullName, DOB, country fields
-  [ ] B4 — Update profile/route.ts PATCH — handle fullName, dateOfBirth updates
-  [ ] B5 — Add "Required for compliance" notice on profile page for legal fields
+SPRINT 3 — Onboarding Simplification
+  [x] B1 — 2-step apply form in GenderLanding.tsx (displayName + email + agree → OTP)
+  [x] B2 — apply/route.ts validate(): only requires displayName, email, agreeToTerms
+  [x] B3 — dashboard/profile/page.tsx: add fullName, DOB, country fields (already implemented)
+  [x] B4 — profile/route.ts PATCH: handle fullName, dateOfBirth updates (already implemented)
+  [x] B5 — "Required for compliance" notice on profile page (already implemented)
 
-SPRINT 4 — Trust Signals (1 day)
-  [ ] D1 — DB migration: add photo_verification_status column
-  [ ] D2 — photos/route.ts: add field to GET
-  [ ] D3 — dashboard/photos/page.tsx: update badge logic
-  [ ] H1 — Welcome banner on dashboard/page.tsx with onboarding checklist
-  [ ] E1 — Meta tags in app/layout.tsx
-  [ ] E2 — JSON-LD in app/layout.tsx
-  [ ] E3 — robots.txt
-  [ ] E4 — sitemap.ts
+SPRINT 4 — Trust Signals + SEO Foundation
+  [x] D1 — DB migration: photo_verification_status column added
+  [x] D2 — photos/route.ts: photo_verification_status in GET
+  [x] D3 — dashboard/photos/page.tsx: 3-state badge (Verified/Approved/Pending)
+  [x] H1 — Welcome banner on dashboard/page.tsx with onboarding checklist (already implemented)
+  [x] H3 — Sidebar completeness bar always shown (already the case — no approval gate)
+  [x] H4 — Sidebar taken_down badge: amber "Profile paused" with support link
+  [x] E1 — Verify meta tags in app/layout.tsx (comprehensive metadata already in place)
+  [x] E2 — JSON-LD Organization schema in app/layout.tsx (already implemented)
+  [x] E3 — public/robots.txt (already exists with correct disallow rules)
+  [x] E4 — sitemap.ts (gender community pages included)
+  [x] E5a — Create lib/slug.ts with toSlug() helper
+  [~] E5b — apply/route.ts: city/country not collected at apply time (simplified flow) — slugs written via profile PATCH
+  [x] E5b — profile/route.ts PATCH: city_slug + country_slug written on every city/country update
+  [x] E5 DB — ALTER TABLE companion_profiles: city_slug + country_slug added, geo index created, 11 rows backfilled
+
+SPRINT 4b — Landing Page Frontend Polish (NEW — see Section I)
+  [x] I1 — Age gate (same as C1 — already built)
+  [x] I2 — Noise texture overlay on GenderLanding.tsx
+  [x] I3 — Fix community grid color (use cfg.accentGrid per community)
+  [x] I4 — Fix success state copy contradiction ("is live" vs "toggle visible")
+  [x] I5 — Replaced "Fast, transparent payments" with "Full booking management"
+  [x] I6 — Community-specific hero copy for all 3 (heroH1, heroEm, heroSub per community)
+  [x] I7 — Live stats bar from DB (companion count + city count per community)
+  [x] I8 — JSON-LD per community page (Organization schema in [gender]/page.tsx)
+  [x] I9 — Companion Guidelines page (app/companion-guidelines/page.tsx)
+  [x] I10 — Mobile nav crowding fix (← text hidden on mobile, icon only)
+  [x] I11 — CTA copy: "Begin your journey" + "See what's inside ↓"
+
+SPRINT 4b-geo — Geographic Pages on blushbite.co (separate codebase session)
+  [x] E5 DB — city_slug + country_slug already added to companion_profiles in Sprint 4
+  [x] E5c — app/[country]/[city]/page.tsx — city page with companion grid, JSON-LD BreadcrumbList + ItemList, ISR hourly
+  [x] E5d — app/[country]/page.tsx — country index listing all cities with counts
+  [x] E5e — app/sitemap.ts on blushbite.co — dynamic geo sitemap with try/catch fallback
+  [x] E5f — SEO copy on all pages ("time and companionship" framing + legal disclaimer above fold)
+  [x] E5g — robots.ts on blushbite.co — Allow: /*/*  added
+  [x] app/[country]/layout.tsx — lightweight geo layout: noise texture, header with logo + Enter CTA, legal footer
+  [ ] Seed 10 priority cities — needs live companions in each city (organic as companions register)
 
 SPRINT 5 — Communications (1 day)
-  [ ] G1 — sendWelcomeEmail in lib/email.ts
-  [ ] G1 — Call sendWelcomeEmail from apply/route.ts after COMMIT
-  [ ] G1 — WhatsApp welcome message from apply/route.ts (if whatsappNumber provided)
+  [x] G1 — sendWelcomeEmail called after COMMIT in apply/route.ts (confirmed)
+  [~] G1 — WhatsApp: apply flow doesn't collect number — WhatsApp API not yet integrated (future)
+  [x] G2–G4 — Drip emails implemented:
+              - companion_nudges table created in DB (tracks sent nudges, prevents duplicates)
+              - sendProfileNudgeEmail (T+4h, completeness < 30) added to lib/email.ts
+              - sendPhotoNudgeEmail (T+24h, no photos) added to lib/email.ts
+              - sendGoLiveNudgeEmail (T+72h, is_live=false) added to lib/email.ts
+              - app/api/cron/drip/route.ts created — POST, secured with CRON_SECRET
+              - Railway setup: add Cron Job service in dashboard, schedule every 15 min,
+                command: curl -s -X POST https://blushbite.live/api/cron/drip -H "Authorization: Bearer $CRON_SECRET"
+              - Required env var: CRON_SECRET (set in Railway dashboard)
 
 SPRINT 6 — Revenue Foundation (1 week)
-  [ ] F1 — Apply to CCBill (requires legal pages to be done first)
-  [ ] F2 — DB migration: companion_subscriptions table
-  [ ] F3 — app/dashboard/upgrade/page.tsx
-  [ ] F4 — api/companions/subscription route
-  [ ] F4 — api/webhooks/ccbill route
-  [ ] F4 — lib/subscription.ts tier check helper
+  [ ] F1 — Apply to CCBill at ccbill.com (manual step — needs NL company reg + legal pages)
+            Required env vars once approved:
+              CCBILL_ACCOUNT_NUMBER, CCBILL_SUBACC_STANDARD, CCBILL_SUBACC_PREMIUM,
+              CCBILL_FORM_NAME, CCBILL_SALT
+            Webhook URL to set in CCBill admin: https://blushbite.live/api/webhooks/ccbill
+            Events to enable: NewSaleSuccess, Cancellation, Expiration, RenewalSuccess
+  [x] F2 — DB migration: companion_subscriptions table + active index
+  [x] F3 — app/dashboard/upgrade/page.tsx — 3-tier comparison (Free/Standard €29/Premium €59)
+            + upgrade button → CCBill redirect, current plan badge, period end date
+  [x] F4 — lib/subscription.ts: getCompanionTier, getCompanionSubscription, buildCCBillUrl, TIERS
+  [x] F4 — api/companions/subscription/route.ts: GET (current sub), POST (→ CCBill redirect URL)
+  [x] F4 — api/webhooks/ccbill/route.ts: NewSaleSuccess, RenewalSuccess, Cancellation, Expiration
+            + MD5 digest verification
+  [x] F4 — api/companions/me: tier field added to response
+  [x] F4 — dashboard/layout.tsx sidebar: tier badge (premium/standard) or "upgrade" link (free)
+            + "Upgrade" nav item added
 
 SPRINT 7 — SEO Growth (ongoing)
-  [ ] E5 — Geographic landing pages (start with 5 EU cities)
-  [ ] Add more cities as companion base grows
+  [x] E5 — Geographic landing pages built (see SPRINT 4b-geo above)
+  [ ] Seed companions in 10 priority cities to activate first pages (organic growth)
 ```
 
 ---
@@ -911,6 +1376,133 @@ Your profile will be reviewed. Violations result in:
 
 How to appeal: support@blushbite.live
 ```
+
+---
+
+## SECTION I — GENDER LANDING PAGE FRONTEND IMPROVEMENTS
+
+Analysis source: review of GenderLanding.tsx, read.md, research.md (July 2026)
+
+### I1. Age Gate (CRITICAL — legal + Google SafeSearch)
+**File:** `components/AgeGate.tsx` + add to `app/layout.tsx`
+- See full spec in C1 above — same component
+- First visit to ANY page shows fullscreen overlay
+- "I am 18 or older — Enter" and "Exit" (redirects to google.com)
+- localStorage `bb_age_confirmed = '1'` + cookie `bb_age=1` on confirm
+- Must NOT render server-side — use mounted state pattern
+
+### I2. Noise Texture Overlay
+**File:** `app/[gender]/GenderLanding.tsx`
+Per `read.md` Section 5 — this overlay is REQUIRED on all full-page screens:
+```html
+<div style="
+  position:fixed; inset:0; pointer-events:none; z-index:1000; opacity:0.6;
+  background-image:url('data:image/svg+xml,...fractalNoise...')
+"></div>
+```
+Add as first child inside the root `<div>` of GenderLanding.
+
+### I3. Fix Community Grid Color
+**File:** `app/[gender]/GenderLanding.tsx` (hero section, lines ~583-587)
+The hero grid background is hardcoded to rose `rgba(232,96,122,.04)` for ALL communities.
+`/male` and `/shemale` show a rose grid which conflicts with their accent colors.
+Fix: use `cfg.accentColor` with low opacity for the grid lines:
+```typescript
+// Replace hardcoded rgba(232,96,122,.04) with dynamic:
+const accentAlpha = (opacity: number) => {
+  const [r,g,b] = cfg.accentColor  // parse the hex
+  return `rgba(r,g,b,${opacity})`
+}
+// Or simpler: add accentGridColor to COMMUNITY_CONFIG
+female: { accentGridColor: 'rgba(232,96,122,.04)' }
+male:   { accentGridColor: 'rgba(96,165,250,.04)' }
+shemale:{ accentGridColor: 'rgba(192,132,252,.04)' }
+```
+
+### I4. Fix Success State Copy Contradiction
+**File:** `app/[gender]/GenderLanding.tsx` ApplyForm success state (~line 502)
+Current copy: "Your profile is live. Add photos... then **toggle yourself visible to dreamers**."
+Problem: "is live" AND "toggle visible" contradict. apply/route.ts sets is_visible_to_users=TRUE immediately.
+Fix: Remove the toggle instruction. New copy:
+```
+"Your profile is live. Dreamers can already find you.
+Add photos, write your story, and set your rate to attract your first bookings."
+```
+
+### I5. Remove Fake Payments Promise
+**File:** `app/[gender]/GenderLanding.tsx` FEATURES array (~line 44)
+The "Fast, transparent payments" feature card promises something that isn't built yet.
+Remove it or replace with: "Full booking management" — describing the existing booking system.
+
+### I6. Community-Specific Hero Copy for /shemale
+**File:** `app/[gender]/GenderLanding.tsx` COMMUNITY_CONFIG + hero section
+The TS/shemale segment is BlushBite's highest-demand category (research.md). They've been
+lumped into "female" on every competitor platform. Specific copy for /shemale:
+```
+Badge: "TS & Shemale — your own community"
+H1: "Your world. Not a subcategory."
+Subtext: "BlushBite's TS community is fully separate — your own profiles, your own dreamers,
+your own stories. Not a filter on female. A space built for you."
+```
+Also update `/female` and `/male` hero subtexts to be more community-specific.
+
+### I7. Live Stats Bar from DB
+**File:** `app/[gender]/page.tsx` (server component) + `GenderLanding.tsx`
+Add a dynamic stat above or below the trust bar showing real counts per community:
+- Companion count for this community
+- Cities represented
+Query in the server component (page.tsx), pass as props to GenderLanding.
+```typescript
+// In page.tsx (server component):
+const stats = await query<{ count: number }>(
+  `SELECT COUNT(*) as count FROM companions
+   WHERE gender_community = $1`, [gender]
+)
+// Pass: companionCount={stats[0].count}
+```
+Display example: "127 companions · 23 cities · EU-verified"
+Even with low numbers initially, it adds social proof and authenticity.
+
+### I8. JSON-LD per Community Page
+**File:** `app/[gender]/page.tsx`
+Add Organization + WebPage structured data as `<script type="application/ld+json">`:
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "BlushBite",
+  "url": "https://blushbite.live/[gender]",
+  "description": "[gender-specific description]"
+}
+```
+Already handled via `generateMetadata` for title/description, but structured data
+signals to Google that this is a legitimate platform, not a spam page.
+
+### I9. Companion Guidelines Page
+**File:** `app/companion-guidelines/page.tsx`
+Footer in GenderLanding.tsx links to `/companion-guidelines` which currently 404s.
+Build the page per the spec already in this file (COMPANION-GUIDELINES PAGE section above).
+Dark-styled server component, same design system.
+
+### I10. Mobile Nav Crowding Fix
+**File:** `app/[gender]/GenderLanding.tsx` nav section (~line 534)
+On 375px: three nav items ("← Choose community" + "Sign in" + "Apply now") are tight.
+Fix: hide "← Choose community" text on mobile, replace with just "←" icon.
+```typescript
+// Add responsive hide:
+<a href="/" ...>
+  <span className="hidden sm:inline">← Choose community</span>
+  <span className="sm:hidden">←</span>
+</a>
+```
+
+### I11. CTA Copy Improvement
+**File:** `app/[gender]/GenderLanding.tsx` hero section CTAs
+Current: "Apply as a companion" — slightly administrative.
+Per read.md brand voice: CTAs should be "personal, present-tense invitations".
+Change to: "Begin your journey" (primary) — "See what's inside ↓" (secondary).
+Also the apply form section h2: "Begin your journey." ← already correct.
+Just update the hero CTAs.
 
 ---
 

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 interface Stats {
   views_today: number
@@ -9,6 +10,9 @@ interface Stats {
   views_month: number
   whatsapp_clicks: number
   bookings_pending: number
+  photo_count?: number
+  story_count?: number
+  hourly_rate?: number
 }
 
 interface CompanionMe {
@@ -102,34 +106,169 @@ const S: Record<string, React.CSSProperties> = {
 }
 
 const QUICK_LINKS = [
-  {
-    href: '/dashboard/profile',
-    label: 'Edit profile',
-    icon: '◉',
-    desc: 'Update your bio & details',
-  },
-  {
-    href: '/dashboard/photos',
-    label: 'Manage photos',
-    icon: '◻',
-    desc: 'Upload & set your primary photo',
-  },
+  { href: '/dashboard/profile', label: 'Edit profile', icon: '◉', desc: 'Update your bio & details' },
+  { href: '/dashboard/photos', label: 'Manage photos', icon: '◻', desc: 'Upload & set your primary photo' },
   { href: '/dashboard/videos', label: 'Add videos', icon: '▷', desc: 'Share short video clips' },
-  {
-    href: '/dashboard/stories',
-    label: 'Write a story',
-    icon: '✦',
-    desc: 'Publish companion stories',
-  },
+  { href: '/dashboard/stories', label: 'Write a story', icon: '✦', desc: 'Publish companion stories' },
   { href: '/dashboard/bookings', label: 'Bookings', icon: '◷', desc: 'View & respond to requests' },
   { href: '/dashboard/analytics', label: 'Analytics', icon: '▥', desc: 'See your profile stats' },
 ]
 
-export default function DashboardPage() {
+function WelcomeBanner({
+  me,
+  stats,
+  onDismiss,
+}: {
+  me: CompanionMe
+  stats: Stats | null
+  onDismiss: () => void
+}) {
+  const tasks = [
+    {
+      label: 'Complete your profile',
+      done: me.profile_completeness >= 50,
+      href: '/dashboard/profile',
+    },
+    {
+      label: 'Upload at least 3 photos',
+      done: (stats?.photo_count ?? 0) >= 3,
+      href: '/dashboard/photos',
+    },
+    {
+      label: 'Write your first story',
+      done: (stats?.story_count ?? 0) >= 1,
+      href: '/dashboard/stories',
+    },
+    {
+      label: 'Set your session rate',
+      done: !!stats?.hourly_rate,
+      href: '/dashboard/profile',
+    },
+    {
+      label: 'Toggle live — become visible',
+      done: me.is_live,
+      href: undefined,
+    },
+  ]
+  const doneCount = tasks.filter((t) => t.done).length
+
+  return (
+    <div
+      style={{
+        background: 'rgba(232,96,122,.06)',
+        border: '1px solid rgba(232,96,122,.2)',
+        borderRadius: 16,
+        padding: '24px',
+        marginBottom: 32,
+        position: 'relative',
+      }}
+    >
+      <button
+        onClick={onDismiss}
+        style={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          background: 'none',
+          border: 'none',
+          color: '#4b5563',
+          cursor: 'pointer',
+          fontSize: 16,
+          lineHeight: 1,
+          padding: 4,
+        }}
+        aria-label="Dismiss"
+      >
+        ×
+      </button>
+      <p
+        style={{
+          fontSize: 11,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: '#6b7280',
+          marginBottom: 6,
+        }}
+      >
+        Getting started
+      </p>
+      <h2
+        style={{
+          fontFamily: 'var(--font-serif)',
+          fontSize: 22,
+          color: '#eeeef0',
+          lineHeight: 1.3,
+          marginBottom: 4,
+        }}
+      >
+        Your stage is{' '}
+        <em style={{ fontStyle: 'italic', color: '#e8607a' }}>waiting.</em>
+      </h2>
+      <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
+        {doneCount} of {tasks.length} complete
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {tasks.map((task) => (
+          <div
+            key={task.label}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              opacity: task.done ? 0.4 : 1,
+            }}
+          >
+            <span
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                border: `1px solid ${task.done ? '#22c55e' : 'rgba(232,96,122,.4)'}`,
+                background: task.done ? 'rgba(34,197,94,.15)' : 'transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 11,
+                color: task.done ? '#22c55e' : 'transparent',
+                flexShrink: 0,
+              }}
+            >
+              ✓
+            </span>
+            {task.href && !task.done ? (
+              <a
+                href={task.href}
+                style={{ fontSize: 13, color: '#e8607a', textDecoration: 'none' }}
+              >
+                {task.label} →
+              </a>
+            ) : (
+              <span
+                style={{
+                  fontSize: 13,
+                  color: task.done ? '#6b7280' : '#9ca3af',
+                  textDecoration: task.done ? 'line-through' : 'none',
+                }}
+              >
+                {task.label}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function DashboardContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isWelcome = searchParams.get('welcome') === '1'
+
   const [me, setMe] = useState<CompanionMe | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showBanner, setShowBanner] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -143,10 +282,31 @@ export default function DashboardPage() {
         }
         setMe(meData)
         setStats(statsData)
+        // Show banner if ?welcome=1 OR onboarding not yet dismissed
+        const dismissed = (() => {
+          try {
+            return !!localStorage.getItem('bb_onboarding_done')
+          } catch {
+            return false
+          }
+        })()
+        if (isWelcome || !dismissed) {
+          setShowBanner(true)
+          if (isWelcome) window.history.replaceState({}, '', '/dashboard')
+        }
       })
       .catch(() => router.replace('/login'))
       .finally(() => setLoading(false))
-  }, [router])
+  }, [router, isWelcome])
+
+  function dismissBanner() {
+    try {
+      localStorage.setItem('bb_onboarding_done', '1')
+    } catch {
+      // ignore
+    }
+    setShowBanner(false)
+  }
 
   const displayName = me?.alias || me?.name?.split(' ')[0] || 'there'
 
@@ -172,6 +332,11 @@ export default function DashboardPage() {
 
   return (
     <div style={S.page}>
+      {/* Welcome banner */}
+      {showBanner && me && (
+        <WelcomeBanner me={me} stats={stats} onDismiss={dismissBanner} />
+      )}
+
       {/* Greeting */}
       <div style={S.greeting}>
         <p style={S.eyebrow}>Companion dashboard</p>
@@ -232,10 +397,10 @@ export default function DashboardPage() {
           </div>
           {me.profile_completeness < 70 && (
             <p style={{ fontSize: 12, color: '#6b7280', marginTop: 10 }}>
-              Complete your profile to 70% before going live.{' '}
-              <a href="/dashboard/profile" style={{ color: '#e8607a', textDecoration: 'none' }}>
+              Complete your profile to attract more dreamers.{' '}
+              <Link href="/dashboard/profile" style={{ color: '#e8607a', textDecoration: 'none' }}>
                 Continue →
-              </a>
+              </Link>
             </p>
           )}
         </div>
@@ -271,5 +436,13 @@ export default function DashboardPage() {
         ))}
       </div>
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardContent />
+    </Suspense>
   )
 }

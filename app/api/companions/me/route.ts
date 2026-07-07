@@ -10,6 +10,7 @@ export async function GET() {
     `SELECT
        c.id, c.email, c.name, c.alias, c.companion_stage, c.full_name,
        c.date_of_birth, c.country, c.whatsapp_number AS companion_whatsapp,
+       c.gender_community,
        cp.bio, cp.tagline, cp.city, cp.is_live, cp.is_verified,
        cp.availability_status, cp.whatsapp_number AS profile_whatsapp,
        cp.session_modality, cp.hourly_rate::text AS hourly_rate, cp.currency,
@@ -28,9 +29,12 @@ export async function GET() {
   if (rows.length === 0) return NextResponse.json({ error: 'Not found.' }, { status: 404 })
 
   const row = rows[0]
-  let status = 'pending'
-  if (row.review_status === 'rejected') status = 'rejected'
-  else if (row.review_status === 'completed' && row.is_live) status = 'approved'
+  let status = 'approved'
+  if (row.review_status === 'rejected') {
+    status = 'rejected'
+  } else if (row.review_status === 'completed' && row.is_live === false) {
+    status = 'taken_down'
+  }
 
   return NextResponse.json({ ...row, status })
 }

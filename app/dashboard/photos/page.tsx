@@ -8,6 +8,7 @@ interface Photo {
   url: string
   is_primary: boolean
   is_approved: boolean
+  photo_verification_status: string | null
   moderation_status: string | null
   sort_order: number
 }
@@ -59,17 +60,21 @@ const S = {
   },
   cardImg: { width: '100%', height: 220, objectFit: 'cover' as const, display: 'block' },
   cardBody: { padding: '12px 14px' },
-  badge: (approved: boolean) => ({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    fontSize: 10,
-    padding: '3px 8px',
-    borderRadius: 20,
-    border: `1px solid ${approved ? 'rgba(201,169,110,.3)' : 'rgba(251,191,36,.3)'}`,
-    background: approved ? 'rgba(201,169,110,.1)' : 'rgba(251,191,36,.1)',
-    color: approved ? '#c9a96e' : '#fbbf24',
-  }),
+  badge: (approved: boolean, verificationStatus: string | null) => {
+    const isVerified = approved && verificationStatus === 'verified'
+    const isApprovedPending = approved && verificationStatus !== 'verified'
+    return {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      fontSize: 10,
+      padding: '3px 8px',
+      borderRadius: 20,
+      border: `1px solid ${isVerified ? 'rgba(34,197,94,.3)' : isApprovedPending ? 'rgba(201,169,110,.3)' : 'rgba(251,191,36,.3)'}`,
+      background: isVerified ? 'rgba(34,197,94,.1)' : isApprovedPending ? 'rgba(201,169,110,.1)' : 'rgba(251,191,36,.1)',
+      color: isVerified ? '#22c55e' : isApprovedPending ? '#c9a96e' : '#fbbf24',
+    }
+  },
   primaryBadge: {
     position: 'absolute' as const,
     top: 8,
@@ -245,8 +250,12 @@ export default function PhotosPage() {
                 {photo.is_primary && <div style={S.primaryBadge}>✦ Primary</div>}
               </div>
               <div style={S.cardBody}>
-                <span style={S.badge(photo.is_approved)}>
-                  {photo.is_approved ? '✦ Approved' : '⏳ Pending'}
+                <span style={S.badge(photo.is_approved, photo.photo_verification_status)}>
+                  {photo.is_approved && photo.photo_verification_status === 'verified'
+                    ? '✦ Verified'
+                    : photo.is_approved
+                    ? '✦ Approved'
+                    : '⏳ Pending review'}
                 </span>
                 <div style={S.actions}>
                   {!photo.is_primary && (

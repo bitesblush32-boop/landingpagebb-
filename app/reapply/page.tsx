@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 
 const GENDERS = [
@@ -296,9 +297,9 @@ export default function ReapplyPage() {
             {saving ? 'Submitting…' : 'Re-submit application →'}
           </button>
           <div style={{ textAlign: 'center', marginTop: 16 }}>
-            <a href="/status" style={{ fontSize: 13, color: '#4b5563', textDecoration: 'none' }}>
+            <Link href="/status" style={{ fontSize: 13, color: '#4b5563', textDecoration: 'none' }}>
               ← Back to status
-            </a>
+            </Link>
           </div>
         </div>
       </div>

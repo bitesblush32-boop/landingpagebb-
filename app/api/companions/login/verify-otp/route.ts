@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyOtp } from '@/lib/otp'
 import { query } from '@/lib/db'
-import { buildSessionCookie } from '@/lib/session'
+import { buildSessionCookie, buildCommunityCookie } from '@/lib/session'
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
@@ -13,8 +13,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: result.error }, { status: 400 })
   }
 
-  const rows = await query<{ id: string; email: string; name: string }>(
-    'SELECT id, email, name FROM companions WHERE email = $1 LIMIT 1',
+  const rows = await query<{ id: string; email: string; name: string; gender_community: string }>(
+    'SELECT id, email, name, gender_community FROM companions WHERE email = $1 LIMIT 1',
     [email]
   )
   if (rows.length === 0) {
@@ -33,14 +33,11 @@ export async function POST(req: NextRequest) {
     [c.id]
   )
 
-  let redirectTo = '/status'
-  if (statusRows.length > 0) {
-    const { review_status, is_live } = statusRows[0]
-    if (review_status === 'completed' && is_live) redirectTo = '/dashboard'
-    else if (review_status === 'rejected') redirectTo = '/reapply'
-  }
+  let redirectTo = '/dashboard'
+  if (statusRows.length > 0 && statusRows[0].review_status === 'rejected') redirectTo = '/reapply'
 
   const res = NextResponse.json({ ok: true, redirectTo })
-  res.headers.set('Set-Cookie', buildSessionCookie(c.id, c.email, c.name ?? ''))
+  res.headers.set('Set-Cookie', buildSessionCookie(c.id, c.email, c.name ?? '', c.gender_community))
+  res.headers.append('Set-Cookie', buildCommunityCookie(c.gender_community ?? 'female'))
   return res
 }

@@ -10,7 +10,7 @@ interface CompanionMe {
   alias: string | null
   is_live: boolean
   profile_completeness: number
-  status: string // 'pending' | 'rejected' | 'approved'
+  status: string // 'approved' | 'rejected' | 'taken_down'
 }
 
 const NAV = [
@@ -22,6 +22,7 @@ const NAV = [
   { href: '/dashboard/bookings', label: 'Bookings', icon: '◷' },
   { href: '/dashboard/analytics', label: 'Analytics', icon: '◈' },
   { href: '/dashboard/settings', label: 'Settings', icon: '⊙' },
+  { href: '/dashboard/upgrade', label: 'Your Plan', icon: '✦' },
 ]
 
 const BOTTOM_NAV = [
@@ -31,9 +32,6 @@ const BOTTOM_NAV = [
   { href: '/dashboard/analytics', label: 'Stats', icon: '▥' },
   { href: '/dashboard/settings', label: 'More', icon: '⊙' },
 ]
-
-// Items accessible before approval
-const UNLOCKED = ['/dashboard/profile']
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -56,16 +54,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .catch(() => router.replace('/login'))
   }, [router])
 
-  const isApproved = me?.status === 'approved'
-  const isUnlocked = UNLOCKED.some((p) => pathname === p || pathname.startsWith(p + '/'))
-
-  // Redirect non-approved companions away from locked pages
-  useEffect(() => {
-    if (authChecked && !isApproved && !isUnlocked) {
-      router.replace('/dashboard/profile')
-    }
-  }, [authChecked, isApproved, isUnlocked, router])
-
   async function toggleLive() {
     if (!me) return
     setToggling(true)
@@ -83,27 +71,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const displayName = me?.alias || me?.name || '…'
 
-  // Don't render content while:
-  // - auth not yet checked
-  // - checked but about to redirect (non-approved on a locked page)
-  if (!authChecked || (!isApproved && !isUnlocked)) {
+  if (!authChecked) {
     return <div style={{ minHeight: '100vh', background: '#07090f' }} />
   }
-
-  const statusColor =
-    me?.status === 'rejected'
-      ? {
-          bg: 'rgba(248,113,113,.08)',
-          border: 'rgba(248,113,113,.3)',
-          text: '#f87171',
-          dot: '#f87171',
-        }
-      : {
-          bg: 'rgba(251,191,36,.08)',
-          border: 'rgba(251,191,36,.3)',
-          text: '#fbbf24',
-          dot: '#fbbf24',
-        }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#07090f' }}>
@@ -131,13 +101,54 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0', marginBottom: 2 }}>
                 {displayName}
               </div>
-              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 12 }}>
-                Companion portal
-              </div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 12 }}>Companion portal</div>
 
-              {isApproved ? (
+              {me.status === 'rejected' ? (
+                <div
+                  style={{
+                    background: 'rgba(248,113,113,.08)',
+                    border: '1px solid rgba(248,113,113,.3)',
+                    borderRadius: 10,
+                    padding: '9px 12px',
+                    fontSize: 12,
+                  }}
+                >
+                  <div style={{ color: '#f87171', fontWeight: 500, marginBottom: 2 }}>
+                    <span style={{ marginRight: 6 }}>●</span>
+                    Application rejected
+                  </div>
+                  <div style={{ fontSize: 10, color: '#4b5563', lineHeight: 1.4 }}>
+                    See your profile for details.
+                  </div>
+                </div>
+              ) : me.status === 'taken_down' ? (
+                <div
+                  style={{
+                    background: 'rgba(251,191,36,.06)',
+                    border: '1px solid rgba(251,191,36,.25)',
+                    borderRadius: 10,
+                    padding: '9px 12px',
+                    fontSize: 12,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div style={{ color: '#fbbf24', fontWeight: 500, marginBottom: 4 }}>
+                    <span style={{ marginRight: 6 }}>⊘</span>
+                    Profile paused
+                  </div>
+                  <div style={{ fontSize: 10, color: '#6b7280', lineHeight: 1.5, marginBottom: 6 }}>
+                    Your profile has been temporarily paused by our team.
+                  </div>
+                  <a
+                    href="mailto:support@blushbite.live"
+                    style={{ fontSize: 10, color: '#fbbf24', textDecoration: 'none' }}
+                  >
+                    Contact support →
+                  </a>
+                </div>
+              ) : (
                 <>
-                  {/* Completeness bar — only shown when approved */}
+                  {/* Completeness bar */}
                   <div
                     style={{
                       display: 'flex',
@@ -192,27 +203,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <span style={{ fontSize: 10, opacity: 0.7 }}>{toggling ? '…' : 'toggle'}</span>
                   </button>
                 </>
-              ) : (
-                /* Verification status badge */
-                <div
-                  style={{
-                    background: statusColor.bg,
-                    border: `1px solid ${statusColor.border}`,
-                    borderRadius: 10,
-                    padding: '9px 12px',
-                    fontSize: 12,
-                  }}
-                >
-                  <div style={{ color: statusColor.text, fontWeight: 500, marginBottom: 2 }}>
-                    <span style={{ marginRight: 6 }}>●</span>
-                    {me.status === 'rejected' ? 'Application rejected' : 'Under review'}
-                  </div>
-                  <div style={{ fontSize: 10, color: '#4b5563', lineHeight: 1.4 }}>
-                    {me.status === 'rejected'
-                      ? 'See your profile for details.'
-                      : "We'll email you within 48 hours."}
-                  </div>
-                </div>
               )}
             </div>
           )}
@@ -221,12 +211,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
           {NAV.map((item) => {
             const active = pathname === item.href
-            const locked =
-              !isApproved && !UNLOCKED.some((p) => item.href === p || item.href.startsWith(p + '/'))
             return (
               <a
                 key={item.href}
-                href={locked ? '/dashboard/profile' : item.href}
+                href={item.href}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -235,16 +223,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   fontSize: 13,
                   textDecoration: 'none',
                   transition: 'all .15s',
-                  color: locked ? '#2d3748' : active ? '#e8607a' : '#6b7280',
-                  background: active && !locked ? 'rgba(232,96,122,.08)' : 'transparent',
-                  borderRight: active && !locked ? '2px solid #e8607a' : '2px solid transparent',
-                  cursor: locked ? 'default' : 'pointer',
-                  pointerEvents: locked ? 'none' : 'auto',
+                  color: active ? '#e8607a' : '#6b7280',
+                  background: active ? 'rgba(232,96,122,.08)' : 'transparent',
+                  borderRight: active ? '2px solid #e8607a' : '2px solid transparent',
                 }}
-                aria-disabled={locked}
-                tabIndex={locked ? -1 : 0}
               >
-                <span style={{ fontSize: 12 }}>{locked ? '⊘' : item.icon}</span>
+                <span style={{ fontSize: 12 }}>{item.icon}</span>
                 {item.label}
               </a>
             )
@@ -293,12 +277,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {BOTTOM_NAV.map((item) => {
           const active =
             pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
-          const locked =
-            !isApproved && !UNLOCKED.some((p) => item.href === p || item.href.startsWith(p + '/'))
           return (
             <a
               key={item.href}
-              href={locked ? '/dashboard/profile' : item.href}
+              href={item.href}
               style={{
                 flex: 1,
                 display: 'flex',
@@ -309,12 +291,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 textDecoration: 'none',
                 gap: 3,
                 minHeight: 56,
-                color: locked ? '#2d3748' : active ? '#e8607a' : '#6b7280',
+                color: active ? '#e8607a' : '#6b7280',
                 fontSize: 10,
-                pointerEvents: locked ? 'none' : 'auto',
               }}
-              aria-disabled={locked}
-              tabIndex={locked ? -1 : 0}
             >
               <span style={{ fontSize: 16 }}>{item.icon}</span>
               {item.label}

@@ -12,6 +12,7 @@ export interface SessionPayload {
   sub: string
   email: string
   name: string
+  community?: string   // 'female' | 'male' | 'shemale' — optional for backward compat
   exp: number
 }
 
@@ -57,11 +58,17 @@ export function getSessionFromRequest(req: NextRequest): SessionPayload | null {
 }
 
 /** Build the Set-Cookie header value */
-export function buildSessionCookie(companionId: string, email: string, name: string): string {
+export function buildSessionCookie(companionId: string, email: string, name: string, community?: string): string {
   const exp = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60
-  const token = signJwt({ sub: companionId, email, name, exp })
+  const token = signJwt({ sub: companionId, email, name, community, exp })
   const secure = IS_PROD ? 'Secure; ' : ''
   return `${COOKIE_NAME}=${token}; HttpOnly; ${secure}SameSite=Strict; Path=/; Max-Age=604800`
+}
+
+/** Set-Cookie value for the community routing cookie (not HttpOnly — JS-readable) */
+export function buildCommunityCookie(community: string): string {
+  const secure = IS_PROD ? ' Secure;' : ''
+  return `bb_community=${community}; Path=/; SameSite=Lax; Max-Age=31536000;${secure}`
 }
 
 export function clearSessionCookie(): string {

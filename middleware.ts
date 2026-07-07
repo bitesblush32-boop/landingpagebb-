@@ -8,10 +8,13 @@ const JWT_SECRET = process.env.COMPANION_JWT_SECRET ?? ''
 // Must mirror lib/session.ts
 const COOKIE_NAME = process.env.NODE_ENV === 'production' ? '__Host-bb_session' : 'bb_session'
 
+const VALID_COMMUNITIES = ['female', 'male', 'shemale']
+
 interface SessionPayload {
   sub: string
   email: string
   name: string
+  community?: string
   exp: number
 }
 
@@ -71,6 +74,28 @@ const PUBLIC_API = [
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
+  // Root page routing — authenticated users go to dashboard; bound devices go to their community
+  if (pathname === '/') {
+    // Layer 1: already logged in → skip the picker entirely
+    const token = req.cookies.get(COOKIE_NAME)?.value ?? req.cookies.get('bb_session')?.value
+    if (token) {
+      const session = await verifyJwt(token)
+      if (session) {
+        const url = req.nextUrl.clone()
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
+      }
+    }
+    // Layer 2: device already bound to a community via cookie
+    const community = req.cookies.get('bb_community')?.value
+    if (community && VALID_COMMUNITIES.includes(community)) {
+      const url = req.nextUrl.clone()
+      url.pathname = `/${community}`
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next()
+  }
+
   const isProtected = PROTECTED.some((p) => pathname === p || pathname.startsWith(p + '/'))
   const isProtectedApi =
     pathname.startsWith('/api/companions/') && !PUBLIC_API.some((p) => pathname.startsWith(p))
@@ -95,9 +120,10 @@ export async function middleware(req: NextRequest) {
   res.headers.set('x-companion-id', payload.sub)
   res.headers.set('x-companion-email', payload.email)
   res.headers.set('x-companion-name', payload.name ?? '')
+  res.headers.set('x-companion-community', payload.community ?? 'female')
   return res
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/status', '/reapply', '/api/companions/:path*'],
+  matcher: ['/', '/dashboard/:path*', '/status', '/reapply', '/api/companions/:path*'],
 }

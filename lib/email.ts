@@ -34,6 +34,42 @@ export async function sendRejectionEmail(
   })
 }
 
+export async function sendWelcomeEmail(to: string, name: string): Promise<void> {
+  await resend.emails.send({
+    from: `BlushBite <${FROM}>`,
+    to,
+    subject: 'Your stage is waiting — BlushBite',
+    html: welcomeEmailHtml(name),
+  })
+}
+
+export async function sendProfileNudgeEmail(to: string, name: string, completeness: number): Promise<void> {
+  await resend.emails.send({
+    from: `BlushBite <${FROM}>`,
+    to,
+    subject: 'Your profile is incomplete — dreamers can\'t find you yet',
+    html: profileNudgeEmailHtml(name, completeness),
+  })
+}
+
+export async function sendPhotoNudgeEmail(to: string, name: string): Promise<void> {
+  await resend.emails.send({
+    from: `BlushBite <${FROM}>`,
+    to,
+    subject: 'Your stage is empty — upload your first photo',
+    html: photoNudgeEmailHtml(name),
+  })
+}
+
+export async function sendGoLiveNudgeEmail(to: string, name: string, city?: string | null): Promise<void> {
+  await resend.emails.send({
+    from: `BlushBite <${FROM}>`,
+    to,
+    subject: 'Dreamers are searching — your profile is hidden',
+    html: goLiveNudgeEmailHtml(name, city),
+  })
+}
+
 export async function sendAdminReapplyNotification(
   companionId: string,
   email: string,
@@ -65,6 +101,35 @@ ${content}
 </td></tr>
 <tr><td style="padding-top:28px;"><p style="margin:0;font-size:11px;color:#374151;">&copy; BlushBite &nbsp;&middot;&nbsp; EU-hosted &nbsp;&middot;&nbsp; Your identity stays private — always.</p></td></tr>
 </table></td></tr></table></body></html>`
+}
+
+function welcomeEmailHtml(name: string): string {
+  return card(
+    '#e8607a',
+    `
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="padding:40px 40px 12px;">
+  <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6b7280;">Welcome to BlushBite</p>
+  <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#eeeef0;line-height:1.3;">Your stage is <em style="color:#e8607a;">waiting.</em></h1>
+  <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">Welcome, ${name}. Your companion profile is ready. Complete it now and go live — your first dreamers are looking.</p>
+</td></tr>
+<tr><td style="padding:0 40px 32px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#111620;border:1px solid #1c2333;border-radius:12px;padding:20px 24px;">
+  <tr><td style="padding-bottom:12px;"><p style="margin:0;font-size:13px;color:#9ca3af;font-weight:500;">Your checklist to go live:</p></td></tr>
+  <tr><td style="padding:6px 0;"><span style="color:#e8607a;margin-right:10px;">→</span><span style="font-size:13px;color:#6b7280;">Complete your profile — bio, tagline, rates</span></td></tr>
+  <tr><td style="padding:6px 0;"><span style="color:#e8607a;margin-right:10px;">→</span><span style="font-size:13px;color:#6b7280;">Upload at least 3 photos</span></td></tr>
+  <tr><td style="padding:6px 0;"><span style="color:#e8607a;margin-right:10px;">→</span><span style="font-size:13px;color:#6b7280;">Write your first story</span></td></tr>
+  <tr><td style="padding:6px 0;"><span style="color:#e8607a;margin-right:10px;">→</span><span style="font-size:13px;color:#6b7280;">Set your session rate</span></td></tr>
+  <tr><td style="padding:6px 0;"><span style="color:#e8607a;margin-right:10px;">→</span><span style="font-size:13px;color:#6b7280;">Toggle live — and you're visible</span></td></tr>
+  </table>
+</td></tr>
+<tr><td style="padding:0 40px 32px;">
+  <a href="https://blushbite.live/dashboard" style="display:inline-block;background:#e8607a;color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:12px 28px;border-radius:10px;">Enter your dashboard →</a>
+</td></tr>
+<tr><td style="padding:0 40px;"><table width="100%"><tr><td style="height:1px;background:#1c2333;font-size:1px;">&nbsp;</td></tr></table></td></tr>
+<tr><td style="padding:24px 40px 36px;"><p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">Your identity stays private — always. Questions? Reply to this email.</p></td></tr>
+</table>`
+  )
 }
 
 function otpEmailHtml(otp: string): string {
@@ -104,6 +169,77 @@ function approvalEmailHtml(name: string): string {
 </td></tr>
 <tr><td style="padding:0 40px;"><table width="100%"><tr><td style="height:1px;background:#1c2333;font-size:1px;">&nbsp;</td></tr></table></td></tr>
 <tr><td style="padding:24px 40px 36px;"><p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">Log in at blushbite.live/login using the email you applied with. Your identity stays private — always.</p></td></tr>
+</table>`
+  )
+}
+
+function profileNudgeEmailHtml(name: string, completeness: number): string {
+  return card(
+    '#c9a96e',
+    `
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="padding:40px 40px 12px;">
+  <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6b7280;">A gentle nudge</p>
+  <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#eeeef0;line-height:1.3;">Your stage is ${completeness}% <em style="color:#c9a96e;">complete.</em></h1>
+  <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">${name}, profiles with a bio, tagline, and photos get significantly more attention from dreamers. It takes less than 5 minutes to finish.</p>
+</td></tr>
+<tr><td style="padding:0 40px 32px;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#111620;border:1px solid #1c2333;border-radius:12px;padding:20px 24px;">
+  <tr><td style="padding-bottom:12px;"><p style="margin:0;font-size:13px;color:#9ca3af;font-weight:500;">What's missing:</p></td></tr>
+  <tr><td style="padding:6px 0;"><span style="color:#c9a96e;margin-right:10px;">→</span><span style="font-size:13px;color:#6b7280;">A bio that tells your story</span></td></tr>
+  <tr><td style="padding:6px 0;"><span style="color:#c9a96e;margin-right:10px;">→</span><span style="font-size:13px;color:#6b7280;">A tagline dreamers will remember</span></td></tr>
+  <tr><td style="padding:6px 0;"><span style="color:#c9a96e;margin-right:10px;">→</span><span style="font-size:13px;color:#6b7280;">At least 3 photos</span></td></tr>
+  <tr><td style="padding:6px 0;"><span style="color:#c9a96e;margin-right:10px;">→</span><span style="font-size:13px;color:#6b7280;">Your session rate</span></td></tr>
+  </table>
+</td></tr>
+<tr><td style="padding:0 40px 32px;">
+  <a href="https://blushbite.live/dashboard/profile" style="display:inline-block;background:#e8607a;color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:12px 28px;border-radius:10px;">Complete my profile →</a>
+</td></tr>
+<tr><td style="padding:0 40px;"><table width="100%"><tr><td style="height:1px;background:#1c2333;font-size:1px;">&nbsp;</td></tr></table></td></tr>
+<tr><td style="padding:24px 40px 36px;"><p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">Your identity stays private — always. Questions? Reply to this email.</p></td></tr>
+</table>`
+  )
+}
+
+function photoNudgeEmailHtml(name: string): string {
+  return card(
+    '#e8607a',
+    `
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="padding:40px 40px 12px;">
+  <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6b7280;">Your stage is waiting</p>
+  <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#eeeef0;line-height:1.3;">No photos yet, <em style="color:#e8607a;">${name}.</em></h1>
+  <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">Profiles with photos receive dramatically more attention. A single well-chosen photo is the difference between being seen — and being invisible.</p>
+  <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">Upload your first photo. It takes two minutes.</p>
+</td></tr>
+<tr><td style="padding:0 40px 32px;">
+  <a href="https://blushbite.live/dashboard/photos" style="display:inline-block;background:#e8607a;color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:12px 28px;border-radius:10px;">Upload my first photo →</a>
+</td></tr>
+<tr><td style="padding:0 40px;"><table width="100%"><tr><td style="height:1px;background:#1c2333;font-size:1px;">&nbsp;</td></tr></table></td></tr>
+<tr><td style="padding:24px 40px 36px;"><p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">Your identity stays private — always. Questions? Reply to this email.</p></td></tr>
+</table>`
+  )
+}
+
+function goLiveNudgeEmailHtml(name: string, city?: string | null): string {
+  const cityLine = city
+    ? `<p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">Dreamers in ${city} are searching right now. Your profile exists — but it's hidden. Toggle yourself live to appear in results.</p>`
+    : `<p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">Dreamers are searching right now. Your profile exists — but it's hidden. Toggle yourself live to appear in results.</p>`
+  return card(
+    '#e8607a',
+    `
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+<tr><td style="padding:40px 40px 12px;">
+  <p style="margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#6b7280;">You're almost there</p>
+  <h1 style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:26px;color:#eeeef0;line-height:1.3;">${name}, your profile is <em style="color:#e8607a;">hidden.</em></h1>
+  ${cityLine}
+  <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">Go to your dashboard sidebar and toggle yourself <strong style="color:#22c55e;">Live</strong>. One click — that's all it takes.</p>
+</td></tr>
+<tr><td style="padding:0 40px 32px;">
+  <a href="https://blushbite.live/dashboard" style="display:inline-block;background:#e8607a;color:#fff;text-decoration:none;font-size:14px;font-weight:500;padding:12px 28px;border-radius:10px;">Go live now →</a>
+</td></tr>
+<tr><td style="padding:0 40px;"><table width="100%"><tr><td style="height:1px;background:#1c2333;font-size:1px;">&nbsp;</td></tr></table></td></tr>
+<tr><td style="padding:24px 40px 36px;"><p style="margin:0;font-size:12px;color:#4b5563;line-height:1.7;">Your identity stays private — always. Questions? Reply to this email.</p></td></tr>
 </table>`
   )
 }

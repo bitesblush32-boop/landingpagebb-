@@ -7,7 +7,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const rows = await query(
-    `SELECT cp.id, cp.url, cp.is_primary, cp.sort_order, cp.is_approved, cp.created_at
+    `SELECT cp.id, cp.url, cp.is_primary, cp.sort_order, cp.is_approved, cp.photo_verification_status, cp.created_at
      FROM companion_photos cp
      JOIN companion_profiles prof ON prof.id = cp.companion_profile_id
      WHERE prof.companion_id = $1 AND cp.deleted_at IS NULL

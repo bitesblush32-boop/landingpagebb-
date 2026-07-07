@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { pool } from '@/lib/db'
 import { query } from '@/lib/db'
 import { getSession } from '@/lib/session'
+import { toSlug } from '@/lib/slug'
 
 export async function GET() {
   const session = await getSession()
@@ -27,6 +28,9 @@ export async function PATCH(req: NextRequest) {
   const body: Record<string, unknown> = await req.json().catch(() => ({}))
   const {
     display_name,
+    full_name,
+    date_of_birth,
+    country,
     bio,
     tagline,
     city,
@@ -67,33 +71,37 @@ export async function PATCH(req: NextRequest) {
 
   const client = await pool.connect()
   try {
+    const cityVal = city != null ? (String(city).trim() || null) : null
+    const citySlug = cityVal ? toSlug(cityVal) : null
     await client.query(
       `UPDATE companion_profiles SET
          bio                 = COALESCE($1, bio),
          tagline             = COALESCE($2, tagline),
          city                = COALESCE($3, city),
-         availability_status = COALESCE($4, availability_status),
-         session_modality    = COALESCE($5, session_modality),
-         whatsapp_number     = COALESCE($6, whatsapp_number),
-         instagram_handle    = COALESCE($7, instagram_handle),
-         website_url         = COALESCE($8, website_url),
-         hourly_rate         = COALESCE($9::numeric, hourly_rate),
-         gender              = COALESCE($10, gender),
-         height_cm           = COALESCE($11::integer, height_cm),
-         body_type           = COALESCE($12, body_type),
-         eye_color           = COALESCE($13, eye_color),
-         hair_color          = COALESCE($14, hair_color),
-         skin_color          = COALESCE($15, skin_color),
-         ethnicity           = COALESCE($16, ethnicity),
-         languages           = COALESCE($17, languages),
-         vibe_tags           = COALESCE($18, vibe_tags),
-         currency            = COALESCE($19, currency),
+         city_slug           = COALESCE($4, city_slug),
+         availability_status = COALESCE($5, availability_status),
+         session_modality    = COALESCE($6, session_modality),
+         whatsapp_number     = COALESCE($7, whatsapp_number),
+         instagram_handle    = COALESCE($8, instagram_handle),
+         website_url         = COALESCE($9, website_url),
+         hourly_rate         = COALESCE($10::numeric, hourly_rate),
+         gender              = COALESCE($11, gender),
+         height_cm           = COALESCE($12::integer, height_cm),
+         body_type           = COALESCE($13, body_type),
+         eye_color           = COALESCE($14, eye_color),
+         hair_color          = COALESCE($15, hair_color),
+         skin_color          = COALESCE($16, skin_color),
+         ethnicity           = COALESCE($17, ethnicity),
+         languages           = COALESCE($18, languages),
+         vibe_tags           = COALESCE($19, vibe_tags),
+         currency            = COALESCE($20, currency),
          updated_at          = NOW()
-       WHERE companion_id = $20`,
+       WHERE companion_id = $21`,
       [
         bio ?? null,
         tagline ?? null,
-        city ?? null,
+        cityVal,
+        citySlug,
         availability_status ?? null,
         session_modality ?? null,
         whatsapp_number ?? null,
@@ -118,6 +126,30 @@ export async function PATCH(req: NextRequest) {
         String(display_name) || null,
         session.sub,
       ])
+    }
+    if (full_name != null && String(full_name).trim()) {
+      await client.query('UPDATE companions SET full_name = $1, updated_at = NOW() WHERE id = $2', [
+        String(full_name).trim(),
+        session.sub,
+      ])
+    }
+    if (date_of_birth != null) {
+      await client.query('UPDATE companions SET date_of_birth = $1, updated_at = NOW() WHERE id = $2', [
+        date_of_birth,
+        session.sub,
+      ])
+    }
+    if (country != null) {
+      const countryVal = String(country).trim() || null
+      await client.query('UPDATE companions SET country = $1, updated_at = NOW() WHERE id = $2', [
+        countryVal,
+        session.sub,
+      ])
+      const countrySlug = countryVal ? toSlug(countryVal) : null
+      await client.query(
+        'UPDATE companion_profiles SET country_slug = $1, updated_at = NOW() WHERE companion_id = $2',
+        [countrySlug, session.sub]
+      )
     }
     if (whatsapp_number) {
       await client.query(

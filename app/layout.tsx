@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, DM_Sans } from 'next/font/google'
 import './globals.css'
 import { AgeGate } from '@/components/AgeGate'
@@ -114,6 +114,9 @@ export const metadata: Metadata = {
     'RTA-label': 'RTA-5042-1996-1400-1577-RTA',
   },
 
+}
+
+export const viewport: Viewport = {
   themeColor: '#07090f',
 }
 

@@ -587,27 +587,6 @@ function calcAge(dob: string | null): number | null {
   return age
 }
 
-function ReadonlyField({ label, value }: { label: string; value: string | null | undefined }) {
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={S.label}>{label}</label>
-      <div
-        style={{
-          background: '#0a0e18',
-          border: '1px solid #151c29',
-          borderRadius: 12,
-          padding: '12px 14px',
-          fontSize: 15,
-          color: value ? '#9ca3af' : '#2d3748',
-          fontStyle: value ? 'normal' : 'italic',
-        }}
-      >
-        {value || '—'}
-      </div>
-    </div>
-  )
-}
-
 function ProfileBuilder({ meData }: { meData: MeData }) {
   const [active, setActive] = useState(0)
   const [ext, setExt] = useState<ExtendedProfile>(DEFAULT_EXT)
@@ -616,7 +595,53 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
 
-  const age = calcAge(meData.date_of_birth)
+  // Identity state — editable fields collected post-registration
+  const [identity, setIdentity] = useState({
+    full_name: meData.full_name ?? '',
+    date_of_birth: meData.date_of_birth ? meData.date_of_birth.split('T')[0] : '',
+    gender: meData.gender ?? '',
+    country: meData.country ?? '',
+    city: meData.city ?? '',
+    tagline: meData.tagline ?? '',
+    bio: meData.bio ?? '',
+  })
+  const [savingIdentity, setSavingIdentity] = useState(false)
+  const [identityMsg, setIdentityMsg] = useState('')
+  const [identityErr, setIdentityErr] = useState('')
+
+  const showComplianceNotice = !identity.full_name.trim() || !identity.date_of_birth
+
+  async function saveIdentity() {
+    setIdentityMsg('')
+    setIdentityErr('')
+    setSavingIdentity(true)
+    try {
+      const r = await fetch('/api/companions/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: identity.full_name,
+          date_of_birth: identity.date_of_birth || null,
+          country: identity.country,
+          city: identity.city,
+          gender: identity.gender,
+          tagline: identity.tagline,
+          bio: identity.bio,
+        }),
+      })
+      const d = await r.json()
+      if (!r.ok) {
+        setIdentityErr(d.error ?? 'Save failed.')
+        return
+      }
+      setIdentityMsg('Saved.')
+      setTimeout(() => setIdentityMsg(''), 3000)
+    } finally {
+      setSavingIdentity(false)
+    }
+  }
+
+  const age = calcAge(identity.date_of_birth || meData.date_of_birth)
 
   useEffect(() => {
     fetch('/api/companions/profile')
@@ -683,16 +708,6 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
       </div>
     )
 
-  const genderLabel: Record<string, string> = {
-    female: 'Female',
-    male: 'Male',
-    non_binary: 'Non-binary',
-    trans_female: 'Trans female',
-    trans_male: 'Trans male',
-    gender_fluid: 'Gender fluid',
-    prefer_not_to_say: 'Prefer not to say',
-  }
-
   return (
     <div style={S.page}>
       <div style={{ marginBottom: 28 }}>
@@ -704,37 +719,37 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
         </p>
       </div>
 
-      {/* ── Verified details card (readonly) ── */}
-      <div style={{ ...S.card, marginBottom: 24 }}>
+      {/* ── Compliance notice ── */}
+      {showComplianceNotice && (
         <div
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 20,
+            background: 'rgba(251,191,36,.07)',
+            border: '1px solid rgba(251,191,36,.25)',
+            borderRadius: 12,
+            padding: '14px 18px',
+            marginBottom: 24,
+            fontSize: 13,
+            color: '#fbbf24',
+            lineHeight: 1.6,
           }}
         >
-          <div style={S.sectionTitle as React.CSSProperties}>Verified details</div>
-          <span
-            style={{
-              fontSize: 11,
-              color: '#4b5563',
-              background: '#111620',
-              border: '1px solid #1c2333',
-              borderRadius: 8,
-              padding: '4px 10px',
-            }}
-          >
-            ⊘ locked
-          </span>
+          <strong style={{ color: '#fbbf24' }}>Account security:</strong> Add your legal name and date of birth to secure your account and comply with platform requirements.
         </div>
+      )}
+
+      {/* ── Identity card — editable ── */}
+      <div style={{ ...S.card, marginBottom: 24 }}>
+        <div style={S.sectionTitle as React.CSSProperties}>Identity &amp; details</div>
         <p style={{ fontSize: 12, color: '#4b5563', marginBottom: 20, lineHeight: 1.5 }}>
-          These details are from your application. Contact support to make changes.
+          Add your details to complete your profile. Your legal name is never shown to dreamers.
         </p>
 
-        {/* Display name — only editable onboarding field */}
+        {identityMsg && <div style={S.successMsg}>{identityMsg}</div>}
+        {identityErr && <div style={S.errMsg}>{identityErr}</div>}
+
+        {/* Display name — part of ext, saved with extended profile */}
         <label style={{ ...S.label, color: '#e8607a' }}>
-          Display name <span style={{ fontSize: 10, color: '#6b7280' }}>— editable</span>
+          Display name
         </label>
         <input
           style={{
@@ -748,64 +763,109 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
         />
 
         <div style={S.grid2}>
-          <ReadonlyField label="Full name" value={meData.full_name} />
-          <ReadonlyField
-            label={`Age${age != null ? ` (${age})` : ''}`}
-            value={
-              meData.date_of_birth
-                ? new Date(meData.date_of_birth).toLocaleDateString('en-GB', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                  })
-                : null
-            }
-          />
-        </div>
-        <div style={S.grid2}>
-          <ReadonlyField
-            label="Gender"
-            value={meData.gender ? (genderLabel[meData.gender] ?? meData.gender) : null}
-          />
-          <ReadonlyField
-            label="WhatsApp"
-            value={meData.companion_whatsapp ?? meData.profile_whatsapp}
-          />
-        </div>
-        <div style={S.grid2}>
-          <ReadonlyField label="Country" value={meData.country} />
-          <ReadonlyField label="City" value={meData.city} />
-        </div>
-        <ReadonlyField label="Tagline" value={meData.tagline} />
-        <div style={{ marginBottom: 0 }}>
-          <label style={S.label}>Bio</label>
-          <div
-            style={{
-              background: '#0a0e18',
-              border: '1px solid #151c29',
-              borderRadius: 12,
-              padding: '12px 14px',
-              fontSize: 15,
-              color: meData.bio ? '#9ca3af' : '#2d3748',
-              fontStyle: meData.bio ? 'normal' : 'italic',
-              lineHeight: 1.6,
-              minHeight: 80,
-            }}
-          >
-            {meData.bio || '—'}
+          <div>
+            <label style={S.label}>Legal name <span style={{ fontSize: 10, color: '#4b5563' }}>(private)</span></label>
+            <input
+              style={S.input}
+              value={identity.full_name}
+              onChange={(e) => setIdentity((p) => ({ ...p, full_name: e.target.value }))}
+              placeholder="Your legal name"
+              autoComplete="name"
+            />
+          </div>
+          <div>
+            <label style={S.label}>Date of birth {age != null ? `(age ${age})` : ''}</label>
+            <input
+              style={S.input}
+              type="date"
+              value={identity.date_of_birth}
+              onChange={(e) => setIdentity((p) => ({ ...p, date_of_birth: e.target.value }))}
+              max={
+                new Date(new Date().setFullYear(new Date().getFullYear() - 18))
+                  .toISOString()
+                  .split('T')[0]
+              }
+            />
           </div>
         </div>
-      </div>
 
-      {/* ── Save display name button ── */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 32 }}>
-        <button
-          style={{ ...S.saveBtn, fontSize: 13, padding: '10px 22px', opacity: saving ? 0.6 : 1 }}
-          onClick={save}
-          disabled={saving}
-        >
-          {saving ? 'Saving…' : 'Save display name'}
-        </button>
+        <div style={S.grid2}>
+          <div>
+            <label style={S.label}>Gender</label>
+            <select
+              style={S.select}
+              value={identity.gender}
+              onChange={(e) => setIdentity((p) => ({ ...p, gender: e.target.value }))}
+            >
+              <option value="">Select…</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="non_binary">Non-binary</option>
+              <option value="trans_female">Trans female</option>
+              <option value="trans_male">Trans male</option>
+              <option value="gender_fluid">Gender fluid</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+          </div>
+          <div>
+            <label style={S.label}>Country</label>
+            <input
+              style={S.input}
+              value={identity.country}
+              onChange={(e) => setIdentity((p) => ({ ...p, country: e.target.value }))}
+              placeholder="Netherlands"
+              autoCapitalize="words"
+            />
+          </div>
+        </div>
+
+        <div style={S.grid2}>
+          <div>
+            <label style={S.label}>City</label>
+            <input
+              style={S.input}
+              value={identity.city}
+              onChange={(e) => setIdentity((p) => ({ ...p, city: e.target.value }))}
+              placeholder="Amsterdam"
+              autoCapitalize="words"
+            />
+          </div>
+        </div>
+
+        <label style={S.label}>Tagline</label>
+        <input
+          style={S.input}
+          value={identity.tagline}
+          onChange={(e) => setIdentity((p) => ({ ...p, tagline: e.target.value }))}
+          placeholder="A short line about your energy…"
+          maxLength={300}
+        />
+
+        <label style={S.label}>Bio</label>
+        <textarea
+          style={S.textarea}
+          value={identity.bio}
+          onChange={(e) => setIdentity((p) => ({ ...p, bio: e.target.value }))}
+          placeholder="Tell dreamers about yourself — how you move, what you love, what a session with you feels like…"
+          maxLength={2000}
+        />
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid #1c2333', marginTop: 8, gap: 12 }}>
+          <button
+            style={{ ...S.saveBtn, fontSize: 13, padding: '10px 22px', opacity: savingIdentity ? 0.6 : 1 }}
+            onClick={saveIdentity}
+            disabled={savingIdentity}
+          >
+            {savingIdentity ? 'Saving…' : 'Save details'}
+          </button>
+          <button
+            style={{ ...S.saveBtn, fontSize: 13, padding: '10px 22px', opacity: saving ? 0.6 : 1, background: 'transparent', border: '1px solid rgba(232,96,122,.4)', color: '#e8607a' }}
+            onClick={save}
+            disabled={saving}
+          >
+            {saving ? 'Saving…' : 'Save display name'}
+          </button>
+        </div>
       </div>
 
       {/* ── Extended profile tabs ── */}
@@ -1113,6 +1173,6 @@ export default function ProfilePage() {
     )
   if (!me) return null
 
-  if (me.status === 'approved') return <ProfileBuilder meData={me} />
+  if (me.status !== 'rejected') return <ProfileBuilder meData={me} />
   return <VerificationView me={me} />
 }

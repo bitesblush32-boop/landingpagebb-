@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 
 export function CookieBanner() {
   const [show, setShow] = useState(false)
@@ -57,12 +58,12 @@ export function CookieBanner() {
         }}
       >
         We use essential cookies for login and age verification only — no tracking, no advertising.{' '}
-        <a
+        <Link
           href="/privacy"
           style={{ color: '#9ca3af', textDecoration: 'underline' }}
         >
           Privacy Policy
-        </a>
+        </Link>
       </p>
       <button
         onClick={dismiss}
