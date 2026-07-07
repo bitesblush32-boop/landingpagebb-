@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { getFingerprint } from '@/lib/fingerprint'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -542,10 +543,19 @@ export default function GenderLanding({
 }) {
   const cfg = COMMUNITY_CONFIG[community]
 
-  // Bind device to this community
+  // Bind device to this community (cookie + localStorage + fingerprint DB binding)
   useEffect(() => {
     document.cookie = `bb_community=${community}; max-age=31536000; path=/; SameSite=Lax`
     try { localStorage.setItem('bb_community', community) } catch { /* ignore */ }
+
+    // Persist fingerprint → community in DB so other browsers on same device auto-redirect
+    getFingerprint().then((fp) => {
+      fetch('/api/device/bind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fingerprint_hash: fp, community }),
+      }).catch(() => {})
+    }).catch(() => {})
   }, [community])
 
   return (
