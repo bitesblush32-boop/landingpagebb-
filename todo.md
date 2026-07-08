@@ -7,6 +7,44 @@
 
 ---
 
+## FEATURE STATUS — QUICK REFERENCE
+
+### blushbite.live (Companion Portal)
+- ✅ Gender community system — `/female`, `/male`, `/shemale` landing pages with 2-step OTP apply
+- ✅ Instant-live registration — no admin approval gate; companions go live immediately on OTP verify
+- ✅ 3-layer device binding — localStorage → SHA-256 fingerprint DB → manual picker
+- ✅ Dashboard — profile, photos, videos, stories, bookings, analytics, settings
+- ✅ Photo upload — `is_approved=TRUE`, auto-primary on first upload, Cloudinary
+- ✅ Stories — companion creates/edits stories; now writes `author_type='companion'`, `is_published=true` so they appear on blushbite.co
+- ✅ Drip email cron — `companion_nudges` table, Railway cron, Resend
+- ✅ Age gate — fullscreen 18+ gate (localStorage + cookie)
+- ✅ Legal pages — Terms, Privacy Policy, Companion Guidelines, Cookie banner
+- ✅ SEO foundation — meta tags, JSON-LD per community page, robots.txt, sitemap.xml
+- ✅ City/country slugs — written to `companion_profiles.city_slug` / `country_slug` on profile PATCH
+- ✅ Onboarding simplification — 2-field apply (displayName + email + OTP), rest in dashboard
+- ✅ Welcome dashboard state — `?welcome=1` banner on first login
+- 📋 Admin panel updates — change Approve→TakeDown/Restore; remove "Pending review" tab; add "New today" badge *(blushbite.co codebase)*
+- 🚫 CCBill subscriptions — DEFERRED (free for 6 months); DB migration done, upgrade page UI stub exists; do not build lib/subscription.ts or webhook
+
+### blushbite.co (Dreamer/Consumer App)
+- ✅ Companion discover API — `GET /api/companions/discover` with Haversine distance, cursor pagination
+- ✅ Companion profile drawer — `GET /api/companions/[profileId]` with photos, session cards, bio, tags
+- ✅ Hourly rate fallback — discover + profile routes fall back to `companion_profiles.hourly_rate` when no session_cards
+- ✅ Geo landing pages — `/[country]`, `/[country]/[city]` — all-gender city pages with JSON-LD
+- ✅ Gender-specific geo SEO pages — `/female/[country]/[city]`, `/male/...`, `/shemale/...` (main SEO target: "ts escort in pune")
+- ✅ Device binding on blushbite.co — `POST /api/device/community-lookup`, `lib/fingerprint.ts`, `hooks/useDeviceCommunity`
+- ✅ Gender-personalized home feed — `useDeviceCommunity()` → `useRecommendedCompanions(community)` → `?gender=` filter
+- ✅ Feed + discover gender filter — `?gender=female|male|shemale` SQL subquery on `companions.gender_community`
+- ✅ Companion stories visible — `/api/platform-stories` serves companion stories (author_type='companion', is_published=true, moderation_status='approved')
+- ✅ Location banner on companions page — persists until coords fetched; handles prompt/loading/denied states
+- 📋 Home page real data — stories and confessions on home page are hardcoded from `lib/data.ts`; needs to call `/api/platform-stories` and `/api/confessions`
+- 📋 Videos visible to dreamers — all video API routes return 401; no public companion video feed exists
+- 📋 Vibe tags cross-codebase — blushbite.live uses JSON column, blushbite.co reads junction table; companions from blushbite.live show no tags
+- 📋 Lat/lng collection — blushbite.live doesn't collect coordinates; companions show without distance sorting
+- 📋 Admin panel — TakeDown/Restore toggle; filter tabs: All | Live | Taken Down | New Today
+
+---
+
 ## UNDERSTANDING THE CURRENT SYSTEM (Read Before Any Changes)
 
 ### Current Registration Flow (UPDATED — as built)

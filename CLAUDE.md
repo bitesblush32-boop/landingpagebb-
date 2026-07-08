@@ -592,8 +592,8 @@ All under `app/api/companions/` unless noted:
 | `photos/set-primary` | POST | Auth | Set primary photo |
 | `videos` | GET/DELETE | Auth | List / delete videos |
 | `videos/upload` | POST | Auth | Upload video to Cloudinary + DB |
-| `stories` | GET/POST | Auth | List / create stories |
-| `stories/[id]` | GET/PATCH/DELETE | Auth | Get / update / soft-delete story |
+| `stories` | GET/POST | Auth | List / create stories (POST sets author_type='companion', is_published=true, moderation_status='approved') |
+| `stories/[id]` | GET/PATCH/DELETE | Auth | Get / update (PATCH resets moderation to 'pending' for re-review) / soft-delete story |
 | `bookings` | GET | Auth | List booking requests |
 | `bookings/[id]` | PATCH | Auth | Accept / decline / complete booking |
 | `settings` | GET/PATCH/POST/DELETE | Auth | Contact / live toggle / password / deactivate |
@@ -751,6 +751,37 @@ Node: `>=20`. **No ORM** — raw SQL via `pg`. No Prisma, no Drizzle.
 - `blushbite.co` — consumer platform for dreamers (separate codebase, shared DB)
 
 **Dreamers never visit blushbite.live.**
+
+---
+
+## Cross-Codebase Data Visibility (blushbite.live → blushbite.co) — CURRENT STATE
+
+This section documents exactly what companion content is visible to dreamers on blushbite.co, as of July 2026.
+
+### Photos ✓ VISIBLE
+- `upload-photo` sets `is_approved=TRUE`, `is_primary=(count=0)` → photos immediately visible in discover + profile routes on blushbite.co
+- blushbite.co `[country]/[city]` pages query `WHERE is_approved=TRUE` — works correctly
+
+### Profile Data ✓ VISIBLE
+- `companion_profiles.bio`, `tagline`, `city`, `hourly_rate`, `currency`, `gender_community` — all written by blushbite.live profile PATCH
+- blushbite.co discover + profile routes read these; hourly_rate fallback implemented when no session_cards exist
+
+### Stories ✓ VISIBLE (FIXED July 2026)
+- blushbite.live stories POST now writes: `author_type='companion'`, `is_published=TRUE`, `moderation_status='approved'`, `published_at=NOW()`
+- blushbite.co `/api/platform-stories` serves stories WHERE these three conditions are met
+- NOTE: story PATCH (edit) resets `moderation_status='pending'` — edited stories disappear until admin re-approves (intentional re-review workflow)
+
+### Vibe Tags ✗ NOT VISIBLE (KNOWN GAP)
+- blushbite.live stores vibe tags as JSON array in `companion_profiles.vibe_tags`
+- blushbite.co reads from `companion_vibe_tags` junction table — no bridge between them
+
+### Videos ✗ NOT VISIBLE VIA PUBLIC API
+- Videos are stored in Cloudinary + `companion_videos` table
+- blushbite.co has no public API route serving companion videos to dreamers yet (route stubs return 401)
+
+### Distance ✗ NOT SHOWN (KNOWN GAP)
+- blushbite.live does not collect lat/lng
+- Companions appear in discover without distance sorting, just by profile_completeness rank
 
 ---
 
