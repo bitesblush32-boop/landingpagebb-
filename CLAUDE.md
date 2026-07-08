@@ -1,6 +1,7 @@
 # CLAUDE.md — blushbite.live Companion Portal
 
 > Read this before writing any code. This is the single source of truth for architecture, schema, auth, and patterns.
+> Last updated: July 2026 — reflects Sprint 0–6 implementation state.
 
 ---
 
@@ -28,6 +29,83 @@
 
 ---
 
+## Current Architecture — Full Flow (as built)
+
+### 1. Root Page — Gender Picker + 3-Layer Device Binding
+
+`app/page.tsx` is a **server component** that renders `app/GenderPickerClient.tsx` (client component).
+
+**Middleware handles routing for `/`** (in `middleware.ts`):
+1. **Layer 1 — Authenticated session**: if valid `bb_session` JWT exists → redirect `/dashboard`
+2. **Layer 2 — Device community cookie**: if `bb_community` cookie is set and valid → redirect `/{community}`
+3. **Layer 3 — Fall through**: render the gender picker
+
+**GenderPickerClient.tsx logic** (runs client-side after picker loads):
+1. Check `localStorage.getItem('bb_community')` — if set, redirect immediately
+2. If not in localStorage: compute SHA-256 device fingerprint via `lib/fingerprint.ts`
+3. Call `GET /api/device/community-lookup?fp={hash}` — if found in DB, redirect to that community
+4. Else: show the three community cards (Female / Male / Shemale) for manual selection
+5. On community select: store in `localStorage`, POST `/api/device/bind` with fingerprint + community, set `bb_community` cookie client-side, redirect to `/{community}`
+
+### 2. Community Landing Pages
+
+`app/[gender]/page.tsx` — **server component**
+- Valid values: `female`, `male`, `shemale` (redirects `/` on any other value)
+- Fetches live stats from DB (companion_count, city_count for this community)
+- Generates community-specific SEO metadata via `generateMetadata()`
+- Injects JSON-LD Organization schema
+- Renders `GenderLanding.tsx` with community + stats props
+
+`app/[gender]/GenderLanding.tsx` — **client component**
+- Community-specific config (`COMMUNITY_CONFIG`): accent color, grid color, hero copy, badge text, hero h1/sub
+- **2-step apply form** (NOT the old 3-step wizard):
+  - Step 1: displayName + email + 18+ checkbox + ToS agree → "Send me a login link"
+  - Step 2: 6-digit OTP input → submit → account created → redirect `/dashboard?welcome=1`
+- Live stats bar: `{companionCount} companions · {cityCount} cities · EU-verified`
+- Features section (4 cards: booking management, stories, analytics, privacy)
+- Trust bar (EU hosted, GDPR, admin-backed, alias protected)
+- Footer: Terms · Privacy · Companion Guidelines · Contact
+
+### 3. Application API — Instant Live (no approval gate)
+
+`app/api/companions/apply/route.ts`:
+- Validates: `displayName`, `email`, `agreeToTerms` only (minimal friction)
+- Creates DB rows in a transaction:
+  - `companions` row (`companion_stage=3`, `onboarding_complete=false`, `gender_community` set)
+  - `companion_profiles` row with `is_live=TRUE`, `is_visible_to_users=TRUE` (instant live)
+  - `companion_onboarding_progress` stages 1, 2, 7 as `'completed'` (auto-approved)
+- Sets session JWT cookie (`bb_session`) and community cookie (`bb_community`)
+- Calls `sendWelcomeEmail()` after commit
+- Returns `{ success: true, redirectTo: '/dashboard?welcome=1' }`
+
+**Result: companions go live immediately on registration. No 48-hour wait. No admin approval needed.**
+
+Admin role changes from "approve to live" → "monitor and take down" (is_live=false if violation).
+
+### 4. Login Flow
+
+`app/login/page.tsx`:
+1. Email → POST `/api/companions/login/send-otp` → Resend 6-digit OTP (10 min TTL)
+2. OTP → POST `/api/companions/login/verify-otp` → session JWT + `bb_community` cookie set
+3. Redirect: rejected → `/reapply` | everyone else → `/dashboard`
+
+### 5. Dashboard
+
+`app/dashboard/layout.tsx`:
+- Fetches `/api/companions/me` on mount — redirects to `/login` if unauthenticated
+- **No approval lock** — all nav items freely accessible for all authenticated companions
+- Desktop (≥768px): 240px fixed sidebar — logo, completeness bar, live toggle, full nav, tier badge
+- Mobile (<768px): fixed bottom tab bar — 5 tabs
+- `taken_down` status: shows red "Profile paused — contact support" badge in sidebar
+- Sidebar shows tier badge (Premium / Standard / Upgrade) based on subscription
+
+`app/dashboard/page.tsx`:
+- Shows welcome onboarding checklist when `?welcome=1` or `localStorage.bb_onboarding_done` not set
+- Checklist: complete profile · upload 3 photos · write first story · set rate · toggle live
+- Progress stored in localStorage key `bb_onboarding_done`
+
+---
+
 ## Auth System
 
 ### JWT Cookie
@@ -37,19 +115,31 @@
 - **Cookie name (dev)**: `bb_session`
 - **Expiry**: 7 days
 - **Env var**: `COMPANION_JWT_SECRET` (required — server throws at startup if missing)
-- **Payload**: `{ sub: companionId (UUID), email, name, exp }`
+- **Payload**: `{ sub: companionId (UUID), email, name, community, exp }`
+  - `community` field added — middleware injects it as `x-companion-community` header
+
+### Community Cookie
+
+- **Cookie name**: `bb_community`
+- **Values**: `female` | `male` | `shemale`
+- **Set by**: `apply/route.ts` and `login/verify-otp/route.ts`
+- **Read by**: `middleware.ts` for root `/` routing (Layer 2)
+- **Set client-side also**: `GenderPickerClient.tsx` sets it on community selection
 
 ### Key files
 
 | File | Purpose |
 |---|---|
-| `lib/session.ts` | `signJwt`, `verifyJwt`, `getSession()` (server components/routes), `buildSessionCookie()`, `clearSessionCookie()` |
-| `middleware.ts` | Edge Runtime JWT verification, protects routes, injects `x-companion-id` / `x-companion-email` / `x-companion-name` headers |
+| `lib/session.ts` | `signJwt`, `verifyJwt`, `getSession()`, `buildSessionCookie()`, `buildCommunityCookie()`, `clearSessionCookie()` |
+| `middleware.ts` | Edge Runtime JWT verification, 3-layer root routing, protects routes, injects request headers |
+| `lib/fingerprint.ts` | Client-side SHA-256 fingerprint from browser signals (language, screen, timezone, platform, CPU, memory) |
 
 ### Protected routes (middleware)
 
 - Pages: `/dashboard/*`, `/status`, `/reapply`
 - API: `/api/companions/*` except: `send-otp`, `verify-otp`, `apply`, `login/*`
+- Device API: `/api/device/*` — public (no auth required)
+- Cron API: `/api/cron/*` — secured by `Authorization: Bearer {CRON_SECRET}` header (not JWT)
 
 ### How to read session in a Route Handler
 
@@ -60,10 +150,63 @@ export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   // session.sub = companionId (UUID)
+  // session.community = 'female' | 'male' | 'shemale'
 }
 ```
 
 **Always guard with early `if (!session) return 401` before any DB or side-effect operations.**
+
+---
+
+## Middleware — Root Routing Logic
+
+```ts
+// middleware.ts — root '/' routing (3-layer):
+if (pathname === '/') {
+  // Layer 1: already logged in → skip the picker entirely
+  const token = req.cookies.get(COOKIE_NAME)?.value
+  if (token) {
+    const session = await verifyJwt(token)
+    if (session) return redirect('/dashboard')
+  }
+  // Layer 2: device already bound to a community via cookie
+  const community = req.cookies.get('bb_community')?.value
+  if (community && VALID_COMMUNITIES.includes(community)) return redirect(`/${community}`)
+  // Layer 3: show picker
+  return NextResponse.next()
+}
+```
+
+Matcher: `['/', '/dashboard/:path*', '/status', '/reapply', '/api/companions/:path*']`
+
+---
+
+## Device Binding System
+
+Stores a mapping of device fingerprint → community in the database.
+
+### `lib/fingerprint.ts`
+
+Computes a SHA-256 hex hash (64 chars) from browser signals:
+- `navigator.language`, `screen.width x height x colorDepth`
+- `Intl.DateTimeFormat().resolvedOptions().timeZone`
+- `navigator.platform`, `navigator.hardwareConcurrency`, `navigator.deviceMemory`
+
+### `app/api/device/bind` (POST)
+
+- Validates: `fingerprint_hash` (64-char hex) + `community` (female/male/shemale)
+- Optionally attaches `companion_id` from session if authenticated
+- Upserts into `device_community_bindings` table:
+  ```sql
+  INSERT ... ON CONFLICT (fingerprint_hash) DO UPDATE
+    SET community = $2, companion_id = COALESCE($3, ...), last_seen = now()
+  ```
+
+### `app/api/device/community-lookup` (GET)
+
+- Query param: `?fp={hash}`
+- Returns `{ found: true, community: 'female' }` or `{ found: false }`
+- Fire-and-forget `last_seen` update on hit
 
 ---
 
@@ -99,14 +242,15 @@ try {
 ```
 id UUID PK
 email VARCHAR UNIQUE
-name VARCHAR            -- display name / first name
+name VARCHAR            -- display name / stage name
 alias VARCHAR UNIQUE    -- generated public alias
-full_name VARCHAR       -- legal name
-date_of_birth TIMESTAMP
-country VARCHAR
+full_name VARCHAR       -- legal name (filled via dashboard/profile)
+date_of_birth TIMESTAMP -- filled via dashboard/profile
+country VARCHAR         -- filled via dashboard/profile
 whatsapp_number VARCHAR
-companion_stage INT     -- 3 after landing page apply
-hashed_password VARCHAR -- bcrypt, nullable (login via OTP)
+companion_stage INT     -- 3 after apply
+gender_community VARCHAR -- 'female' | 'male' | 'shemale' (set on apply)
+hashed_password VARCHAR -- bcrypt, nullable (OTP is default login)
 onboarding_complete BOOLEAN
 created_at, updated_at TIMESTAMP
 ```
@@ -118,13 +262,15 @@ companion_id UUID FK → companions.id
 bio TEXT
 tagline VARCHAR(300)
 city VARCHAR
+city_slug VARCHAR(100)    -- URL-safe slug e.g. 'new-delhi' (written by profile PATCH)
+country_slug VARCHAR(100) -- URL-safe slug e.g. 'india' (written by profile PATCH)
 gender VARCHAR
 availability_status VARCHAR  -- 'offline' | 'online' | 'busy'
 whatsapp_number VARCHAR
 session_modality VARCHAR     -- 'in_person' | 'online' | 'both'
 hourly_rate NUMERIC
 currency VARCHAR
-is_live BOOLEAN              -- companion toggled live
+is_live BOOLEAN              -- admin can set false to take down
 is_verified BOOLEAN          -- admin verified
 is_visible_to_users BOOLEAN  -- synced with is_live
 profile_completeness INT     -- 0–100
@@ -142,12 +288,13 @@ created_at, updated_at TIMESTAMP
 ```
 id UUID PK
 companion_profile_id UUID FK → companion_profiles.id
-url TEXT                -- Cloudinary secure_url
-storage_key VARCHAR     -- Cloudinary public_id
+url TEXT                        -- Cloudinary secure_url
+storage_key VARCHAR             -- Cloudinary public_id
 alt_text TEXT
 sort_order INT
 is_primary BOOLEAN
 is_approved BOOLEAN
+photo_verification_status VARCHAR DEFAULT 'pending'  -- 'pending' | 'verified' | 'failed'
 moderation_status VARCHAR
 deleted_at TIMESTAMP    -- soft delete — always filter WHERE deleted_at IS NULL
 created_at TIMESTAMP
@@ -171,7 +318,7 @@ created_at TIMESTAMP
 ```
 id UUID PK
 title VARCHAR(200)
-body TEXT               -- full story content
+body TEXT
 excerpt VARCHAR(500)
 author_companion_id UUID FK → companions.id   (NOT companion_profiles.id)
 moderation_status VARCHAR  -- 'pending' | 'approved' | 'rejected'
@@ -203,16 +350,65 @@ notes TEXT
 UNIQUE (companion_id, stage)
 ```
 
-**Stage 7 status='completed' AND companion_profiles.is_live=true = approved companion.**
+**Stage 7 status='completed' = companion is in the system. Combined with is_live=true = visible to dreamers.**
+**On instant-live registration: stages 1, 2, 7 are all auto-completed. is_live=true immediately.**
 
-### Companion Approval Status Logic
+#### `device_community_bindings` (NEW — Sprint 0)
+```
+id UUID PK
+fingerprint_hash VARCHAR(64) UNIQUE  -- SHA-256 hex
+community VARCHAR                    -- 'female' | 'male' | 'shemale'
+companion_id UUID NULL               -- FK → companions.id (attached if authenticated)
+created_at TIMESTAMP
+last_seen TIMESTAMP
+```
+
+#### `companion_nudges` (NEW — Sprint 5)
+```
+id UUID PK
+companion_id UUID FK → companions.id
+nudge_type VARCHAR  -- 'profile_incomplete' | 'no_photos' | 'go_live'
+sent_at TIMESTAMP
+```
+Prevents duplicate drip emails. Checked before sending each nudge.
+
+#### `companion_subscriptions` (NEW — Sprint 6 — DB only, API pending)
+```
+id UUID PK
+companion_id UUID FK → companions.id
+tier VARCHAR(20)              -- 'free' | 'standard' | 'premium'
+status VARCHAR(20)            -- 'active' | 'cancelled' | 'expired'
+ccbill_subscription_id VARCHAR(100)
+current_period_start TIMESTAMP
+current_period_end TIMESTAMP
+created_at, updated_at TIMESTAMP
+```
+
+### Companion Status Logic
 
 ```ts
 // In /api/companions/me:
-let status = 'pending'
+let status = 'approved'  // default — all registered companions are live
 if (row.review_status === 'rejected') status = 'rejected'
-else if (row.review_status === 'completed' && row.is_live) status = 'approved'
+else if (row.is_live === false && row.review_status !== 'completed') status = 'taken_down'
+// taken_down = admin set is_live=false; companion can still login but sees paused notice
 ```
+
+### Geo Slug Helper — `lib/slug.ts`
+
+```ts
+export function toSlug(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // strip diacritics
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+// "New Delhi" → "new-delhi" | "São Paulo" → "sao-paulo"
+```
+
+`city_slug` and `country_slug` are written to `companion_profiles` on every PATCH to city/country via `app/api/companions/profile/route.ts`. Used by geo landing pages on blushbite.co.
 
 ---
 
@@ -249,9 +445,103 @@ Cleanup: expired entries are swept on every `storeOtp()` call.
 
 ## Email (Resend)
 
-`lib/email.ts` — functions: `sendOtpEmail`, `sendApprovalEmail`, `sendRejectionEmail`, `sendAdminReapplyNotification`.
+`lib/email.ts` — functions:
+- `sendOtpEmail` — OTP delivery
+- `sendApprovalEmail` — legacy (admin approval path, now unused in instant-live flow)
+- `sendRejectionEmail` — sent when admin rejects
+- `sendAdminReapplyNotification` — alerts admin when companion reapplies
+- `sendWelcomeEmail` — NEW: sent immediately on registration (called in apply/route.ts)
+- `sendProfileNudgeEmail` — NEW: T+4h drip if completeness < 30%
+- `sendPhotoNudgeEmail` — NEW: T+24h drip if no photos uploaded
+- `sendGoLiveNudgeEmail` — NEW: T+72h drip if is_live=false
 
 Env vars: `RESEND_API_KEY`, `RESEND_FROM` (optional, defaults to `admin@blushbite.co`)
+
+---
+
+## Drip Email Cron
+
+`app/api/cron/drip/route.ts` — POST endpoint, secured with `Authorization: Bearer {CRON_SECRET}`.
+
+Checks all companions registered in the last 7 days and sends nudges based on state:
+- T+4h: `sendProfileNudgeEmail` if `profile_completeness < 30` and not yet sent
+- T+24h: `sendPhotoNudgeEmail` if no photos and not yet sent
+- T+72h: `sendGoLiveNudgeEmail` if `is_live=false` and not yet sent
+
+Uses `companion_nudges` table to prevent duplicate sends.
+
+**Railway setup:** Add Cron Job service in Railway dashboard, schedule every 15 min:
+```
+curl -s -X POST https://blushbite.live/api/cron/drip -H "Authorization: Bearer $CRON_SECRET"
+```
+
+---
+
+## Legal & SEO Pages
+
+### Age Gate — `components/AgeGate.tsx`
+
+Client component, added in `app/layout.tsx` before `{children}`.
+- First visit (no `localStorage.bb_age_confirmed`): shows fullscreen overlay
+- Blocks all content: "I am 18 or older — Enter" | "Exit" (→ google.com)
+- On confirm: sets `localStorage.bb_age_confirmed = '1'` + cookie `bb_age=1; max-age=31536000`
+- Does NOT render server-side (uses mounted state pattern)
+
+### Cookie Banner — `components/CookieBanner.tsx`
+
+Fixed bottom bar, z-index 8000 (below age gate). Dismissed to `localStorage.bb_cookie_ok = '1'`.
+
+### Legal Pages (server components, no auth required)
+
+| Page | File |
+|---|---|
+| `/terms` | `app/terms/page.tsx` |
+| `/privacy` | `app/privacy/page.tsx` |
+| `/companion-guidelines` | `app/companion-guidelines/page.tsx` |
+
+All use Netherlands governing law framing. Terms use "time and companionship" language (MassageRepublic pattern — DSA safe harbour compliance).
+
+### SEO Configuration
+
+**`app/layout.tsx`** — root metadata:
+- Title: `BlushBite — Private Companions`
+- Description with "time and companionship" framing
+- `robots: { index: true, follow: true }`
+- OpenGraph + Twitter card
+- JSON-LD Organization schema
+
+**`app/[gender]/page.tsx`** — per-community metadata:
+- Community-specific title, description, keywords (escort-safe framing)
+- `alternates.canonical`: `https://blushbite.live/{gender}`
+- JSON-LD Organization schema with community-specific description
+- `robots: { index: true, follow: true }`
+
+**`app/sitemap.ts`** — dynamic sitemap:
+- Static: `/`, `/female`, `/male`, `/shemale`, `/terms`, `/privacy`, `/companion-guidelines`
+- Priority 1.0 on community pages
+
+**`app/robots.ts`** — robots configuration:
+```
+Allow: /
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /reapply
+Sitemap: https://blushbite.live/sitemap.xml
+```
+
+**Geo landing pages** — built on blushbite.co (separate codebase), NOT on blushbite.live.
+The slug columns (`city_slug`, `country_slug`) in `companion_profiles` feed those pages.
+
+---
+
+## Subscription / Upgrade
+
+`app/dashboard/upgrade/page.tsx` — exists, shows 3-tier comparison (Free / Standard €29 / Premium €59).
+- Upgrade buttons placeholder (CCBill integration pending).
+- Shows current tier badge pulled from `/api/companions/me` (tier field).
+
+**Status: DB migration done, upgrade page done. API routes + webhook NOT yet built.**
+See todo.md SPRINT 6 for remaining items.
 
 ---
 
@@ -259,15 +549,23 @@ Env vars: `RESEND_API_KEY`, `RESEND_FROM` (optional, defaults to `admin@blushbit
 
 ```bash
 DATABASE_URL                    # Railway PostgreSQL connection string
-COMPANION_JWT_SECRET            # HS256 signing secret — REQUIRED, server throws if missing
+COMPANION_JWT_SECRET            # HS256 signing secret — REQUIRED
 RESEND_API_KEY                  # Email sending
+RESEND_FROM                     # From address (default: admin@blushbite.co)
 CLOUDINARY_CLOUD_NAME
 CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET
+CRON_SECRET                     # Bearer token for /api/cron/drip
 NODE_ENV                        # 'production' | 'development'
 
+# CCBill (pending — set when approved)
+CCBILL_ACCOUNT_NUMBER
+CCBILL_SUBACC_STANDARD
+CCBILL_SUBACC_PREMIUM
+CCBILL_FORM_NAME
+CCBILL_SALT
+
 # Optional
-RESEND_FROM                     # From address, defaults to admin@blushbite.co
 PORT                            # HTTP port, defaults to 3001
 ```
 
@@ -275,32 +573,37 @@ PORT                            # HTTP port, defaults to 3001
 
 ## API Routes
 
-All under `app/api/companions/`:
+All under `app/api/companions/` unless noted:
 
 | Route | Method | Auth | Purpose |
 |---|---|---|---|
 | `send-otp` | POST | Public | Send login OTP to email |
 | `verify-otp` | POST | Public | Verify OTP, issue session cookie |
-| `apply` | POST | Public | Landing page application (creates companion + profile) |
-| `login/send-otp` | POST | Public | Same as send-otp (legacy path) |
-| `login/verify-otp` | POST | Public | Same as verify-otp (legacy path) |
+| `apply` | POST | Public | Apply (creates companion + profile, instant live) |
+| `login/send-otp` | POST | Public | Same as send-otp (login path) |
+| `login/verify-otp` | POST | Public | Same as verify-otp (login path) |
 | `logout` | POST | Auth | Clear session cookie |
-| `me` | GET | Auth | Current companion data + approval status |
+| `me` | GET | Auth | Current companion data + status + tier |
 | `application` | PATCH | Auth | Update personal details (name, DOB, country) |
-| `profile` | GET/PATCH | Auth | Companion profile (bio, tagline, city, etc.) |
-| `photos` | GET | Auth | List photos |
+| `profile` | GET/PATCH | Auth | Profile (bio, tagline, city + writes slugs, etc.) |
+| `photos` | GET | Auth | List photos (includes photo_verification_status) |
 | `upload-photo` | POST | Auth | Upload photo to Cloudinary + DB |
 | `photos/[id]` | DELETE | Auth | Soft-delete photo |
 | `photos/set-primary` | POST | Auth | Set primary photo |
 | `videos` | GET/DELETE | Auth | List / delete videos |
 | `videos/upload` | POST | Auth | Upload video to Cloudinary + DB |
 | `stories` | GET/POST | Auth | List / create stories |
-| `stories/[id]` | GET/PATCH/DELETE | Auth | Get full story / update / soft-delete |
+| `stories/[id]` | GET/PATCH/DELETE | Auth | Get / update / soft-delete story |
 | `bookings` | GET | Auth | List booking requests |
 | `bookings/[id]` | PATCH | Auth | Accept / decline / complete booking |
-| `settings` | GET/PATCH/POST/DELETE | Auth | Contact info / live toggle / password / deactivate |
-| `reapply` | GET/POST | Auth | Fetch / submit updated application (rejected companions) |
+| `settings` | GET/PATCH/POST/DELETE | Auth | Contact / live toggle / password / deactivate |
+| `reapply` | GET/POST | Auth | Fetch / submit updated application (rejected only) |
 | `analytics` | GET | Auth | Profile view stats + 30-day chart |
+| `subscription` | GET/POST | Auth | **PENDING** — current tier / initiate CCBill upgrade |
+| `/api/device/bind` | POST | Public | Store fingerprint → community binding |
+| `/api/device/community-lookup` | GET | Public | Lookup community by fingerprint |
+| `/api/cron/drip` | POST | CRON_SECRET | Send drip nudge emails |
+| `/api/webhooks/ccbill` | POST | CCBill sig | **PENDING** — handle payment events |
 
 ---
 
@@ -308,18 +611,36 @@ All under `app/api/companions/`:
 
 | Page | Auth | Purpose |
 |---|---|---|
-| `/` | Public | Landing page + 3-step application wizard |
+| `/` | Public | Gender picker (3-layer device binding) |
+| `/female` | Public | Female community landing + 2-step apply form |
+| `/male` | Public | Male community landing + 2-step apply form |
+| `/shemale` | Public | TS/Shemale community landing + 2-step apply form |
 | `/login` | Public | OTP login |
-| `/status` | Auth | Application status (pending/approved/rejected) |
+| `/terms` | Public | Terms of Service (NL law) |
+| `/privacy` | Public | GDPR Privacy Policy |
+| `/companion-guidelines` | Public | Content rules and moderation policy |
+| `/status` | Auth | taken_down state notice / rejected reason |
 | `/reapply` | Auth | Edit and re-submit rejected application |
-| `/dashboard` | Auth | Overview stats |
-| `/dashboard/profile` | Auth (any status) | Profile builder — only page unlocked before approval |
-| `/dashboard/photos` | Auth + approved | Photo management |
-| `/dashboard/videos` | Auth + approved | Video management |
-| `/dashboard/stories` | Auth + approved | Story management |
-| `/dashboard/bookings` | Auth + approved | Booking requests |
-| `/dashboard/analytics` | Auth + approved | Profile analytics |
-| `/dashboard/settings` | Auth + approved | Account settings |
+| `/dashboard` | Auth | Overview + welcome onboarding checklist |
+| `/dashboard/profile` | Auth | Profile builder (bio, tagline, city, attributes) |
+| `/dashboard/photos` | Auth | Photo management (3-state badge: Verified/Approved/Pending) |
+| `/dashboard/videos` | Auth | Video management |
+| `/dashboard/stories` | Auth | Story management |
+| `/dashboard/bookings` | Auth | Booking requests |
+| `/dashboard/analytics` | Auth | Profile analytics |
+| `/dashboard/settings` | Auth | Account settings |
+| `/dashboard/upgrade` | Auth | Subscription tier comparison (CCBill pending) |
+
+---
+
+## Components
+
+| File | Purpose |
+|---|---|
+| `components/AgeGate.tsx` | Fullscreen 18+ gate on first visit |
+| `components/CookieBanner.tsx` | GDPR cookie notice (fixed bottom) |
+| `app/GenderPickerClient.tsx` | Community picker with 3-layer device binding |
+| `app/[gender]/GenderLanding.tsx` | Community-specific landing page + 2-step apply form |
 
 ---
 
@@ -338,6 +659,7 @@ All under `app/api/companions/`:
 - Early `if (!session) return 401` at the top of every protected route
 - Check `res.rows.length === 0` after INSERT…RETURNING before accessing `res.rows[0]`
 - Use `formData.get('file')` for photo uploads, `formData.get('video')` for video uploads
+- Write `city_slug` + `country_slug` via `toSlug()` whenever city/country changes in profile PATCH
 
 ### WhatsApp validation regex
 ```ts
@@ -345,7 +667,13 @@ All under `app/api/companions/`:
 ```
 
 ### Static asset caching
-Logo, favicon, og-image are served with `Cache-Control: public, max-age=31536000, immutable` via `next.config.ts` headers.
+Logo, favicon, og-image: `Cache-Control: public, max-age=31536000, immutable` via `next.config.ts` headers.
+
+### `canvas-confetti` ESM interop (CJS package)
+```ts
+const mod = await import('canvas-confetti')
+const confetti = (mod.default ?? (mod as any)) as (options?: object) => void
+```
 
 ---
 
@@ -358,7 +686,7 @@ npm start        # next start -p ${PORT:-3001}
 
 Railway uses `nixpacks.toml`: `npm install` → `npm run build` → `npm start`.
 
-`outputFileTracingRoot` is set in `next.config.ts` to prevent build trace ENOENT errors on Windows (multiple lockfile detection).
+`outputFileTracingRoot` is set in `next.config.ts` to prevent build trace ENOENT errors on Windows.
 
 ---
 
@@ -366,13 +694,16 @@ Railway uses `nixpacks.toml`: `npm install` → `npm run build` → `npm start`.
 
 - **Primary accent**: `#e8607a` (rose)
 - **Gold**: `#c9a96e`
-- **Dark bg**: `#07090f` (page), `#0d1117` (cards), `#111620` (inputs), `#1c2333` (borders)
+- **Dark bg**: `#07090f` (page), `#0d1117` (cards/modals), `#111620` (inputs), `#1c2333` (borders)
 - **Text**: `#eeeef0` (primary), `#9ca3af` (secondary), `#6b7280` (muted), `#4b5563` (disabled)
 - **Fonts**: Playfair Display (`var(--font-serif)`), DM Sans (`var(--font-sans)`)
-- **Style**: intimate, dimly-lit, private — not a directory, a personal stage
+- **Italic accent**: key word at end of serif heading in rose `#e8607a`
+- **Noise texture**: `position:fixed; inset:0; pointer-events:none; z-index:1000; opacity:0.6` SVG fractalNoise
+- **Rose glow**: `radial-gradient(ellipse 70% 55% at 50% 30%, rgba(232,96,122,0.06) 0%, transparent 70%)`
+- **Grid overlay**: `linear-gradient` in community accent color at `.04` opacity
 
 All dashboard pages use inline `style={}` objects. No Tailwind inside dashboard pages.
-Landing page (`app/page.tsx`) uses Tailwind classes.
+Landing/community pages use Tailwind classes. Community accent grid color is per-community (not hardcoded rose).
 
 ---
 
@@ -383,172 +714,55 @@ Landing page (`app/page.tsx`) uses Tailwind classes.
 | `next` | ^15.3.3 | Framework — App Router |
 | `react` / `react-dom` | ^19.0.0 | UI |
 | `typescript` | ^5 | Language |
-| `tailwindcss` | ^4.1.10 | CSS (landing page only) |
+| `tailwindcss` | ^4.1.10 | CSS (landing + community pages only) |
 | `pg` | ^8.13.3 | PostgreSQL client |
 | `cloudinary` | ^2.5.1 | Photo + video storage |
 | `resend` | ^4.0.0 | Transactional email |
-| `bcryptjs` | ^2.4.3 | Password hashing (optional — OTP is default login) |
+| `bcryptjs` | ^2.4.3 | Password hashing (optional) |
 | `canvas-confetti` | ^1.9.3 | Status page celebration animation |
-| `libphonenumber-js` | ^1.13.7 | Phone number validation (landing page wizard) |
+| `libphonenumber-js` | ^1.13.7 | Phone validation |
 | `lucide-react` | ^0.511.0 | Icon set |
 
 Node: `>=20`. **No ORM** — raw SQL via `pg`. No Prisma, no Drizzle.
-
-`canvas-confetti` is CJS — always use ESM interop when importing dynamically:
-```ts
-const mod = await import('canvas-confetti')
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const confetti = (mod.default ?? (mod as any)) as (options?: object) => void
-```
-
-Never use `require()` in any file — causes webpack module factory errors in Next.js.
-
----
-
-## Feature Inventory
-
-### Landing Page (`app/page.tsx`) — `'use client'`, Tailwind only
-3-step application wizard — no login required:
-- **Step 1 — Personal**: fullName, email, DOB, country, city, whatsappNumber (E.164, validated with `libphonenumber-js`)
-- **Step 2 — Identity**: displayName (stage name), gender, tagline (short), bio
-- **Step 3 — Photo & Notes**: optional profile photo upload (preview before submit), additional notes
-
-Photo upload flow: file input → preview → POST `/api/companions/upload-photo` (field name: `file`) → returns `{ url }` → stored temporarily → included in final apply payload.
-
-Final submit: POST `/api/companions/apply` → DB transaction creates: `companions` + `companion_profiles` + `companion_photos` (if photo) + `companion_onboarding_progress` rows atomically.
-
-Success screen: "Application received. We'll be in touch within 48 hours."
-
-### Login (`app/login/page.tsx`) — `'use client'`
-1. Email → POST `/api/companions/send-otp` → Resend delivers 6-digit OTP (10 min TTL)
-2. OTP → POST `/api/companions/verify-otp` → session cookie set → redirect:
-   - `pending` → `/status` | `rejected` → `/reapply` | `approved` → `/dashboard`
-
-### Status (`app/status/page.tsx`) — `'use client'`
-Shows review state via GET `/api/companions/me`. If approved: `canvas-confetti` burst. If rejected: reason + link to `/reapply`.
-
-### Reapply (`app/reapply/page.tsx`) — `'use client'`
-Pre-fills form with existing application data. PATCH `/api/companions/reapply` on submit. Only reachable if `review_status = 'rejected'`.
-
-### Dashboard Layout (`app/dashboard/layout.tsx`) — `'use client'`
-- Fetches `/api/companions/me` on mount — redirects to `/login` if unauthenticated
-- Desktop (≥768px): 240px fixed sidebar — logo, completeness bar, live toggle, full nav
-- Mobile (<768px): fixed bottom tab bar — 5 tabs (Home, Profile, Photos, Stats, More)
-- Pre-approval: all nav except `/dashboard/profile` locked (greyed, ⊘ icon, pointer-events: none)
-- Live toggle: PATCH `/api/companions/settings` `{ is_live: boolean }`
-- Non-approved companions redirected to `/dashboard/profile` from any other dashboard route
-
-### Dashboard Overview (`app/dashboard/page.tsx`)
-At-a-glance: profile completeness %, pending bookings count, recent activity. Quick nav links.
-
-### Dashboard Profile (`app/dashboard/profile/page.tsx`)
-Unlocked pre-approval. Fields: bio, tagline, city, gender, availability status (`offline`/`online`/`busy`), session modality (`in_person`/`online`/`both`), hourly rate, currency, Instagram handle, website URL, physical attributes (height_cm, body type, eye/hair/skin color). GET/PATCH `/api/companions/profile`.
-
-### Dashboard Photos (`app/dashboard/photos/page.tsx`)
-- Grid, max 8 photos, JPEG/PNG/WEBP, max 5MB each
-- Upload: POST `/api/companions/upload-photo` (field: `file`)
-- Set primary: POST `/api/companions/photos/set-primary` `{ id }`
-- Delete: DELETE `/api/companions/photos/[id]` (soft delete)
-- Badges: "✦ Approved" (gold) or "⏳ Pending" (amber) · "✦ Primary" overlay on primary photo
-
-### Dashboard Videos (`app/dashboard/videos/page.tsx`)
-- Upload field: `video`, route: POST `/api/companions/videos/upload`
-- Cloudinary folder: `companion-videos`, resource_type: `video`
-- Thumbnail auto-generated by Cloudinary
-- Delete: DELETE `/api/companions/videos/[id]` (soft delete)
-
-### Dashboard Stories (`app/dashboard/stories/page.tsx`)
-- List with title, excerpt, badge (Live ✦ / Pending ⏳)
-- Create/Edit modal: Title (max 200), Excerpt optional (max 500), Content (max 20,000)
-- Edit pre-fills `body` via GET `/api/companions/stories/[id]` (async on modal open)
-- PATCH resets `moderation_status` to `'pending'`
-- Delete: soft delete via `deleted_at`
-
-### Dashboard Bookings (`app/dashboard/bookings/page.tsx`)
-- Filter: Pending (default) | All
-- Card shows: user alias, session title, duration, price+currency, modality, requested date, message
-- Accept/Decline: PATCH `/api/companions/bookings/[id]` `{ status: 'accepted' | 'declined' }`
-- Error state checked (`r.ok`) — error banner shown, state not updated on failure
-
-### Dashboard Analytics (`app/dashboard/analytics/page.tsx`)
-Profile views, story reads, booking conversion stats. 30-day chart. GET `/api/companions/analytics`.
-
-### Dashboard Settings (`app/dashboard/settings/page.tsx`)
-WhatsApp + Instagram update (E.164 enforced), optional password (bcrypt), go-live toggle, account deactivation. GET/PATCH/POST/DELETE `/api/companions/settings`.
 
 ---
 
 ## Platform Purpose
 
-**BlushBite** is a premium adult companion & erotic fantasy platform. EU-hosted (Netherlands — jurisdiction fully permits adult services). 18+ globally.
+**BlushBite** is a premium adult companion & erotic fantasy platform. EU-hosted (Netherlands). 18+ globally.
 
-**Positioning: "desire engine" — not an escort directory.** The difference:
-- Directory: grid of people with prices. BlushBite: builds desire first via stories and audio.
-- Directory: transactional. BlushBite: psychological, intimate.
-- Directory: customers. BlushBite: people with a private inner world.
-
-**Core conversion loop:** Story/audio → character identification → companion card → booking.
+**Positioning: "desire engine" — not an escort directory.**
 
 **blushbite.live's three jobs (in order):**
 1. **Attract** — shatter expectations of cheap directories on first impression
-2. **Build trust** — EU hosting, GDPR, admin review, "we screen your clients — not just you"
-3. **Convert** — "Begin your journey" / "Your stage is waiting" — never "Submit your details"
+2. **Build trust** — EU hosting, GDPR, admin review, alias protection
+3. **Convert** — "Begin your journey" — never "Submit your details"
 
-**Full companion journey:**
-```
-blushbite.live
-  → 3-step wizard (public, no auth)
-  → POST /api/companions/apply → DB transaction → companion_stage = 3
-  → "Application received. 48 hours."
+**Brand voice:**
+- Headlines: sound like opening lines of an erotic story. "Your private world awaits." — never "Browse companions."
+- CTAs: personal, present-tense. "Begin your journey" / "Enter my world" — never "Submit" / "Next" / "Book now"
+- Empty states: evocative. "Your stage is ready." — never "No results found."
+- Errors: warm. "That code isn't right — check your inbox." — never "Invalid OTP. Error 400."
+- Italic accent pattern: `<em style="font-style:italic; color:#e8607a"> awaits.</em>`
+- NEVER use: "Browse", "Submit", "Get started", "Manage", "Book now", "Dashboard" as a heading
 
-blushbite.co/admin
-  → Admin reviews → PATCH /api/admin/companions/[id] { is_live: true }
-  → Resend approval email to companion
+**Two platforms:**
+- `blushbite.live` — companion portal (this codebase)
+- `blushbite.co` — consumer platform for dreamers (separate codebase, shared DB)
 
-blushbite.live/login
-  → OTP login → session cookie → pending/rejected/approved routing
-
-blushbite.live/dashboard
-  → Build profile → go live (is_live toggle)
-  → Manage bookings, track analytics
-
-blushbite.co (consumer)
-  → Companion visible (is_visible_to_users = true)
-  → Dreamers read stories → identify → book
-```
+**Dreamers never visit blushbite.live.**
 
 ---
 
-## Brand Voice (apply to all copy and UI)
+## Admin Panel (blushbite.co — separate codebase)
 
-**The room metaphor:** Every screen is a dimly-lit, expensive, intimate room. Dark. Rose-lit. Private. A little breathless.
+Admin at `C:\Users\Ravi Desai\Downloads\BlushBite\` manages companions via blushbite.co.
 
-**Companion portal tone:** Empowered, not administrative. "Your profile is your stage." / "Your world is live." / "A new request." / "Your story is in the world."
+**Changed role (instant-live era):** Admin no longer "approves to live." Admin monitors and takes down violating profiles.
 
-**Headlines:** Sound like opening lines of an erotic story. "Your private world awaits." — never "Browse companions."
-
-**CTAs:** Personal, present-tense invitations. "Begin your journey" / "Enter my world" / "She's waiting" — never "Submit" / "Continue" / "Book now" / "Next".
-
-**Empty states:** Evocative. "Your stage is ready." / "Nothing yet — your story is just beginning." — never "No results found."
-
-**Errors:** Warm and human. "That code isn't right — check your inbox and try again." — never "Invalid OTP. Error 400."
-
-**Italic accent pattern** — key word at end of serif heading in rose `#e8607a`:
-```html
-<h1 style="font-family:'Playfair Display',serif; color:#eeeef0">
-  Your private world<em style="font-style:italic; color:#e8607a"> awaits.</em>
-</h1>
-```
-
-**NEVER use:** "Browse", "Submit", "Get started", "Manage", "Book now", "Dashboard" as a heading, generic corporate language.
-
----
-
-## What Companions Are
-
-Verified adult professionals offering companionship, fantasy sessions, and personal experiences. Primarily Europe (NL, DE, UK, BE, FR). They value personal brand and quality clients over volume. blushbite.live must feel like "backstage at a premium private members club."
-
-**Content they post:**
-- **Photos** — max 8 (code limit), JPEG/PNG/WEBP, max 5MB, semi-nude allowed, no full nudity, moderated before live
-- **Videos** — 15s non-nude clips, face/personality/speaking to camera
-- **Stories** — literary erotica (emotionally rich, not pornographic) — feeds the dreamer "character identification bridge"
+**Pending changes to admin panel (NOT YET DONE):**
+- Change [Approve] button → [Take Down] / [Restore] toggle
+- Take Down: sets `is_live=false`, `is_visible_to_users=false`, sends email to companion
+- Restore: sets `is_live=true`, `is_visible_to_users=true`
+- Filter: change "Pending review" → "New today" badge (companions registered in last 24h)
+- All companions now show as "Live" by default in the list

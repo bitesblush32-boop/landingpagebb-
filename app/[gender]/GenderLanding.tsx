@@ -157,11 +157,17 @@ function OtpDigit({
 
 function ApplyForm({ community }: { community: Community }) {
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
+  const fpHashRef = useRef<string>('')
 
   const [uiState, setUiState] = useState<'form' | 'otp' | 'success'>('form')
   const [animKey, setAnimKey] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Pre-compute fingerprint so it's ready by the time apply succeeds
+  useEffect(() => {
+    getFingerprint().then((fp) => { fpHashRef.current = fp }).catch(() => {})
+  }, [])
 
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
@@ -273,6 +279,16 @@ function ApplyForm({ community }: { community: Community }) {
           setError(ad.error ?? 'Something went wrong. Please try again.')
         }
         return
+      }
+
+      // Bind fingerprint → companion_id now that session cookie is set.
+      // This ensures admin delete can cleanly remove the device binding later.
+      if (fpHashRef.current) {
+        fetch('/api/device/bind', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fingerprint_hash: fpHashRef.current, community }),
+        }).catch(() => {})
       }
 
       goTo('success')

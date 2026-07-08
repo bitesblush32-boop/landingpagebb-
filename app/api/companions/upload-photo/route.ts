@@ -63,22 +63,26 @@ export async function POST(req: NextRequest) {
          WHERE prof.companion_id = $1 AND cp.deleted_at IS NULL`,
         [session.sub]
       )
-      if (parseInt(String(countRes.rows[0].cnt)) >= 8) {
+      const existingCount = parseInt(String(countRes.rows[0].cnt))
+      if (existingCount >= 8) {
         return NextResponse.json(
           { error: 'Maximum 8 photos allowed. Delete one to upload more.' },
           { status: 400 }
         )
       }
+      // First photo uploaded becomes primary automatically.
+      // Photos are approved on upload (instant-live philosophy) — admin can remove violations.
+      const isPrimary = existingCount === 0
 
       const photoRes = await client.query(
         `INSERT INTO companion_photos
           (companion_profile_id, url, storage_key, sort_order, is_primary, is_approved, created_at)
          SELECT prof.id, $2, $3,
            COALESCE((SELECT MAX(sort_order)+1 FROM companion_photos WHERE companion_profile_id=prof.id AND deleted_at IS NULL),0),
-           false, false, NOW()
+           $4, true, NOW()
          FROM companion_profiles prof WHERE prof.companion_id = $1
          RETURNING id`,
-        [session.sub, url, publicId]
+        [session.sub, url, publicId, isPrimary]
       )
       return NextResponse.json({ url, photoId: photoRes.rows[0]?.id })
     } finally {

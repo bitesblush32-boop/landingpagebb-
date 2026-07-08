@@ -1317,23 +1317,33 @@ SPRINT 5 — Communications (1 day)
                 command: curl -s -X POST https://blushbite.live/api/cron/drip -H "Authorization: Bearer $CRON_SECRET"
               - Required env var: CRON_SECRET (set in Railway dashboard)
 
-SPRINT 6 — Revenue Foundation (1 week)
+SPRINT 6 — Revenue Foundation (in progress)
   [ ] F1 — Apply to CCBill at ccbill.com (manual step — needs NL company reg + legal pages)
             Required env vars once approved:
               CCBILL_ACCOUNT_NUMBER, CCBILL_SUBACC_STANDARD, CCBILL_SUBACC_PREMIUM,
               CCBILL_FORM_NAME, CCBILL_SALT
             Webhook URL to set in CCBill admin: https://blushbite.live/api/webhooks/ccbill
             Events to enable: NewSaleSuccess, Cancellation, Expiration, RenewalSuccess
-  [x] F2 — DB migration: companion_subscriptions table + active index
+  [x] F2 — DB migration: companion_subscriptions table + active index (run in DB)
   [x] F3 — app/dashboard/upgrade/page.tsx — 3-tier comparison (Free/Standard €29/Premium €59)
-            + upgrade button → CCBill redirect, current plan badge, period end date
-  [x] F4 — lib/subscription.ts: getCompanionTier, getCompanionSubscription, buildCCBillUrl, TIERS
-  [x] F4 — api/companions/subscription/route.ts: GET (current sub), POST (→ CCBill redirect URL)
-  [x] F4 — api/webhooks/ccbill/route.ts: NewSaleSuccess, RenewalSuccess, Cancellation, Expiration
-            + MD5 digest verification
-  [x] F4 — api/companions/me: tier field added to response
-  [x] F4 — dashboard/layout.tsx sidebar: tier badge (premium/standard) or "upgrade" link (free)
-            + "Upgrade" nav item added
+            + upgrade button placeholder, current plan badge, period end date (FILE EXISTS)
+  [ ] F4 — lib/subscription.ts: getCompanionTier, getCompanionSubscription, buildCCBillUrl, TIERS
+            STATUS: file does NOT exist — directory created but empty
+  [ ] F4 — api/companions/subscription/route.ts: GET (current sub), POST (→ CCBill redirect URL)
+            STATUS: directory exists (app/api/companions/subscription/) but route.ts NOT built
+  [ ] F4 — api/webhooks/ccbill/route.ts: NewSaleSuccess, RenewalSuccess, Cancellation, Expiration
+            STATUS: directory exists (app/api/webhooks/ccbill/) but route.ts NOT built
+  [ ] F4 — api/companions/me: add tier field to response (depends on lib/subscription.ts)
+  [ ] F4 — dashboard/layout.tsx sidebar: tier badge (premium/standard) or "upgrade" link (free)
+            + "Upgrade" nav item (depends on lib/subscription.ts)
+
+  NEXT STEPS FOR SPRINT 6:
+  1. Build lib/subscription.ts (TIERS constant, getCompanionTier query, buildCCBillUrl helper)
+  2. Build app/api/companions/subscription/route.ts (GET current tier, POST → CCBill URL)
+  3. Build app/api/webhooks/ccbill/route.ts (MD5 sig verify, upsert companion_subscriptions)
+  4. Update app/api/companions/me/route.ts to include tier in response
+  5. Update app/dashboard/layout.tsx sidebar with tier badge + Upgrade nav item
+  6. Apply to CCBill (manual — requires NL company reg docs)
 
 SPRINT 7 — SEO Growth (ongoing)
   [x] E5 — Geographic landing pages built (see SPRINT 4b-geo above)
@@ -1342,9 +1352,9 @@ SPRINT 7 — SEO Growth (ongoing)
 
 ---
 
-## COMPANION-GUIDELINES PAGE (to build)
+## COMPANION-GUIDELINES PAGE (BUILT — Sprint 4b)
 
-**File:** `app/companion-guidelines/page.tsx`
+**File:** `app/companion-guidelines/page.tsx` — EXISTS
 
 Content:
 ```
