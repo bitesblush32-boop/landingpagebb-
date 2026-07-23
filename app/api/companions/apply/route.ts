@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
         null,
         null,
         null,
-        null,
+        community,
         'offline',
         null,
         'both',

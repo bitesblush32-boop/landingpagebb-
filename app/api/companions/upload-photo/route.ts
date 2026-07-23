@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         )
       }
       // First photo uploaded becomes primary automatically.
-      // Photos are approved on upload (instant-live philosophy) — admin can remove violations.
+      // Photos start as pending (is_approved=false) — admin must approve before visible to dreamers.
       const isPrimary = existingCount === 0
 
       const photoRes = await client.query(
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
           (companion_profile_id, url, storage_key, sort_order, is_primary, is_approved, created_at)
          SELECT prof.id, $2, $3,
            COALESCE((SELECT MAX(sort_order)+1 FROM companion_photos WHERE companion_profile_id=prof.id AND deleted_at IS NULL),0),
-           $4, true, NOW()
+           $4, false, NOW()
          FROM companion_profiles prof WHERE prof.companion_id = $1
          RETURNING id`,
         [session.sub, url, publicId, isPrimary]

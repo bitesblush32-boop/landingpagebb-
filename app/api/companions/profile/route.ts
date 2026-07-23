@@ -12,7 +12,7 @@ export async function GET() {
     `SELECT cp.ethnicity, cp.languages, cp.vibe_tags, cp.currency,
             cp.height_cm, cp.body_type, cp.eye_color, cp.hair_color, cp.skin_color,
             cp.session_modality, cp.hourly_rate::text AS hourly_rate,
-            cp.instagram_handle, cp.website_url
+            cp.instagram_handle, cp.website_url, cp.telegram_handle
      FROM companion_profiles cp
      WHERE cp.companion_id = $1`,
     [session.sub]
@@ -37,6 +37,7 @@ export async function PATCH(req: NextRequest) {
     availability_status,
     session_modality,
     whatsapp_number,
+    telegram_handle,
     instagram_handle,
     website_url,
     hourly_rate,
@@ -82,21 +83,22 @@ export async function PATCH(req: NextRequest) {
          availability_status = COALESCE($5, availability_status),
          session_modality    = COALESCE($6, session_modality),
          whatsapp_number     = COALESCE($7, whatsapp_number),
-         instagram_handle    = COALESCE($8, instagram_handle),
-         website_url         = COALESCE($9, website_url),
-         hourly_rate         = COALESCE($10::numeric, hourly_rate),
-         gender              = COALESCE($11, gender),
-         height_cm           = COALESCE($12::integer, height_cm),
-         body_type           = COALESCE($13, body_type),
-         eye_color           = COALESCE($14, eye_color),
-         hair_color          = COALESCE($15, hair_color),
-         skin_color          = COALESCE($16, skin_color),
-         ethnicity           = COALESCE($17, ethnicity),
-         languages           = COALESCE($18, languages),
-         vibe_tags           = COALESCE($19, vibe_tags),
-         currency            = COALESCE($20, currency),
+         telegram_handle     = COALESCE($8, telegram_handle),
+         instagram_handle    = COALESCE($9, instagram_handle),
+         website_url         = COALESCE($10, website_url),
+         hourly_rate         = COALESCE($11::numeric, hourly_rate),
+         gender              = COALESCE($12, gender),
+         height_cm           = COALESCE($13::integer, height_cm),
+         body_type           = COALESCE($14, body_type),
+         eye_color           = COALESCE($15, eye_color),
+         hair_color          = COALESCE($16, hair_color),
+         skin_color          = COALESCE($17, skin_color),
+         ethnicity           = COALESCE($18, ethnicity),
+         languages           = COALESCE($19, languages),
+         vibe_tags           = COALESCE($20, vibe_tags),
+         currency            = COALESCE($21, currency),
          updated_at          = NOW()
-       WHERE companion_id = $21`,
+       WHERE companion_id = $22`,
       [
         bio ?? null,
         tagline ?? null,
@@ -105,6 +107,7 @@ export async function PATCH(req: NextRequest) {
         availability_status ?? null,
         session_modality ?? null,
         whatsapp_number ?? null,
+        telegram_handle ?? null,
         instagram_handle ?? null,
         website_url ?? null,
         hourly_rate !== '' && hourly_rate != null ? parseFloat(String(hourly_rate)) : null,
@@ -157,6 +160,32 @@ export async function PATCH(req: NextRequest) {
         [whatsapp_number, session.sub]
       )
     }
+
+    // Sync vibe_tags JSON → companion_vibe_tags junction table (shared DB with blushbite.co)
+    if (vibe_tags !== undefined) {
+      const profileRow = await client.query<{ id: string }>(
+        `SELECT id FROM companion_profiles WHERE companion_id = $1`,
+        [session.sub]
+      )
+      const profileId = profileRow.rows[0]?.id
+      if (profileId) {
+        await client.query(
+          `DELETE FROM companion_vibe_tags WHERE companion_profile_id = $1`,
+          [profileId]
+        )
+        const tags = Array.isArray(vibe_tags) ? vibe_tags : []
+        if (tags.length > 0) {
+          await client.query(
+            `INSERT INTO companion_vibe_tags (companion_profile_id, vibe_tag_id)
+             SELECT $1, id FROM vibe_tags
+             WHERE name = ANY($2::text[]) AND is_active = true
+             ON CONFLICT DO NOTHING`,
+            [profileId, tags]
+          )
+        }
+      }
+    }
+
     return NextResponse.json({ ok: true })
   } finally {
     client.release()

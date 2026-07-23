@@ -21,6 +21,7 @@ const NAV = [
   { href: '/dashboard/stories', label: 'Stories', icon: '✦' },
   { href: '/dashboard/bookings', label: 'Bookings', icon: '◷' },
   { href: '/dashboard/analytics', label: 'Analytics', icon: '◈' },
+  { href: '/dashboard/boost', label: 'Boost', icon: '★', highlight: true },
   { href: '/dashboard/settings', label: 'Settings', icon: '⊙' },
   { href: '/dashboard/upgrade', label: 'Your Plan', icon: '✦' },
 ]
@@ -28,7 +29,7 @@ const NAV = [
 const BOTTOM_NAV = [
   { href: '/dashboard', label: 'Home', icon: '◈' },
   { href: '/dashboard/profile', label: 'Profile', icon: '◉' },
-  { href: '/dashboard/photos', label: 'Photos', icon: '◻' },
+  { href: '/dashboard/boost', label: 'Boost', icon: '★' },
   { href: '/dashboard/analytics', label: 'Stats', icon: '▥' },
   { href: '/dashboard/settings', label: 'More', icon: '⊙' },
 ]
@@ -211,6 +212,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav style={{ flex: 1, padding: '12px 0', overflowY: 'auto' }}>
           {NAV.map((item) => {
             const active = pathname === item.href
+            const isHighlight = (item as { highlight?: boolean }).highlight && !active
             return (
               <a
                 key={item.href}
@@ -222,14 +224,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   padding: '10px 20px',
                   fontSize: 13,
                   textDecoration: 'none',
-                  transition: 'all .15s',
-                  color: active ? '#e8607a' : '#6b7280',
-                  background: active ? 'rgba(232,96,122,.08)' : 'transparent',
-                  borderRight: active ? '2px solid #e8607a' : '2px solid transparent',
+                  transition: 'color .15s, background .15s',
+                  color: active ? '#e8607a' : isHighlight ? '#c9a96e' : '#6b7280',
+                  background: active ? 'rgba(232,96,122,.08)' : isHighlight ? 'rgba(201,169,110,.05)' : 'transparent',
+                  borderRight: active ? '2px solid #e8607a' : isHighlight ? '2px solid rgba(201,169,110,.3)' : '2px solid transparent',
                 }}
               >
                 <span style={{ fontSize: 12 }}>{item.icon}</span>
                 {item.label}
+                {isHighlight && (
+                  <span style={{
+                    marginLeft: 'auto', fontSize: 9, color: '#c9a96e',
+                    background: 'rgba(201,169,110,.1)', border: '1px solid rgba(201,169,110,.25)',
+                    borderRadius: 4, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.06em',
+                  }}>
+                    New
+                  </span>
+                )}
               </a>
             )
           })}

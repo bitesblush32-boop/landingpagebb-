@@ -139,17 +139,33 @@ export default function VideosPage() {
       setError('Maximum 3 videos allowed.')
       return
     }
-    if (file.size > 100 * 1024 * 1024) {
-      setError('Video must be under 100 MB.')
+    if (file.size > 20 * 1024 * 1024) {
+      setError('Your video is too large. Please upload a video that is 20 MB or smaller.')
+      if (fileRef.current) fileRef.current.value = ''
       return
     }
+
+    // Check duration client-side before uploading
+    const duration = await new Promise<number>((resolve) => {
+      const vid = document.createElement('video')
+      vid.preload = 'metadata'
+      vid.onloadedmetadata = () => { URL.revokeObjectURL(vid.src); resolve(vid.duration) }
+      vid.onerror = () => resolve(0)
+      vid.src = URL.createObjectURL(file)
+    })
+    if (duration > 20) {
+      setError(`Your video is ${Math.round(duration)} seconds long. Videos must be 20 seconds or shorter.`)
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+
     setError('')
     setUploading(true)
     setUploadPct(0)
 
     try {
       const form = new FormData()
-      form.append('file', file)
+      form.append('video', file)
 
       const d = await new Promise<{ error?: string; id?: string }>((resolve, reject) => {
         const xhr = new XMLHttpRequest()
@@ -315,7 +331,7 @@ export default function VideosPage() {
       )}
 
       <p style={{ fontSize: 12, color: '#4b5563', marginTop: 24 }}>
-        Videos are reviewed before appearing publicly. Max 3 videos, 100 MB each. MP4, MOV, or WebM.
+        Videos are reviewed before appearing publicly. Max 3 videos · 20 seconds · 20 MB each. MP4, MOV, or WebM.
       </p>
     </div>
   )
