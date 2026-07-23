@@ -19,6 +19,7 @@ const COMMUNITY_CONFIG: Record<Community, {
   accentColor: string
   accentBg: string
   accentGrid: string
+  heroBgImage?: string
 }> = {
   female: {
     badge: 'Female companion community',
@@ -46,6 +47,7 @@ const COMMUNITY_CONFIG: Record<Community, {
     accentColor: '#c084fc',
     accentBg: 'rgba(192,132,252,.1)',
     accentGrid: 'rgba(192,132,252,.04)',
+    heroBgImage: '/shemale-hero.png',
   },
 }
 
@@ -628,9 +630,25 @@ export default function GenderLanding({
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-5 pt-28 pb-20">
+      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-5 pt-28 pb-20 overflow-hidden">
+        {cfg.heroBgImage && (
+          <div
+            className="absolute inset-0 pointer-events-none z-0"
+            style={{
+              top: '4rem',
+              backgroundImage: `url(${cfg.heroBgImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center 35%',
+              backgroundRepeat: 'no-repeat',
+              opacity: 0.7,
+              filter: 'brightness(0.9) contrast(1.05)',
+              WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0) 95%)',
+              maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0) 95%)',
+            }}
+          />
+        )}
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none z-0"
           style={{
             backgroundImage: `linear-gradient(${cfg.accentGrid} 1px,transparent 1px),linear-gradient(90deg,${cfg.accentGrid} 1px,transparent 1px)`,
             backgroundSize: '60px 60px',
@@ -639,7 +657,7 @@ export default function GenderLanding({
           }}
         />
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none z-0"
           style={{
             background: `radial-gradient(ellipse 72% 58% at 50% 28%,${cfg.accentBg} 0%,transparent 70%)`,
           }}
