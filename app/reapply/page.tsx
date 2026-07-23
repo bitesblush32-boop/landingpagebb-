@@ -5,18 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
-const GENDERS = [
-  'woman',
-  'man',
-  'non_binary',
-  'trans_woman',
-  'trans_man',
-  'genderqueer',
-  'genderfluid',
-  'agender',
-  'other',
-  'prefer_not_to_say',
-]
+const COMMUNITY_LABELS: Record<string, string> = { female: 'Female', male: 'Male', shemale: 'Shemale / TS' }
 const MODALITIES = [
   { v: 'in_person', label: 'In Person' },
   { v: 'online', label: 'Online' },
@@ -31,7 +20,7 @@ export default function ReapplyPage() {
   const [success, setSuccess] = useState(false)
 
   const [city, setCity] = useState('')
-  const [gender, setGender] = useState('')
+  const [genderCommunity, setGenderCommunity] = useState('')
   const [tagline, setTagline] = useState('')
   const [bio, setBio] = useState('')
   const [modality, setModality] = useState('')
@@ -46,7 +35,7 @@ export default function ReapplyPage() {
           return
         }
         setCity(data.city ?? '')
-        setGender(data.gender ?? '')
+        setGenderCommunity(data.gender_community ?? '')
         setTagline(data.tagline ?? '')
         setBio(data.bio ?? '')
         setModality(data.session_modality ?? '')
@@ -65,7 +54,6 @@ export default function ReapplyPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           city,
-          gender,
           tagline,
           bio,
           session_modality: modality,
@@ -260,9 +248,15 @@ export default function ReapplyPage() {
           />
 
           <label style={S.fieldLabel}>Gender</label>
-          <div style={S.pillRow}>
-            {GENDERS.map((g) => pill(g, gender, () => setGender(g === gender ? '' : g)))}
-          </div>
+          <input
+            style={{ ...S.input, opacity: 0.5, cursor: 'not-allowed' }}
+            value={COMMUNITY_LABELS[genderCommunity] ?? genderCommunity}
+            readOnly
+            tabIndex={-1}
+          />
+          <p style={{ fontSize: 11, color: '#4b5563', marginTop: -10, marginBottom: 16 }}>
+            Your community is set at registration and cannot be changed.
+          </p>
 
           <label style={S.fieldLabel}>Vibe headline</label>
           <input

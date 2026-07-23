@@ -157,6 +157,32 @@ export async function PATCH(req: NextRequest) {
         [whatsapp_number, session.sub]
       )
     }
+
+    // Sync vibe_tags JSON → companion_vibe_tags junction table (shared DB with blushbite.co)
+    if (vibe_tags !== undefined) {
+      const profileRow = await client.query<{ id: string }>(
+        `SELECT id FROM companion_profiles WHERE companion_id = $1`,
+        [session.sub]
+      )
+      const profileId = profileRow.rows[0]?.id
+      if (profileId) {
+        await client.query(
+          `DELETE FROM companion_vibe_tags WHERE companion_profile_id = $1`,
+          [profileId]
+        )
+        const tags = Array.isArray(vibe_tags) ? vibe_tags : []
+        if (tags.length > 0) {
+          await client.query(
+            `INSERT INTO companion_vibe_tags (companion_profile_id, vibe_tag_id)
+             SELECT $1, id FROM vibe_tags
+             WHERE name = ANY($2::text[]) AND is_active = true
+             ON CONFLICT DO NOTHING`,
+            [profileId, tags]
+          )
+        }
+      }
+    }
+
     return NextResponse.json({ ok: true })
   } finally {
     client.release()

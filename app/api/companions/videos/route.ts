@@ -15,7 +15,7 @@ export async function GET() {
 
   const rows = await query(
     `SELECT cv.id, cv.url, cv.thumbnail_url, cv.duration_seconds, cv.title,
-            COALESCE(cv.moderation_status, CASE WHEN cv.is_approved THEN 'approved' ELSE 'pending' END) AS moderation_status,
+            CASE WHEN cv.is_approved THEN 'approved' ELSE 'pending' END AS moderation_status,
             cv.created_at
      FROM companion_videos cv
      JOIN companion_profiles cp ON cp.id = cv.companion_profile_id

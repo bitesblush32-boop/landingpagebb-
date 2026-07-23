@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getFingerprint } from '@/lib/fingerprint'
@@ -8,6 +8,478 @@ import { getFingerprint } from '@/lib/fingerprint'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type Community = 'female' | 'male' | 'shemale'
+
+// ── First-visit overlay config ────────────────────────────────────────────────
+
+const OVERLAY_CONFIG: Record<Community, {
+  symbol: string
+  label: string
+  heading: string
+  headingEm: string
+  sub: string
+  accentColor: string
+  accentBg: string
+  accentBorder: string
+  confettiColors: string[]
+}> = {
+  female: {
+    symbol: '♀',
+    label: 'Female companion community',
+    heading: 'You\'re entering',
+    headingEm: 'your world.',
+    sub: 'A private space built for female companions. Alias-protected, EU-hosted, and entirely on your terms.',
+    accentColor: '#e8607a',
+    accentBg: 'rgba(232,96,122,0.08)',
+    accentBorder: 'rgba(232,96,122,0.35)',
+    confettiColors: ['#e8607a', '#f9a8b8', '#c9a96e', '#ffffff', '#fda4af'],
+  },
+  male: {
+    symbol: '♂',
+    label: 'Male companion community',
+    heading: 'You\'re entering',
+    headingEm: 'your space.',
+    sub: 'A dedicated space for male companions. Your profile, your rate, your rules — dreamers here seek you specifically.',
+    accentColor: '#60a5fa',
+    accentBg: 'rgba(96,165,250,0.08)',
+    accentBorder: 'rgba(96,165,250,0.35)',
+    confettiColors: ['#60a5fa', '#93c5fd', '#c9a96e', '#ffffff', '#bfdbfe'],
+  },
+  shemale: {
+    symbol: '⚥',
+    label: 'TS & Shemale community',
+    heading: 'Not a subcategory.',
+    headingEm: 'Your own world.',
+    sub: 'A fully separate community built for you, by design. Your profiles, your dreamers, your stories — nothing shared.',
+    accentColor: '#c084fc',
+    accentBg: 'rgba(192,132,252,0.08)',
+    accentBorder: 'rgba(192,132,252,0.35)',
+    confettiColors: ['#c084fc', '#e879f9', '#c9a96e', '#ffffff', '#d8b4fe'],
+  },
+}
+
+// ── First-visit overlay ───────────────────────────────────────────────────────
+
+function FirstVisitOverlay({
+  community,
+  onEnter,
+  onStartFade,
+  fading,
+}: {
+  community: Community
+  onEnter: () => void
+  onStartFade: () => void
+  fading: boolean
+}) {
+  const oc = OVERLAY_CONFIG[community]
+  return (
+    <div
+      onTransitionEnd={() => { if (fading) onEnter() }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        backdropFilter: 'blur(28px)',
+        WebkitBackdropFilter: 'blur(28px)',
+        background: 'rgba(7,9,15,0.88)',
+        opacity: fading ? 0 : 1,
+        transition: 'opacity 0.55s ease',
+        pointerEvents: fading ? 'none' : 'auto',
+      }}
+    >
+      {/* Card */}
+      <div
+        style={{
+          width: '100%',
+          maxWidth: 400,
+          background: '#0d1117',
+          border: `1px solid ${oc.accentBorder}`,
+          borderRadius: 24,
+          overflow: 'hidden',
+          textAlign: 'center',
+          boxShadow: `0 0 80px ${oc.accentBg}, 0 0 0 1px ${oc.accentBorder}`,
+        }}
+      >
+        {/* Top accent line */}
+        <div
+          style={{
+            height: 2,
+            background: `linear-gradient(90deg, transparent, ${oc.accentColor}, transparent)`,
+          }}
+        />
+
+        <div style={{ padding: '44px 36px 40px' }}>
+          {/* Symbol */}
+          <div
+            style={{
+              fontSize: 56,
+              lineHeight: 1,
+              marginBottom: 20,
+              color: oc.accentColor,
+              filter: `drop-shadow(0 0 24px ${oc.accentColor}55)`,
+            }}
+          >
+            {oc.symbol}
+          </div>
+
+          {/* Community label pill */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              borderRadius: 100,
+              padding: '4px 12px',
+              marginBottom: 22,
+              fontSize: 10,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              color: oc.accentColor,
+              background: oc.accentBg,
+              border: `1px solid ${oc.accentBorder}`,
+            }}
+          >
+            <span
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: '50%',
+                background: oc.accentColor,
+                display: 'inline-block',
+              }}
+            />
+            {oc.label}
+          </div>
+
+          {/* Heading */}
+          <h1
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 'clamp(26px, 5vw, 32px)',
+              color: '#eeeef0',
+              lineHeight: 1.25,
+              marginBottom: 14,
+              fontWeight: 400,
+            }}
+          >
+            {oc.heading}
+            <br />
+            <em style={{ fontStyle: 'italic', color: oc.accentColor }}>{oc.headingEm}</em>
+          </h1>
+
+          {/* Sub */}
+          <p
+            style={{
+              fontSize: 13,
+              color: '#6b7280',
+              lineHeight: 1.75,
+              marginBottom: 32,
+              maxWidth: 300,
+              margin: '0 auto 32px',
+            }}
+          >
+            {oc.sub}
+          </p>
+
+          {/* Enter button */}
+          <EnterButton
+            accentColor={oc.accentColor}
+            accentBg={oc.accentBg}
+            confettiColors={oc.confettiColors}
+            onAfterConfetti={onStartFade}
+          />
+
+          <p style={{ fontSize: 11, color: '#374151', marginTop: 16 }}>
+            EU-hosted · GDPR compliant · 18+ only
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EnterButton({
+  accentColor,
+  accentBg,
+  confettiColors,
+  onAfterConfetti,
+}: {
+  accentColor: string
+  accentBg: string
+  confettiColors: string[]
+  onAfterConfetti: () => void
+}) {
+  const [hovered, setHovered] = useState(false)
+
+  async function handleClick() {
+    // Fire confetti then trigger overlay fade-out
+    try {
+      const mod = await import('canvas-confetti')
+      const confetti = (mod.default ?? mod) as (opts?: object) => void
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        startVelocity: 45,
+        origin: { x: 0.5, y: 0.55 },
+        colors: confettiColors,
+        scalar: 0.9,
+        gravity: 1.1,
+      })
+      setTimeout(() => {
+        confetti({
+          particleCount: 60,
+          spread: 110,
+          startVelocity: 30,
+          origin: { x: 0.5, y: 0.6 },
+          colors: confettiColors,
+          scalar: 0.75,
+          gravity: 1.2,
+        })
+      }, 180)
+    } catch {
+      // confetti is non-critical
+    }
+    // Short delay so confetti is visible before fade begins
+    setTimeout(onAfterConfetti, 400)
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        width: '100%',
+        minHeight: 52,
+        borderRadius: 14,
+        border: 'none',
+        background: hovered ? accentColor : accentBg,
+        color: hovered ? '#ffffff' : accentColor,
+        fontSize: 15,
+        fontWeight: 600,
+        cursor: 'pointer',
+        transition: 'all 0.15s ease',
+        transform: hovered ? 'translateY(-1px)' : 'none',
+        boxShadow: hovered ? `0 8px 28px ${accentColor}40` : 'none',
+        letterSpacing: '0.01em',
+      }}
+    >
+      Enter →
+    </button>
+  )
+}
+
+// ── Boost types (server-passed) ───────────────────────────────────────────────
+
+export interface BoostCompanion {
+  id: string
+  boost_type: string
+  banner_headline: string | null
+  banner_tagline: string | null
+  companion_name: string
+  alias: string | null
+  tagline: string | null
+  city: string | null
+  primary_photo_url: string | null
+}
+
+export interface ActiveBoosts {
+  headerBanner: BoostCompanion | null
+  rightRail:    BoostCompanion | null
+  featured:     BoostCompanion[]
+}
+
+// ── Header Banner ─────────────────────────────────────────────────────────────
+
+function HeaderBanner({ boost, accentColor, accentBg }: { boost: BoostCompanion; accentColor: string; accentBg: string }) {
+  const name     = boost.banner_headline || boost.alias || boost.companion_name
+  const subtitle = boost.banner_tagline  || boost.tagline  || ''
+  const city     = boost.city
+
+  return (
+    <div
+      style={{
+        background: '#0d1117',
+        borderBottom: `1px solid ${accentColor}25`,
+        padding: '10px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        flexWrap: 'wrap',
+        transform: 'translateZ(0)', // GPU layer
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        {/* Photo thumbnail */}
+        {boost.primary_photo_url ? (
+          <div style={{
+            width: 44, height: 44, borderRadius: 10, overflow: 'hidden', flexShrink: 0,
+            border: `1px solid ${accentColor}40`,
+          }}>
+            <img
+              src={boost.primary_photo_url}
+              alt={name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              loading="lazy"
+            />
+          </div>
+        ) : (
+          <div style={{
+            width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+            background: accentBg, border: `1px solid ${accentColor}30`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 18, color: accentColor,
+          }}>
+            ✦
+          </div>
+        )}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', fontFamily: 'var(--font-serif)' }}>
+              {name}
+            </span>
+            {city && (
+              <span style={{ fontSize: 11, color: '#6b7280' }}>· {city}</span>
+            )}
+            <span style={{
+              fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em',
+              color: accentColor, background: accentBg,
+              border: `1px solid ${accentColor}35`, borderRadius: 4, padding: '2px 6px',
+            }}>
+              Featured
+            </span>
+          </div>
+          {subtitle && (
+            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2, fontStyle: 'italic' }}>
+              "{subtitle}"
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{ fontSize: 10, color: '#4b5563' }}>
+        Promoted · BlushBite
+      </div>
+    </div>
+  )
+}
+
+// ── Featured Card ─────────────────────────────────────────────────────────────
+
+function FeaturedCard({ boost, accentColor, accentBg }: { boost: BoostCompanion; accentColor: string; accentBg: string }) {
+  const name = boost.alias || boost.companion_name
+  const tag  = boost.tagline ? `"${boost.tagline}"` : null
+
+  return (
+    <div style={{
+      background: '#0d1117',
+      border: `1px solid ${accentColor}30`,
+      borderRadius: 16,
+      overflow: 'hidden',
+      flexShrink: 0,
+      width: 'clamp(160px, 40vw, 200px)',
+      transform: 'translateZ(0)',
+    }}>
+      {/* Photo */}
+      <div style={{ aspectRatio: '3/4', background: accentBg, position: 'relative', overflow: 'hidden' }}>
+        {boost.primary_photo_url ? (
+          <img
+            src={boost.primary_photo_url}
+            alt={name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            loading="lazy"
+          />
+        ) : (
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: accentColor }}>
+            ✦
+          </div>
+        )}
+        {/* Featured badge */}
+        <div style={{
+          position: 'absolute', top: 8, left: 8,
+          fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em',
+          color: accentColor, background: 'rgba(7,9,15,.85)',
+          border: `1px solid ${accentColor}40`, borderRadius: 4, padding: '2px 7px',
+        }}>
+          Featured
+        </div>
+      </div>
+      {/* Info */}
+      <div style={{ padding: '10px 12px' }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#eeeef0', fontFamily: 'var(--font-serif)', marginBottom: 2 }}>
+          {name}
+        </div>
+        {boost.city && (
+          <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>{boost.city}</div>
+        )}
+        {tag && (
+          <div style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic', lineHeight: 1.4 }}>
+            {tag.length > 60 ? tag.slice(0, 57) + '…"' : tag}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Right Rail ────────────────────────────────────────────────────────────────
+
+function RightRail({ boost, accentColor, accentBg }: { boost: BoostCompanion; accentColor: string; accentBg: string }) {
+  const name = boost.alias || boost.companion_name
+
+  return (
+    <div style={{
+      width: 220, flexShrink: 0,
+      position: 'sticky', top: 76,  // below fixed nav (64px) + 12px gap
+      alignSelf: 'flex-start',
+      transform: 'translateZ(0)',
+    }}>
+      <div style={{
+        background: '#0d1117',
+        border: `1px solid ${accentColor}30`,
+        borderRadius: 16,
+        overflow: 'hidden',
+      }}>
+        {/* Top accent */}
+        <div style={{ height: 2, background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }} />
+        <div style={{ padding: '12px 14px 6px', fontSize: 9, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          Featured tonight
+        </div>
+        {/* Photo */}
+        <div style={{ aspectRatio: '3/4', background: accentBg, overflow: 'hidden' }}>
+          {boost.primary_photo_url ? (
+            <img
+              src={boost.primary_photo_url}
+              alt={name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              loading="lazy"
+            />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: accentColor }}>
+              ✦
+            </div>
+          )}
+        </div>
+        <div style={{ padding: '12px 14px 14px' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', fontFamily: 'var(--font-serif)', marginBottom: 3 }}>
+            {name}
+          </div>
+          {boost.city && (
+            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 6 }}>{boost.city}</div>
+          )}
+          {boost.tagline && (
+            <div style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic', lineHeight: 1.5 }}>
+              "{boost.tagline.slice(0, 80)}{boost.tagline.length > 80 ? '…' : ''}"
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ── Community config ──────────────────────────────────────────────────────────
 
@@ -552,15 +1024,42 @@ export default function GenderLanding({
   community,
   companionCount = 0,
   cityCount = 0,
+  activeBoosts = { headerBanner: null, rightRail: null, featured: [] },
 }: {
   community: Community
   companionCount?: number
   cityCount?: number
+  activeBoosts?: ActiveBoosts
 }) {
   const cfg = COMMUNITY_CONFIG[community]
 
-  // Bind device to this community (cookie + localStorage + fingerprint DB binding)
+  // ── First-visit overlay state ──────────────────────────────────────────────
+  // null = still checking localStorage (SSR-safe), true = show, false = hidden
+  const [showOverlay, setShowOverlay] = useState<boolean | null>(null)
+  const [overlayFading, setOverlayFading] = useState(false)
+
+  const dismissOverlay = useCallback(() => {
+    setShowOverlay(false)
+  }, [])
+
+  function handleEnterClick() {
+    // Start fade-out — the overlay's onTransitionEnd will call dismissOverlay
+    setOverlayFading(true)
+  }
+
+  // ── Device binding ────────────────────────────────────────────────────────
   useEffect(() => {
+    // Check first-visit: if bb_community not set in localStorage, this is a new visitor
+    let isFirstVisit = false
+    try {
+      const stored = localStorage.getItem('bb_community')
+      isFirstVisit = stored !== community
+    } catch {
+      isFirstVisit = false
+    }
+    setShowOverlay(isFirstVisit)
+
+    // Bind device to this community (cookie + localStorage + fingerprint DB binding)
     document.cookie = `bb_community=${community}; max-age=31536000; path=/; SameSite=Lax`
     try { localStorage.setItem('bb_community', community) } catch { /* ignore */ }
 
@@ -576,6 +1075,16 @@ export default function GenderLanding({
 
   return (
     <div style={{ background: '#07090f', color: '#eeeef0', minHeight: '100vh', overflowX: 'hidden' }}>
+      {/* ── First-visit community welcome overlay ── */}
+      {showOverlay === true && (
+        <FirstVisitOverlay
+          community={community}
+          onEnter={dismissOverlay}
+          onStartFade={handleEnterClick}
+          fading={overlayFading}
+        />
+      )}
+
       {/* ── Noise texture overlay ── */}
       <div
         aria-hidden
@@ -627,8 +1136,19 @@ export default function GenderLanding({
         </div>
       </nav>
 
+      {/* ── Header Banner (promoted companion) ── */}
+      {activeBoosts.headerBanner && (
+        <div style={{ paddingTop: 64 /* nav height */ }}>
+          <HeaderBanner
+            boost={activeBoosts.headerBanner}
+            accentColor={cfg.accentColor}
+            accentBg={cfg.accentBg}
+          />
+        </div>
+      )}
+
       {/* ── Hero ── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-5 pt-28 pb-20">
+      <section className={`relative min-h-screen flex flex-col items-center justify-center text-center px-5 pb-20 ${activeBoosts.headerBanner ? 'pt-12' : 'pt-28'}`}>
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -737,8 +1257,60 @@ export default function GenderLanding({
         ))}
       </div>
 
-      {/* ── Why join ── */}
-      <div id="why-join">
+      {/* ── Featured companions (social proof) ── */}
+      {activeBoosts.featured.length > 0 && (
+        <div style={{ padding: '24px 0', borderBottom: '1px solid #1c2333' }}>
+          <div className="max-w-[1100px] mx-auto px-5">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', color: cfg.accentColor }}>Featured</span>
+                <span style={{ width: 1, height: 10, background: '#1c2333', display: 'inline-block' }} />
+                <span style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4b5563' }}>Active this week</span>
+              </div>
+            </div>
+            <div style={{
+              display: 'flex', gap: 12, overflowX: 'auto',
+              scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch',
+              paddingBottom: 4,
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none',
+            }}>
+              {activeBoosts.featured.map(b => (
+                <div key={b.id} style={{ scrollSnapAlign: 'start', flexShrink: 0 }}>
+                  <FeaturedCard boost={b} accentColor={cfg.accentColor} accentBg={cfg.accentBg} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Why join (with optional right rail) ── */}
+      <div id="why-join" style={{ position: 'relative' }}>
+        {/* Right rail — desktop only (≥1100px), rendered as a sibling via flex */}
+        {activeBoosts.rightRail && (
+          <div
+            className="bb-right-rail"
+            style={{
+              position: 'absolute', top: 0, right: 20,
+              display: 'none', // shown via CSS below
+            }}
+          >
+            <RightRail boost={activeBoosts.rightRail} accentColor={cfg.accentColor} accentBg={cfg.accentBg} />
+          </div>
+        )}
+        <style>{`
+          @media (min-width: 1100px) {
+            .bb-right-rail { display: block !important; }
+          }
+          /* hide scrollbar on featured row */
+          ::-webkit-scrollbar { display: none; }
+        `}</style>
+      </div>
+
+      {/* ── Why join original content ── */}
+      <div id="why-join-content">
         <div className="max-w-[1100px] mx-auto px-5 py-16 sm:py-20">
           <p className="text-[11px] uppercase tracking-[0.1em] mb-2" style={{ color: '#6b7280' }}>
             For Companions

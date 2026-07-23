@@ -9,8 +9,8 @@ export async function GET() {
 
   const rows = await query(
     `SELECT c.full_name, c.email, c.date_of_birth::text AS date_of_birth,
-            c.country, c.whatsapp_number,
-            cp.city, cp.gender, cp.tagline, cp.bio, cp.session_modality
+            c.country, c.whatsapp_number, c.gender_community,
+            cp.city, cp.tagline, cp.bio, cp.session_modality
      FROM companions c
      LEFT JOIN companion_profiles cp ON cp.companion_id = c.id
      WHERE c.id = $1`,
@@ -40,23 +40,21 @@ export async function POST(req: NextRequest) {
   }
 
   const body: Record<string, unknown> = await req.json().catch(() => ({}))
-  const { city, gender, tagline, bio, session_modality, whatsapp_number } = body
+  const { city, tagline, bio, session_modality, whatsapp_number } = body
 
   const client = await pool.connect()
   try {
     await client.query(
       `UPDATE companion_profiles SET
          city            = COALESCE($1, city),
-         gender          = COALESCE($2, gender),
-         tagline         = COALESCE($3, tagline),
-         bio             = COALESCE($4, bio),
-         session_modality = COALESCE($5, session_modality),
-         whatsapp_number = COALESCE($6, whatsapp_number),
+         tagline         = COALESCE($2, tagline),
+         bio             = COALESCE($3, bio),
+         session_modality = COALESCE($4, session_modality),
+         whatsapp_number = COALESCE($5, whatsapp_number),
          updated_at      = NOW()
-       WHERE companion_id = $7`,
+       WHERE companion_id = $6`,
       [
         city ?? null,
-        gender ?? null,
         tagline ?? null,
         bio ?? null,
         session_modality ?? null,

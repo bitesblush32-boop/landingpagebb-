@@ -572,3 +572,187 @@ This makes BlushBite's premium review feel like **curated quality**, not a burea
 ---
 
 *Research conducted: July 2026. Sources: massagerepublic.com, shemalelisting.com (redirected from ts-dating.com), hi.empirescort.com, skokka.co.in (403), locanto.org (403). BlushBite codebase: C:\Users\Ravi Desai\Downloads\blush\landingpagebb-*
+
+---
+
+## 9. ADVERTISEMENTS — PROMOTION & BOOST SYSTEM
+
+### 9.1 How Competitors Promote Profiles on Their First Pages
+
+Every platform has two tiers of companion visibility: **organic** (free, paginated) and **paid** (promoted, above organic). The promoted placements operate in specific fixed positions across browse pages.
+
+#### Position Map (all competitors follow this layout)
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  [NAV]                                                  │
+├─────────────────────────────────────────────────────────┤
+│  [HEADER BANNER — full width, 1 companion, paid weekly] │
+├──────────────────────────────────────┬──────────────────┤
+│  Featured Row (3 cards, paid weekly) │  [RIGHT RAIL]   │
+│  ─────────────────────────────────── │  300×250         │
+│  Organic card · card · card · card   │  1 companion     │
+│  Organic card · card · card · card   │  paid weekly     │
+│  [MID-GRID NATIVE CARD — paid]       │                  │
+│  Organic card · card · card · card   │                  │
+└──────────────────────────────────────┴──────────────────┘
+```
+
+#### 1. Header Banner (Top of Browse, Full Width)
+- Appears **above the browse grid**, below the main nav
+- Shows: companion's best photo + stage name + tagline + CTA
+- Sold as: flat weekly rate, **1 slot per community page per week**
+- MassageRepublic: full-width image strip, ~728×90 equivalent on desktop
+- ShemaLeListing: gradient-bordered card spanning full column width at top
+- Rotation: only 1 companion can hold this slot per week — **first-come, first-served**
+
+#### 2. Featured Row (Top of Grid)
+- 3 cards that appear **before organic results** in the browse grid
+- Styled identically to organic cards but with a community-colored accent border + "Featured" label
+- ShemaLeListing `.payment-type--top`: gradient pink/red badge on card
+- MassageRepublic: no badge text — just visual prominence (top position)
+- Up to 3 companions can hold featured slots simultaneously per community per week
+- **UNIQUE constraint per slot**: featured-1, featured-2, featured-3 per community per week
+
+#### 3. Right Rail Banner (Desktop Sidebar, 300×250)
+- Fixed or sticky sidebar on the right, desktop only (hidden on mobile)
+- Shows: companion profile card or custom banner image
+- **1 slot per community page per week**
+- EmpireEscort `buttons_panel_enabled` flag = this slot is managed per-companion in DB
+
+#### 4. Mid-Grid Native Card (Inline, Between Results)
+- A paid card that appears naturally **inside the organic grid** at position 7–9 (after row 2–3)
+- Indistinguishable from organic cards except for subtle "Sponsored" pill
+- Lower price point, higher impression volume than header
+- EmpireEscort and Skokka both use this format
+
+---
+
+### 9.2 Charging Model — How Competitors Bill for Promotions
+
+#### ShemaLeListing (Most Detailed — 4 Tiers in CSS)
+
+| CSS class | Tier | What it is | Pricing |
+|---|---|---|---|
+| `.payment-type--history` | Free | Listed, paginated, no badge | €0 |
+| Standard subscription | Standard | Searchable, visible | Subscription |
+| `.payment-type--premium` | Premium | Higher sort order + badge | Higher subscription |
+| `.payment-type--top` | Top | Pinned to featured row, gradient badge | Top-tier subscription or add-on |
+| `.payment-type--ads` | Ads | Banner placements (header/rail) | **Separate purchase**, not included in subscription |
+
+Key insight: **"Ads" is sold separately** from subscription tiers. You can be a free companion and still buy a banner slot.
+
+#### MassageRepublic
+- Free basic listing (limited photos)
+- Featured placement: ~EUR 20–80/month (not publicly listed, varies by city demand)
+- Verified badge: separate add-on
+- Refund window: 72 hours
+- Pricing strategy: **not publicly listed** — companions contact them. This lets them price by demand (Amsterdam slot > €80, small city < €20).
+
+#### EmpireEscort (India)
+- Base: free classifieds
+- Bump (moves listing to top): ~INR 500–2,000 one-off
+- Banner slots (header/right rail): sold to agencies, not individual companions, at flat monthly rate
+- `buttons_panel_enabled` = admin flag in DB that enables the "boost" CTA on a companion's profile
+
+---
+
+### 9.3 Slot Allocation Strategy — Industry Approaches
+
+Three models exist across competitors:
+
+| Model | How it works | Used by | Weakness |
+|---|---|---|---|
+| **Auction** | Highest bidder wins the slot | Not common in adult | Prices spiral, alienates smaller companions |
+| **Monthly subscription** | Pay monthly, always featured | MassageRepublic (approx) | Heavy commitment, hard to try |
+| **First-come, first-served weekly** | Buy a week, UNIQUE slot per week | ShemaLeListing (implied by CSS) | **Best for BlushBite** — predictable, fair, pre-bookable |
+
+**Recommended for BlushBite: First-Come, First-Served Weekly Slots**
+- Each slot (header_banner, right_rail, featured-1/2/3, mid_grid) is unique per community per ISO week (Mon–Sun)
+- Companion can see which weeks are taken and which are open
+- Can pre-book up to 4 weeks in advance
+- DB UNIQUE constraint on `(boost_type, community, week_start)` prevents any overlap at the data layer
+- If current week is taken: system shows next available week and allows instant pre-booking
+
+---
+
+### 9.4 BlushBite Boost Product Definitions & Pricing
+
+| Product | Slot name | Max per community/week | Price | Description |
+|---|---|---|---|---|
+| Featured placement | `featured` | 3 (featured_1, featured_2, featured_3) | **€15/week** | Card appears in featured row at top of community page, accent border, no badge text |
+| Header banner | `header_banner` | 1 | **€25/week** | Full-width banner above browse grid, companion photo + tagline |
+| Right rail | `right_rail` | 1 | **€15/week** | 300×250 sidebar card, desktop only, sticky position |
+| Mid-grid native | `mid_grid` | 1 | **€10/week** | Inline card at position 7 in browse grid, subtle "Sponsored" pill |
+
+**Revenue projection (single community, all slots sold every week):**
+- 3× Featured: 3 × €15 = €45/week
+- 1× Header banner: €25/week
+- 1× Right rail: €15/week
+- 1× Mid-grid: €10/week
+- **= €95/week per community × 3 communities = €285/week = €1,140/month in ad revenue alone**
+- This scales with city-specific pages later (Amsterdam slot, London slot, etc.)
+
+---
+
+### 9.5 BlushBite Implementation Plan
+
+**DB Schema:**
+
+```sql
+CREATE TABLE companion_boosts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  companion_id UUID REFERENCES companions(id) ON DELETE CASCADE NOT NULL,
+  boost_type VARCHAR(30) NOT NULL,     -- 'featured_1'|'featured_2'|'featured_3'|'header_banner'|'right_rail'|'mid_grid'
+  community VARCHAR(20) NOT NULL,      -- 'female'|'male'|'shemale'
+  week_start DATE NOT NULL,            -- Monday of ISO week (YYYY-MM-DD)
+  week_end DATE NOT NULL,              -- Sunday of same ISO week
+  price_eur NUMERIC(8,2) NOT NULL,
+  status VARCHAR(20) DEFAULT 'active', -- 'active'|'cancelled'|'expired'
+  is_enabled BOOLEAN DEFAULT true,     -- admin kill-switch per boost
+  banner_image_url TEXT,               -- Cloudinary URL (optional custom image)
+  banner_headline TEXT,                -- optional override headline
+  banner_tagline TEXT,                 -- optional override tagline
+  payment_ref VARCHAR(100),            -- CCBill transaction ID (future)
+  payment_status VARCHAR(20) DEFAULT 'manual',  -- 'manual'|'paid'|'refunded'
+  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+  UNIQUE(boost_type, community, week_start)      -- prevents any overlap at DB level
+);
+
+CREATE TABLE boost_settings (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  header_banner_enabled BOOLEAN DEFAULT true NOT NULL,
+  right_rail_enabled BOOLEAN DEFAULT true NOT NULL,
+  mid_grid_enabled BOOLEAN DEFAULT true NOT NULL,
+  featured_enabled BOOLEAN DEFAULT true NOT NULL,
+  price_featured_eur NUMERIC(8,2) DEFAULT 15.00 NOT NULL,
+  price_header_banner_eur NUMERIC(8,2) DEFAULT 25.00 NOT NULL,
+  price_right_rail_eur NUMERIC(8,2) DEFAULT 15.00 NOT NULL,
+  price_mid_grid_eur NUMERIC(8,2) DEFAULT 10.00 NOT NULL,
+  max_weeks_advance INT DEFAULT 4 NOT NULL
+);
+
+INSERT INTO boost_settings (id) VALUES (1) ON CONFLICT DO NOTHING;
+```
+
+**API Endpoints:**
+- `GET /api/boosts/active?community=female` — public, renders promotions on community pages
+- `GET /api/companions/boosts/slots?type=featured_1&community=female` — companion checks slot availability
+- `GET/POST /api/companions/boosts` — companion views/books their boosts
+- `GET /api/admin/boosts` — admin views all active/upcoming boosts
+- `PATCH /api/admin/boosts/[id]` — admin enable/disable individual boost
+- `GET/PATCH /api/admin/boost-settings` — admin manages global toggles + pricing
+
+**Admin Controls:**
+- Global on/off for header banner (if disabled: slot disappears from community page + no new bookings accepted)
+- Global on/off for right rail (same)
+- Per-boost enable/disable (admin can kill a specific companion's boost without cancelling it — useful if companion uploads violating content)
+- Pricing is admin-editable (stored in boost_settings, not hardcoded)
+
+**Visual placement on community pages (blushbite.live /female, /male, /shemale):**
+- Header banner: between nav (fixed top) and hero section — companion's photo + tagline strip
+- Featured row: after stats bar, before "why join" — horizontal scroll on mobile, 3-column grid on desktop
+- Right rail: desktop only (≥1100px), sticky alongside hero + trust bar sections
+- Mid-grid: within the featured companions grid, at position 4
+
+**These same companion_boosts records also feed blushbite.co discover pages** — the shared Railway DB means the dreamer-side browse page queries the same table to show featured companions at the top of the discover feed.

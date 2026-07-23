@@ -185,6 +185,7 @@ interface MeData {
   profile_whatsapp: string | null
   alias: string | null
   gender: string | null
+  gender_community: string | null
   tagline: string | null
   bio: string | null
   rejection_reason: string | null
@@ -194,7 +195,6 @@ interface AppForm {
   full_name: string
   display_name: string
   date_of_birth: string
-  gender: string
   country: string
   city: string
   whatsapp_number: string
@@ -210,7 +210,6 @@ function VerificationView({ me }: { me: MeData }) {
     full_name: me.full_name ?? '',
     display_name: me.alias ?? '',
     date_of_birth: me.date_of_birth ? me.date_of_birth.split('T')[0] : '',
-    gender: me.gender ?? '',
     country: me.country ?? '',
     city: me.city ?? '',
     whatsapp_number: me.companion_whatsapp ?? me.profile_whatsapp ?? '',
@@ -393,20 +392,15 @@ function VerificationView({ me }: { me: MeData }) {
           </div>
           <div>
             <label style={S.label}>Gender</label>
-            <select
-              style={S.select}
-              value={form.gender}
-              onChange={(e) => set('gender', e.target.value)}
-            >
-              <option value="">Select…</option>
-              <option value="female">Female</option>
-              <option value="male">Male</option>
-              <option value="non_binary">Non-binary</option>
-              <option value="trans_female">Trans female</option>
-              <option value="trans_male">Trans male</option>
-              <option value="gender_fluid">Gender fluid</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
-            </select>
+            <input
+              style={{ ...S.input, opacity: 0.5, cursor: 'not-allowed', marginBottom: 0 }}
+              value={{ female: 'Female', male: 'Male', shemale: 'Shemale / TS' }[me.gender_community ?? ''] ?? (me.gender_community ?? '')}
+              readOnly
+              tabIndex={-1}
+            />
+            <p style={{ fontSize: 11, color: '#4b5563', marginTop: 4 }}>
+              Your community is set at registration and cannot be changed.
+            </p>
           </div>
         </div>
 
@@ -506,40 +500,41 @@ interface ExtendedProfile {
   session_modality: string
   instagram_handle: string
   website_url: string
-  hourly_rate: number | null
-  currency: string
 }
 
 const BODY_TYPES = ['slim', 'athletic', 'curvy', 'plus_size', 'average', 'prefer_not_to_say']
 const HAIR_COLORS = ['blonde', 'brunette', 'black', 'red', 'auburn', 'grey', 'white', 'other']
-const EYE_COLORS = ['blue', 'green', 'brown', 'hazel', 'grey', 'other']
+const EYE_COLORS = ['black', 'brown', 'hazel', 'blue', 'green', 'grey', 'other']
 const MODALITIES = [
   { v: 'in_person', l: 'In Person' },
   { v: 'online', l: 'Online' },
   { v: 'both', l: 'Both' },
 ]
-const CURRENCIES = ['EUR', 'GBP', 'USD', 'CHF', 'SEK', 'DKK', 'NOK', 'CAD', 'AUD']
+const CURRENCIES = ['EUR', 'GBP', 'USD', 'INR', 'CHF', 'SEK', 'DKK', 'NOK', 'CAD', 'AUD']
 const LANGUAGES = [
-  'English',
-  'Dutch',
-  'German',
-  'French',
-  'Spanish',
-  'Italian',
-  'Portuguese',
-  'Polish',
-  'Russian',
-  'Arabic',
-  'Japanese',
-  'Korean',
-  'Mandarin',
-  'Swedish',
-  'Danish',
-  'Norwegian',
-  'Finnish',
-  'Greek',
-  'Turkish',
   'Hindi',
+  'English',
+  'Bengali',
+  'Telugu',
+  'Marathi',
+  'Tamil',
+  'Urdu',
+  'Gujarati',
+  'Kannada',
+  'Malayalam',
+  'Odia',
+  'Punjabi',
+  'Assamese',
+  'Maithili',
+  'Santali',
+  'Kashmiri',
+  'Nepali',
+  'Sindhi',
+  'Konkani',
+  'Dogri',
+  'Bodo',
+  'Manipuri',
+  'Sanskrit',
 ]
 const VIBE_TAGS = [
   'intellectual',
@@ -573,8 +568,6 @@ const DEFAULT_EXT: ExtendedProfile = {
   session_modality: '',
   instagram_handle: '',
   website_url: '',
-  hourly_rate: null,
-  currency: 'EUR',
 }
 
 function calcAge(dob: string | null): number | null {
@@ -587,6 +580,26 @@ function calcAge(dob: string | null): number | null {
   return age
 }
 
+interface SessionCard {
+  id: string
+  title: string
+  description: string | null
+  duration_minutes: number | null
+  price: string | null
+  currency: string
+  session_type: string | null
+  is_active: boolean
+}
+
+const SESSION_TYPE_LABELS: Record<string, string> = {
+  in_person: 'In Person',
+  audio_call: 'Audio Call',
+  video_call: 'Video Call',
+  chat: 'Chat',
+  custom: 'Custom',
+}
+const SESSION_TYPES = Object.keys(SESSION_TYPE_LABELS)
+
 function ProfileBuilder({ meData }: { meData: MeData }) {
   const [active, setActive] = useState(0)
   const [ext, setExt] = useState<ExtendedProfile>(DEFAULT_EXT)
@@ -595,11 +608,20 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
 
+  // Session cards state
+  const [cards, setCards] = useState<SessionCard[]>([])
+  const [cardForm, setCardForm] = useState<{
+    title: string; description: string; duration: string; price: string
+    currency: string; session_type: string
+  }>({ title: '', description: '', duration: '', price: '', currency: 'EUR', session_type: '' })
+  const [cardAdding, setCardAdding] = useState(false)
+  const [cardSaving, setCardSaving] = useState(false)
+  const [cardErr, setCardErr] = useState('')
+
   // Identity state — editable fields collected post-registration
   const [identity, setIdentity] = useState({
     full_name: meData.full_name ?? '',
     date_of_birth: meData.date_of_birth ? meData.date_of_birth.split('T')[0] : '',
-    gender: meData.gender ?? '',
     country: meData.country ?? '',
     city: meData.city ?? '',
     tagline: meData.tagline ?? '',
@@ -608,6 +630,23 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
   const [savingIdentity, setSavingIdentity] = useState(false)
   const [identityMsg, setIdentityMsg] = useState('')
   const [identityErr, setIdentityErr] = useState('')
+  const [locStatus, setLocStatus] = useState<'idle' | 'loading' | 'success' | 'denied' | 'error'>('idle')
+
+  async function shareLocation() {
+    if (!navigator.geolocation) { setLocStatus('error'); return }
+    setLocStatus('loading')
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const res = await fetch('/api/companions/location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        })
+        setLocStatus(res.ok ? 'success' : 'error')
+      },
+      () => setLocStatus('denied')
+    )
+  }
 
   const showComplianceNotice = !identity.full_name.trim() || !identity.date_of_birth
 
@@ -624,7 +663,6 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
           date_of_birth: identity.date_of_birth || null,
           country: identity.country,
           city: identity.city,
-          gender: identity.gender,
           tagline: identity.tagline,
           bio: identity.bio,
         }),
@@ -644,29 +682,62 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
   const age = calcAge(identity.date_of_birth || meData.date_of_birth)
 
   useEffect(() => {
-    fetch('/api/companions/profile')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d)
-          setExt((prev) => ({
-            ...prev,
-            display_name: meData.alias ?? '',
-            height_cm: d.height_cm != null ? parseInt(d.height_cm) : null,
-            body_type: d.body_type ?? '',
-            hair_color: d.hair_color ?? '',
-            eye_color: d.eye_color ?? '',
-            ethnicity: d.ethnicity ?? '',
-            languages: Array.isArray(d.languages) ? d.languages : [],
-            vibe_tags: Array.isArray(d.vibe_tags) ? d.vibe_tags : [],
-            session_modality: d.session_modality ?? '',
-            instagram_handle: d.instagram_handle ?? '',
-            website_url: d.website_url ?? '',
-            hourly_rate: d.hourly_rate != null ? parseFloat(d.hourly_rate) : null,
-            currency: d.currency ?? 'EUR',
-          }))
-      })
-      .finally(() => setLoading(false))
+    Promise.all([
+      fetch('/api/companions/profile').then((r) => (r.ok ? r.json() : null)),
+      fetch('/api/companions/session-cards').then((r) => (r.ok ? r.json() : null)),
+    ]).then(([d, sc]) => {
+      if (d)
+        setExt((prev) => ({
+          ...prev,
+          display_name: meData.alias ?? '',
+          height_cm: d.height_cm != null ? parseInt(d.height_cm) : null,
+          body_type: d.body_type ?? '',
+          hair_color: d.hair_color ?? '',
+          eye_color: d.eye_color ?? '',
+          ethnicity: d.ethnicity ?? '',
+          languages: Array.isArray(d.languages) ? d.languages : [],
+          vibe_tags: Array.isArray(d.vibe_tags) ? d.vibe_tags : [],
+          session_modality: d.session_modality ?? '',
+          instagram_handle: d.instagram_handle ?? '',
+          website_url: d.website_url ?? '',
+        }))
+      if (sc?.cards) setCards(sc.cards)
+    }).finally(() => setLoading(false))
   }, [meData.alias])
+
+  async function addCard() {
+    setCardErr('')
+    if (!cardForm.title.trim()) { setCardErr('Title is required.'); return }
+    setCardSaving(true)
+    try {
+      const r = await fetch('/api/companions/session-cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: cardForm.title.trim(),
+          description: cardForm.description.trim() || null,
+          duration_minutes: cardForm.duration ? parseInt(cardForm.duration) : null,
+          price: cardForm.price ? parseFloat(cardForm.price) : null,
+          currency: cardForm.currency,
+          session_type: cardForm.session_type || null,
+        }),
+      })
+      const data = await r.json()
+      if (!r.ok) { setCardErr(data.error ?? 'Failed to add.'); return }
+      // Refresh list
+      const sc = await fetch('/api/companions/session-cards').then((r) => r.json())
+      setCards(sc.cards ?? [])
+      setCardForm({ title: '', description: '', duration: '', price: '', currency: 'EUR', session_type: '' })
+      setCardAdding(false)
+    } finally {
+      setCardSaving(false)
+    }
+  }
+
+  async function deleteCard(id: string) {
+    await fetch(`/api/companions/session-cards/${id}`, { method: 'DELETE' })
+    setCards((prev) => prev.filter((c) => c.id !== id))
+  }
 
   function set<K extends keyof ExtendedProfile>(key: K, val: ExtendedProfile[K]) {
     setExt((p) => ({ ...p, [key]: val }))
@@ -792,20 +863,15 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
         <div style={S.grid2}>
           <div>
             <label style={S.label}>Gender</label>
-            <select
-              style={S.select}
-              value={identity.gender}
-              onChange={(e) => setIdentity((p) => ({ ...p, gender: e.target.value }))}
-            >
-              <option value="">Select…</option>
-              <option value="female">Female</option>
-              <option value="male">Male</option>
-              <option value="non_binary">Non-binary</option>
-              <option value="trans_female">Trans female</option>
-              <option value="trans_male">Trans male</option>
-              <option value="gender_fluid">Gender fluid</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
-            </select>
+            <input
+              style={{ ...S.input, opacity: 0.5, cursor: 'not-allowed', marginBottom: 0 }}
+              value={{ female: 'Female', male: 'Male', shemale: 'Shemale / TS' }[meData.gender_community ?? ''] ?? (meData.gender_community ?? '')}
+              readOnly
+              tabIndex={-1}
+            />
+            <p style={{ fontSize: 11, color: '#4b5563', marginTop: 4, marginBottom: 16 }}>
+              Your community is set at registration and cannot be changed.
+            </p>
           </div>
           <div>
             <label style={S.label}>Country</label>
@@ -830,6 +896,68 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
               autoCapitalize="words"
             />
           </div>
+        </div>
+
+        {/* Location sharing */}
+        <div
+          style={{
+            background: '#111620',
+            border: '1px solid #1c2333',
+            borderRadius: 12,
+            padding: '14px 16px',
+            marginBottom: 16,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <div>
+            <p style={{ fontSize: 13, color: '#eeeef0', marginBottom: 2 }}>
+              Share approximate location
+            </p>
+            <p style={{ fontSize: 11, color: '#6b7280' }}>
+              {locStatus === 'success'
+                ? 'Location shared — dreamers can see your distance.'
+                : locStatus === 'denied'
+                  ? 'Location blocked. Enable it in browser settings.'
+                  : locStatus === 'error'
+                    ? 'Could not get location. Try again.'
+                    : 'Lets dreamers see your distance. Never exact — city-level only.'}
+            </p>
+          </div>
+          <button
+            onClick={shareLocation}
+            disabled={locStatus === 'loading' || locStatus === 'success'}
+            style={{
+              flexShrink: 0,
+              padding: '8px 14px',
+              borderRadius: 10,
+              fontSize: 12,
+              cursor: locStatus === 'loading' || locStatus === 'success' ? 'default' : 'pointer',
+              border: `1px solid ${locStatus === 'success' ? 'rgba(34,197,94,.3)' : locStatus === 'denied' || locStatus === 'error' ? 'rgba(248,113,113,.3)' : 'rgba(232,96,122,.3)'}`,
+              background:
+                locStatus === 'success'
+                  ? 'rgba(34,197,94,.08)'
+                  : locStatus === 'denied' || locStatus === 'error'
+                    ? 'rgba(248,113,113,.08)'
+                    : 'rgba(232,96,122,.08)',
+              color:
+                locStatus === 'success'
+                  ? '#22c55e'
+                  : locStatus === 'denied' || locStatus === 'error'
+                    ? '#f87171'
+                    : '#e8607a',
+              minHeight: 34,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {locStatus === 'loading'
+              ? 'Getting location…'
+              : locStatus === 'success'
+                ? '✓ Location shared'
+                : 'Share location'}
+          </button>
         </div>
 
         <label style={S.label}>Tagline</label>
@@ -1059,37 +1187,157 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
           <>
             <div style={S.sectionTitle}>Rates</div>
             <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 20 }}>
-              Set your base hourly rate. Dreamers will see this on your profile.
+              Add the services you offer. Dreamers will see these on your profile.
             </p>
-            <div style={S.grid2}>
-              <div>
-                <label style={S.label}>Hourly rate</label>
+
+            {/* Services list */}
+            {cards.length > 0 && (
+              <div style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {cards.map((card) => (
+                  <div
+                    key={card.id}
+                    style={{
+                      background: '#111620',
+                      border: '1px solid #1c2333',
+                      borderRadius: 12,
+                      padding: '14px 16px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, color: '#eeeef0', fontWeight: 500, marginBottom: 4 }}>
+                        {card.title}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {card.session_type && (
+                          <span style={{ fontSize: 11, color: '#9ca3af', background: '#0d1117', borderRadius: 6, padding: '2px 8px', border: '1px solid #1c2333' }}>
+                            {SESSION_TYPE_LABELS[card.session_type] ?? card.session_type}
+                          </span>
+                        )}
+                        {card.duration_minutes && (
+                          <span style={{ fontSize: 11, color: '#9ca3af' }}>{card.duration_minutes} min</span>
+                        )}
+                        {card.price && (
+                          <span style={{ fontSize: 12, color: '#e8607a', fontWeight: 500 }}>
+                            {card.currency} {parseFloat(card.price).toFixed(0)}
+                          </span>
+                        )}
+                        {card.description && (
+                          <span style={{ fontSize: 12, color: '#6b7280', width: '100%' }}>{card.description}</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => deleteCard(card.id)}
+                      style={{ background: 'none', border: 'none', color: '#4b5563', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4, flexShrink: 0 }}
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add service form */}
+            {cardAdding ? (
+              <div style={{ background: '#111620', border: '1px solid #1c2333', borderRadius: 14, padding: '20px', marginBottom: 20 }}>
+                <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 14 }}>New service</div>
+                {cardErr && (
+                  <div style={{ fontSize: 13, color: '#f87171', marginBottom: 12, padding: '8px 12px', background: 'rgba(248,113,113,.08)', borderRadius: 8, border: '1px solid rgba(248,113,113,.2)' }}>
+                    {cardErr}
+                  </div>
+                )}
+                <label style={S.label}>Title *</label>
                 <input
                   style={S.input}
-                  type="number"
-                  min={0}
-                  value={ext.hourly_rate ?? ''}
-                  onChange={(e) =>
-                    set('hourly_rate', e.target.value ? parseInt(e.target.value) : null)
-                  }
-                  placeholder="150"
+                  value={cardForm.title}
+                  onChange={(e) => setCardForm((f) => ({ ...f, title: e.target.value }))}
+                  placeholder="e.g. 60-min video call"
                 />
+                <label style={S.label}>Description</label>
+                <input
+                  style={S.input}
+                  value={cardForm.description}
+                  onChange={(e) => setCardForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="What's included…"
+                />
+                <div style={S.grid2}>
+                  <div>
+                    <label style={S.label}>Session type</label>
+                    <select
+                      style={S.select}
+                      value={cardForm.session_type}
+                      onChange={(e) => setCardForm((f) => ({ ...f, session_type: e.target.value }))}
+                    >
+                      <option value="">— Select —</option>
+                      {SESSION_TYPES.map((t) => (
+                        <option key={t} value={t}>{SESSION_TYPE_LABELS[t]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={S.label}>Duration (minutes)</label>
+                    <input
+                      style={S.input}
+                      type="number"
+                      min={1}
+                      value={cardForm.duration}
+                      onChange={(e) => setCardForm((f) => ({ ...f, duration: e.target.value }))}
+                      placeholder="60"
+                    />
+                  </div>
+                  <div>
+                    <label style={S.label}>Price</label>
+                    <input
+                      style={S.input}
+                      type="number"
+                      min={0}
+                      value={cardForm.price}
+                      onChange={(e) => setCardForm((f) => ({ ...f, price: e.target.value }))}
+                      placeholder="150"
+                    />
+                  </div>
+                  <div>
+                    <label style={S.label}>Currency</label>
+                    <select
+                      style={S.select}
+                      value={cardForm.currency}
+                      onChange={(e) => setCardForm((f) => ({ ...f, currency: e.target.value }))}
+                    >
+                      {CURRENCIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                  <button
+                    onClick={addCard}
+                    disabled={cardSaving}
+                    style={{ background: '#e8607a', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 14, cursor: 'pointer', opacity: cardSaving ? 0.6 : 1 }}
+                  >
+                    {cardSaving ? 'Adding…' : 'Add service'}
+                  </button>
+                  <button
+                    onClick={() => { setCardAdding(false); setCardErr('') }}
+                    style={{ background: 'transparent', border: '1px solid #1c2333', color: '#6b7280', borderRadius: 10, padding: '10px 16px', fontSize: 14, cursor: 'pointer' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-              <div>
-                <label style={S.label}>Currency</label>
-                <select
-                  style={S.select}
-                  value={ext.currency}
-                  onChange={(e) => set('currency', e.target.value)}
-                >
-                  {CURRENCIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            ) : (
+              <button
+                onClick={() => setCardAdding(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px dashed #1c2333', color: '#9ca3af', borderRadius: 12, padding: '12px 18px', fontSize: 14, cursor: 'pointer', width: '100%' }}
+              >
+                <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> Add service
+              </button>
+            )}
           </>
         )}
 

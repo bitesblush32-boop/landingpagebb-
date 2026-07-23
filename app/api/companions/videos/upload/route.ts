@@ -3,6 +3,7 @@ import { v2 as cloudinary } from 'cloudinary'
 import { pool, query } from '@/lib/db'
 import { getSession } from '@/lib/session'
 
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -34,8 +35,8 @@ export async function POST(req: NextRequest) {
   if (!file) return NextResponse.json({ error: 'No video provided.' }, { status: 400 })
   if (!file.type.startsWith('video/'))
     return NextResponse.json({ error: 'File must be a video.' }, { status: 400 })
-  if (file.size > 50 * 1024 * 1024)
-    return NextResponse.json({ error: 'Video must be under 50 MB.' }, { status: 400 })
+  if (file.size > 20 * 1024 * 1024)
+    return NextResponse.json({ error: 'Video must be under 20 MB.' }, { status: 400 })
 
   const buffer = Buffer.from(await file.arrayBuffer())
 
@@ -63,6 +64,15 @@ export async function POST(req: NextRequest) {
     publicId = result.public_id
     duration = result.duration ? Math.round(result.duration) : null
     thumbnailUrl = cloudinary.url(`${publicId}.jpg`, { resource_type: 'video' })
+
+    // Enforce 20-second max — delete from Cloudinary and reject
+    if (duration !== null && duration > 20) {
+      cloudinary.uploader.destroy(publicId, { resource_type: 'video' }).catch(console.error)
+      return NextResponse.json(
+        { error: 'Video must be 20 seconds or shorter.' },
+        { status: 400 }
+      )
+    }
   } catch (err) {
     console.error('[upload-video] Cloudinary error:', err)
     return NextResponse.json({ error: 'Video upload failed. Please try again.' }, { status: 500 })
