@@ -170,6 +170,131 @@ function fmt(s: string) {
   return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
+// ── Country dial codes ────────────────────────────────────────────────────────
+
+const COUNTRIES = [
+  { code: 'NL', dial: '+31',  flag: '🇳🇱', name: 'Netherlands' },
+  { code: 'DE', dial: '+49',  flag: '🇩🇪', name: 'Germany' },
+  { code: 'FR', dial: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: 'ES', dial: '+34',  flag: '🇪🇸', name: 'Spain' },
+  { code: 'IT', dial: '+39',  flag: '🇮🇹', name: 'Italy' },
+  { code: 'BE', dial: '+32',  flag: '🇧🇪', name: 'Belgium' },
+  { code: 'CH', dial: '+41',  flag: '🇨🇭', name: 'Switzerland' },
+  { code: 'AT', dial: '+43',  flag: '🇦🇹', name: 'Austria' },
+  { code: 'PT', dial: '+351', flag: '🇵🇹', name: 'Portugal' },
+  { code: 'PL', dial: '+48',  flag: '🇵🇱', name: 'Poland' },
+  { code: 'CZ', dial: '+420', flag: '🇨🇿', name: 'Czech Republic' },
+  { code: 'HU', dial: '+36',  flag: '🇭🇺', name: 'Hungary' },
+  { code: 'RO', dial: '+40',  flag: '🇷🇴', name: 'Romania' },
+  { code: 'GR', dial: '+30',  flag: '🇬🇷', name: 'Greece' },
+  { code: 'SE', dial: '+46',  flag: '🇸🇪', name: 'Sweden' },
+  { code: 'NO', dial: '+47',  flag: '🇳🇴', name: 'Norway' },
+  { code: 'DK', dial: '+45',  flag: '🇩🇰', name: 'Denmark' },
+  { code: 'FI', dial: '+358', flag: '🇫🇮', name: 'Finland' },
+  { code: 'IE', dial: '+353', flag: '🇮🇪', name: 'Ireland' },
+  { code: 'GB', dial: '+44',  flag: '🇬🇧', name: 'United Kingdom' },
+  { code: 'TR', dial: '+90',  flag: '🇹🇷', name: 'Turkey' },
+  { code: 'RU', dial: '+7',   flag: '🇷🇺', name: 'Russia' },
+  { code: 'UA', dial: '+380', flag: '🇺🇦', name: 'Ukraine' },
+  { code: 'US', dial: '+1',   flag: '🇺🇸', name: 'United States' },
+  { code: 'CA', dial: '+1',   flag: '🇨🇦', name: 'Canada' },
+  { code: 'MX', dial: '+52',  flag: '🇲🇽', name: 'Mexico' },
+  { code: 'BR', dial: '+55',  flag: '🇧🇷', name: 'Brazil' },
+  { code: 'AR', dial: '+54',  flag: '🇦🇷', name: 'Argentina' },
+  { code: 'CO', dial: '+57',  flag: '🇨🇴', name: 'Colombia' },
+  { code: 'CL', dial: '+56',  flag: '🇨🇱', name: 'Chile' },
+  { code: 'PE', dial: '+51',  flag: '🇵🇪', name: 'Peru' },
+  { code: 'VE', dial: '+58',  flag: '🇻🇪', name: 'Venezuela' },
+  { code: 'EC', dial: '+593', flag: '🇪🇨', name: 'Ecuador' },
+  { code: 'IN', dial: '+91',  flag: '🇮🇳', name: 'India' },
+  { code: 'PH', dial: '+63',  flag: '🇵🇭', name: 'Philippines' },
+  { code: 'TH', dial: '+66',  flag: '🇹🇭', name: 'Thailand' },
+  { code: 'ID', dial: '+62',  flag: '🇮🇩', name: 'Indonesia' },
+  { code: 'MY', dial: '+60',  flag: '🇲🇾', name: 'Malaysia' },
+  { code: 'VN', dial: '+84',  flag: '🇻🇳', name: 'Vietnam' },
+  { code: 'JP', dial: '+81',  flag: '🇯🇵', name: 'Japan' },
+  { code: 'KR', dial: '+82',  flag: '🇰🇷', name: 'South Korea' },
+  { code: 'CN', dial: '+86',  flag: '🇨🇳', name: 'China' },
+  { code: 'SG', dial: '+65',  flag: '🇸🇬', name: 'Singapore' },
+  { code: 'ZA', dial: '+27',  flag: '🇿🇦', name: 'South Africa' },
+  { code: 'NG', dial: '+234', flag: '🇳🇬', name: 'Nigeria' },
+  { code: 'KE', dial: '+254', flag: '🇰🇪', name: 'Kenya' },
+  { code: 'EG', dial: '+20',  flag: '🇪🇬', name: 'Egypt' },
+  { code: 'MA', dial: '+212', flag: '🇲🇦', name: 'Morocco' },
+  { code: 'AE', dial: '+971', flag: '🇦🇪', name: 'UAE' },
+  { code: 'SA', dial: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: 'IL', dial: '+972', flag: '🇮🇱', name: 'Israel' },
+  { code: 'AU', dial: '+61',  flag: '🇦🇺', name: 'Australia' },
+  { code: 'NZ', dial: '+64',  flag: '🇳🇿', name: 'New Zealand' },
+]
+
+function parseE164(e164: string): { dialCode: string; localNumber: string } {
+  if (!e164 || !e164.startsWith('+')) return { dialCode: '+31', localNumber: e164.replace(/\D/g, '') }
+  const sorted = [...COUNTRIES].sort((a, b) => b.dial.length - a.dial.length)
+  for (const c of sorted) {
+    if (e164.startsWith(c.dial)) return { dialCode: c.dial, localNumber: e164.slice(c.dial.length) }
+  }
+  return { dialCode: '+1', localNumber: e164.slice(1) }
+}
+
+function validateWhatsApp(dialCode: string, localNumber: string): string | null {
+  const digits = localNumber.replace(/\D/g, '')
+  if (!digits) return 'WhatsApp number is required — dreamers need this to contact you'
+  if (!/^\+[1-9]\d{6,14}$/.test(dialCode + digits)) return 'Number seems incorrect — check the country code and digits'
+  return null
+}
+
+function validateTelegram(handle: string): string | null {
+  const h = handle.trim()
+  if (!h) return null
+  if (h.startsWith('+')) {
+    if (!/^\+[1-9]\d{6,14}$/.test(h)) return 'Phone must include country code, e.g. +31612345678'
+    return null
+  }
+  const u = h.startsWith('@') ? h.slice(1) : h
+  if (u.length < 5) return 'Username must be at least 5 characters'
+  if (u.length > 32) return 'Username must be 32 characters or less'
+  if (!/^[a-zA-Z0-9_]+$/.test(u)) return 'Only letters, numbers and underscores allowed'
+  if (u.startsWith('_') || u.endsWith('_')) return 'Username cannot start or end with an underscore'
+  return null
+}
+
+function normalizeTelegram(handle: string): string {
+  const h = handle.trim()
+  if (!h || h.startsWith('+') || h.startsWith('@')) return h
+  return '@' + h
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+interface ToastItem { id: number; type: 'success' | 'error'; msg: string }
+
+function ToastContainer({ toasts, dismiss }: { toasts: ToastItem[]; dismiss: (id: number) => void }) {
+  if (!toasts.length) return null
+  return (
+    <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
+      <style>{`@keyframes bbToastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}`}</style>
+      {toasts.map((t) => (
+        <div key={t.id} style={{
+          background: '#0d1117',
+          border: `1px solid ${t.type === 'success' ? 'rgba(34,197,94,.3)' : 'rgba(248,113,113,.3)'}`,
+          borderLeft: `3px solid ${t.type === 'success' ? '#22c55e' : '#f87171'}`,
+          borderRadius: 10, padding: '12px 14px', fontSize: 13,
+          color: t.type === 'success' ? '#22c55e' : '#f87171',
+          display: 'flex', alignItems: 'center', gap: 10,
+          minWidth: 240, maxWidth: 360,
+          boxShadow: '0 8px 28px rgba(0,0,0,.55)',
+          animation: 'bbToastIn .18s ease',
+          pointerEvents: 'all',
+        }}>
+          <span style={{ flex: 1, lineHeight: 1.4 }}>{t.type === 'success' ? '✓ ' : '✕ '}{t.msg}</span>
+          <button onClick={() => dismiss(t.id)} style={{ background: 'none', border: 'none', color: '#4b5563', cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1, flexShrink: 0 }}>✕</button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ── VERIFICATION VIEW — shown until admin approves ────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -218,16 +343,21 @@ function VerificationView({ me }: { me: MeData }) {
     bio: me.bio ?? '',
   })
   const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState('')
-  const [err, setErr] = useState('')
+  const [saveState, setSaveState] = useState<'idle' | 'saved'>('idle')
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+
+  function showToast(type: 'success' | 'error', msg: string) {
+    const id = Date.now()
+    setToasts((t) => [...t, { id, type, msg }])
+    if (type === 'success') setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500)
+  }
+  function dismissToast(id: number) { setToasts((t) => t.filter((x) => x.id !== id)) }
 
   function set(key: keyof AppForm, val: string) {
     setForm((f) => ({ ...f, [key]: val }))
   }
 
   async function save() {
-    setMsg('')
-    setErr('')
     setSaving(true)
     try {
       const r = await fetch('/api/companions/application', {
@@ -237,11 +367,12 @@ function VerificationView({ me }: { me: MeData }) {
       })
       if (!r.ok) {
         const d = await r.json()
-        setErr(d.error ?? 'Save failed.')
+        showToast('error', d.error ?? 'Save failed — please try again')
         return
       }
-      setMsg('Changes saved.')
-      setTimeout(() => setMsg(''), 3000)
+      showToast('success', 'Changes saved')
+      setSaveState('saved')
+      setTimeout(() => setSaveState('idle'), 2000)
     } finally {
       setSaving(false)
     }
@@ -332,9 +463,6 @@ function VerificationView({ me }: { me: MeData }) {
           You can edit the information you submitted. Changes are saved immediately.
         </p>
       </div>
-
-      {msg && <div style={S.successMsg}>{msg}</div>}
-      {err && <div style={S.errMsg}>{err}</div>}
 
       <div style={S.card}>
         {/* Email — readonly */}
@@ -472,14 +600,19 @@ function VerificationView({ me }: { me: MeData }) {
           }}
         >
           <button
-            style={{ ...S.saveBtn, opacity: saving ? 0.6 : 1 }}
+            style={{
+              ...S.saveBtn,
+              opacity: saving ? 0.6 : 1,
+              background: saveState === 'saved' ? '#22c55e' : '#e8607a',
+            }}
             onClick={save}
             disabled={saving}
           >
-            {saving ? 'Saving…' : 'Save changes'}
+            {saving ? 'Saving…' : saveState === 'saved' ? '✓ Saved' : 'Save changes'}
           </button>
         </div>
       </div>
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
     </div>
   )
 }
@@ -606,8 +739,16 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
   const [ext, setExt] = useState<ExtendedProfile>(DEFAULT_EXT)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [msg, setMsg] = useState('')
-  const [err, setErr] = useState('')
+  const [extSaveState, setExtSaveState] = useState<'idle' | 'saved'>('idle')
+
+  // Toast state
+  const [toasts, setToasts] = useState<ToastItem[]>([])
+  function showToast(type: 'success' | 'error', msg: string) {
+    const id = Date.now()
+    setToasts((t) => [...t, { id, type, msg }])
+    if (type === 'success') setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500)
+  }
+  function dismissToast(id: number) { setToasts((t) => t.filter((x) => x.id !== id)) }
 
   // Session cards state
   const [cards, setCards] = useState<SessionCard[]>([])
@@ -625,14 +766,17 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
     date_of_birth: meData.date_of_birth ? meData.date_of_birth.split('T')[0] : '',
     country: meData.country ?? '',
     city: meData.city ?? '',
-    whatsapp_number: meData.companion_whatsapp ?? meData.profile_whatsapp ?? '',
     telegram_handle: meData.telegram_handle ?? '',
     tagline: meData.tagline ?? '',
     bio: meData.bio ?? '',
   })
+  // WhatsApp split into dial code + local number
+  const initWa = parseE164(meData.companion_whatsapp ?? meData.profile_whatsapp ?? '')
+  const [waDialCode, setWaDialCode] = useState(initWa.dialCode)
+  const [waLocalNumber, setWaLocalNumber] = useState(initWa.localNumber)
+  const [fieldErrors, setFieldErrors] = useState<{ whatsapp?: string; telegram?: string }>({})
   const [savingIdentity, setSavingIdentity] = useState(false)
-  const [identityMsg, setIdentityMsg] = useState('')
-  const [identityErr, setIdentityErr] = useState('')
+  const [identitySaveState, setIdentitySaveState] = useState<'idle' | 'saved'>('idle')
   const [locStatus, setLocStatus] = useState<'idle' | 'loading' | 'success' | 'denied' | 'error'>('idle')
 
   async function shareLocation() {
@@ -654,10 +798,21 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
   const showComplianceNotice = !identity.full_name.trim() || !identity.date_of_birth
 
   async function saveIdentity() {
-    setIdentityMsg('')
-    setIdentityErr('')
+    // Validate contact fields before hitting the API
+    const waErr = validateWhatsApp(waDialCode, waLocalNumber)
+    const tgErr = validateTelegram(identity.telegram_handle)
+    const errors: { whatsapp?: string; telegram?: string } = {}
+    if (waErr) errors.whatsapp = waErr
+    if (tgErr) errors.telegram = tgErr
+    setFieldErrors(errors)
+    if (Object.keys(errors).length > 0) {
+      showToast('error', 'Fix the highlighted errors before saving')
+      return
+    }
     setSavingIdentity(true)
     try {
+      const fullWa = waLocalNumber.trim() ? waDialCode + waLocalNumber.replace(/\D/g, '') : null
+      const normTg = normalizeTelegram(identity.telegram_handle) || null
       const r = await fetch('/api/companions/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -666,19 +821,20 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
           date_of_birth: identity.date_of_birth || null,
           country: identity.country,
           city: identity.city,
-          whatsapp_number: identity.whatsapp_number || null,
-          telegram_handle: identity.telegram_handle || null,
+          whatsapp_number: fullWa,
+          telegram_handle: normTg,
           tagline: identity.tagline,
           bio: identity.bio,
         }),
       })
       const d = await r.json()
       if (!r.ok) {
-        setIdentityErr(d.error ?? 'Save failed.')
+        showToast('error', d.error ?? 'Save failed — please try again')
         return
       }
-      setIdentityMsg('Saved.')
-      setTimeout(() => setIdentityMsg(''), 3000)
+      showToast('success', 'Identity & details saved')
+      setIdentitySaveState('saved')
+      setTimeout(() => setIdentitySaveState('idle'), 2000)
     } finally {
       setSavingIdentity(false)
     }
@@ -756,8 +912,6 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
   }
 
   async function save() {
-    setMsg('')
-    setErr('')
     setSaving(true)
     try {
       const r = await fetch('/api/companions/profile', {
@@ -767,11 +921,12 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
       })
       const d = await r.json()
       if (!r.ok) {
-        setErr(d.error ?? 'Save failed.')
+        showToast('error', d.error ?? 'Save failed — please try again')
         return
       }
-      setMsg('Profile saved.')
-      setTimeout(() => setMsg(''), 3000)
+      showToast('success', 'Profile saved')
+      setExtSaveState('saved')
+      setTimeout(() => setExtSaveState('idle'), 2000)
     } finally {
       setSaving(false)
     }
@@ -819,9 +974,6 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
         <p style={{ fontSize: 12, color: '#4b5563', marginBottom: 20, lineHeight: 1.5 }}>
           Add your details to complete your profile. Your legal name is never shown to dreamers.
         </p>
-
-        {identityMsg && <div style={S.successMsg}>{identityMsg}</div>}
-        {identityErr && <div style={S.errMsg}>{identityErr}</div>}
 
         {/* Display name — part of ext, saved with extended profile */}
         <label style={{ ...S.label, color: '#e8607a' }}>
@@ -913,42 +1065,107 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
           </p>
         </div>
 
-        <div style={S.grid2}>
-          <div>
-            <label style={{ ...S.label, color: identity.whatsapp_number ? '#22c55e' : '#e8607a' }}>
-              WhatsApp number <span style={{ fontSize: 10 }}>required</span>
-            </label>
+        {/* WhatsApp — country code picker + number */}
+        <div style={{ marginBottom: 4 }}>
+          <label style={{ ...S.label, color: waLocalNumber && !fieldErrors.whatsapp ? '#22c55e' : '#e8607a' }}>
+            WhatsApp number <span style={{ fontSize: 10, opacity: 0.8 }}>required</span>
+          </label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+            <select
+              value={waDialCode}
+              onChange={(e) => setWaDialCode(e.target.value)}
+              onBlur={() => {
+                const err = validateWhatsApp(waDialCode, waLocalNumber)
+                setFieldErrors((p) => ({ ...p, whatsapp: err ?? undefined }))
+              }}
+              style={{
+                ...S.select,
+                flex: '0 0 auto',
+                width: 'auto',
+                minWidth: 160,
+                marginBottom: 0,
+                borderColor: waLocalNumber && !fieldErrors.whatsapp
+                  ? 'rgba(34,197,94,0.4)'
+                  : fieldErrors.whatsapp
+                    ? 'rgba(248,113,113,0.5)'
+                    : 'rgba(232,96,122,0.4)',
+              }}
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c.code + c.dial} value={c.dial}>
+                  {c.flag} {c.dial} {c.name}
+                </option>
+              ))}
+            </select>
             <input
               style={{
                 ...S.input,
-                borderColor: identity.whatsapp_number ? 'rgba(34,197,94,0.4)' : 'rgba(232,96,122,0.5)',
+                flex: 1,
+                marginBottom: 0,
+                borderColor: waLocalNumber && !fieldErrors.whatsapp
+                  ? 'rgba(34,197,94,0.4)'
+                  : fieldErrors.whatsapp
+                    ? 'rgba(248,113,113,0.5)'
+                    : 'rgba(232,96,122,0.4)',
               }}
-              value={identity.whatsapp_number}
-              onChange={(e) => setIdentity((p) => ({ ...p, whatsapp_number: e.target.value }))}
-              placeholder="+31612345678"
+              value={waLocalNumber}
               inputMode="tel"
-            />
-            <p style={{ fontSize: 11, color: '#4b5563', marginTop: -12, marginBottom: 16 }}>
-              E.164 format — include country code
-            </p>
-          </div>
-          <div>
-            <label style={{ ...S.label, color: identity.telegram_handle ? '#22c55e' : '#e8607a' }}>
-              Telegram <span style={{ fontSize: 10 }}>required</span>
-            </label>
-            <input
-              style={{
-                ...S.input,
-                borderColor: identity.telegram_handle ? 'rgba(34,197,94,0.4)' : 'rgba(232,96,122,0.5)',
+              placeholder="612345678"
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, '')
+                setWaLocalNumber(digits)
+                if (fieldErrors.whatsapp) {
+                  const err = validateWhatsApp(waDialCode, digits)
+                  setFieldErrors((p) => ({ ...p, whatsapp: err ?? undefined }))
+                }
               }}
-              value={identity.telegram_handle}
-              onChange={(e) => setIdentity((p) => ({ ...p, telegram_handle: e.target.value }))}
-              placeholder="@username or +31612345678"
+              onBlur={() => {
+                const err = validateWhatsApp(waDialCode, waLocalNumber)
+                setFieldErrors((p) => ({ ...p, whatsapp: err ?? undefined }))
+              }}
             />
-            <p style={{ fontSize: 11, color: '#4b5563', marginTop: -12, marginBottom: 16 }}>
-              Username or phone number
-            </p>
           </div>
+          {fieldErrors.whatsapp
+            ? <p style={{ fontSize: 11, color: '#f87171', margin: '0 0 16px' }}>{fieldErrors.whatsapp}</p>
+            : <p style={{ fontSize: 11, color: '#4b5563', margin: '0 0 16px' }}>Dreamers tap this to message you directly</p>
+          }
+        </div>
+
+        {/* Telegram */}
+        <div style={{ marginBottom: 4 }}>
+          <label style={{ ...S.label, color: identity.telegram_handle && !fieldErrors.telegram ? '#22c55e' : '#e8607a' }}>
+            Telegram <span style={{ fontSize: 10, opacity: 0.8 }}>required</span>
+          </label>
+          <input
+            style={{
+              ...S.input,
+              marginBottom: 4,
+              borderColor: identity.telegram_handle && !fieldErrors.telegram
+                ? 'rgba(34,197,94,0.4)'
+                : fieldErrors.telegram
+                  ? 'rgba(248,113,113,0.5)'
+                  : 'rgba(232,96,122,0.4)',
+            }}
+            value={identity.telegram_handle}
+            placeholder="@username or +31612345678"
+            onChange={(e) => {
+              setIdentity((p) => ({ ...p, telegram_handle: e.target.value }))
+              if (fieldErrors.telegram) {
+                const err = validateTelegram(e.target.value)
+                setFieldErrors((p) => ({ ...p, telegram: err ?? undefined }))
+              }
+            }}
+            onBlur={(e) => {
+              const normalized = normalizeTelegram(e.target.value)
+              setIdentity((p) => ({ ...p, telegram_handle: normalized }))
+              const err = validateTelegram(normalized)
+              setFieldErrors((p) => ({ ...p, telegram: err ?? undefined }))
+            }}
+          />
+          {fieldErrors.telegram
+            ? <p style={{ fontSize: 11, color: '#f87171', margin: '0 0 16px' }}>{fieldErrors.telegram}</p>
+            : <p style={{ fontSize: 11, color: '#4b5563', margin: '0 0 16px' }}>@username or phone — dreamers tap this to open a Telegram chat</p>
+          }
         </div>
 
         {/* Location sharing */}
@@ -1033,11 +1250,17 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid #1c2333', marginTop: 8, gap: 12 }}>
           <button
-            style={{ ...S.saveBtn, fontSize: 13, padding: '10px 22px', opacity: savingIdentity ? 0.6 : 1 }}
+            style={{
+              ...S.saveBtn,
+              fontSize: 13,
+              padding: '10px 22px',
+              opacity: savingIdentity ? 0.6 : 1,
+              background: identitySaveState === 'saved' ? '#22c55e' : '#e8607a',
+            }}
             onClick={saveIdentity}
             disabled={savingIdentity}
           >
-            {savingIdentity ? 'Saving…' : 'Save details'}
+            {savingIdentity ? 'Saving…' : identitySaveState === 'saved' ? '✓ Saved' : 'Save details'}
           </button>
           <button
             style={{ ...S.saveBtn, fontSize: 13, padding: '10px 22px', opacity: saving ? 0.6 : 1, background: 'transparent', border: '1px solid rgba(232,96,122,.4)', color: '#e8607a' }}
@@ -1076,9 +1299,6 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
           </button>
         ))}
       </div>
-
-      {msg && <div style={S.successMsg}>{msg}</div>}
-      {err && <div style={S.errMsg}>{err}</div>}
 
       <div style={S.card}>
         {/* Look */}
@@ -1439,14 +1659,20 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
             )}
           </div>
           <button
-            style={{ ...S.saveBtn, opacity: saving ? 0.6 : 1 }}
+            style={{
+              ...S.saveBtn,
+              opacity: saving ? 0.6 : 1,
+              background: extSaveState === 'saved' ? '#22c55e' : '#e8607a',
+            }}
             onClick={save}
             disabled={saving}
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Saving…' : extSaveState === 'saved' ? '✓ Saved' : 'Save'}
           </button>
         </div>
       </div>
+
+      <ToastContainer toasts={toasts} dismiss={dismissToast} />
     </div>
   )
 }
