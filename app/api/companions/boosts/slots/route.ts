@@ -20,10 +20,10 @@ export async function GET(req: Request) {
   const boostType = searchParams.get('type') as string
   const community = searchParams.get('community') as string
 
-  if (!BOOST_TYPES.includes(boostType as any)) {
+  if (!(BOOST_TYPES as readonly string[]).includes(boostType)) {
     return NextResponse.json({ error: 'Invalid boost type' }, { status: 400 })
   }
-  if (!VALID_COMMUNITIES.includes(community as any)) {
+  if (!(VALID_COMMUNITIES as readonly string[]).includes(community)) {
     return NextResponse.json({ error: 'Invalid community' }, { status: 400 })
   }
 

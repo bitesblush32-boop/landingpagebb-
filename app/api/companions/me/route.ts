@@ -13,11 +13,16 @@ export async function GET() {
        c.gender_community,
        cp.bio, cp.tagline, cp.city, cp.is_live, cp.is_verified,
        cp.availability_status, cp.whatsapp_number AS profile_whatsapp,
+       cp.telegram_handle,
        cp.session_modality, cp.hourly_rate::text AS hourly_rate, cp.currency,
        cp.profile_completeness, cp.is_visible_to_users,
        cp.gender, cp.instagram_handle, cp.website_url,
        cp.height_cm, cp.body_type, cp.eye_color, cp.hair_color, cp.skin_color,
-       cop.status AS review_status, cop.notes AS rejection_reason
+       cop.status AS review_status, cop.notes AS rejection_reason,
+       (SELECT COUNT(*)::int FROM companion_photos
+        WHERE companion_profile_id = cp.id
+          AND is_primary = true
+          AND deleted_at IS NULL) AS has_primary_photo
      FROM companions c
      LEFT JOIN companion_profiles cp ON cp.companion_id = c.id
      LEFT JOIN companion_onboarding_progress cop

@@ -183,6 +183,7 @@ interface MeData {
   city: string | null
   companion_whatsapp: string | null
   profile_whatsapp: string | null
+  telegram_handle: string | null
   alias: string | null
   gender: string | null
   gender_community: string | null
@@ -624,6 +625,8 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
     date_of_birth: meData.date_of_birth ? meData.date_of_birth.split('T')[0] : '',
     country: meData.country ?? '',
     city: meData.city ?? '',
+    whatsapp_number: meData.companion_whatsapp ?? meData.profile_whatsapp ?? '',
+    telegram_handle: meData.telegram_handle ?? '',
     tagline: meData.tagline ?? '',
     bio: meData.bio ?? '',
   })
@@ -663,6 +666,8 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
           date_of_birth: identity.date_of_birth || null,
           country: identity.country,
           city: identity.city,
+          whatsapp_number: identity.whatsapp_number || null,
+          telegram_handle: identity.telegram_handle || null,
           tagline: identity.tagline,
           bio: identity.bio,
         }),
@@ -895,6 +900,54 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
               placeholder="Amsterdam"
               autoCapitalize="words"
             />
+          </div>
+        </div>
+
+        {/* Contact — WhatsApp + Telegram */}
+        <div style={{ borderTop: '1px solid #1c2333', margin: '8px 0 20px', paddingTop: 20 }}>
+          <div style={{ fontSize: 13, color: '#9ca3af', marginBottom: 4, fontWeight: 500 }}>
+            Contact details
+          </div>
+          <p style={{ fontSize: 11, color: '#4b5563', marginBottom: 16 }}>
+            These become the WhatsApp &amp; Telegram buttons dreamers tap to reach you. Required to appear in search.
+          </p>
+        </div>
+
+        <div style={S.grid2}>
+          <div>
+            <label style={{ ...S.label, color: identity.whatsapp_number ? '#22c55e' : '#e8607a' }}>
+              WhatsApp number <span style={{ fontSize: 10 }}>required</span>
+            </label>
+            <input
+              style={{
+                ...S.input,
+                borderColor: identity.whatsapp_number ? 'rgba(34,197,94,0.4)' : 'rgba(232,96,122,0.5)',
+              }}
+              value={identity.whatsapp_number}
+              onChange={(e) => setIdentity((p) => ({ ...p, whatsapp_number: e.target.value }))}
+              placeholder="+31612345678"
+              inputMode="tel"
+            />
+            <p style={{ fontSize: 11, color: '#4b5563', marginTop: -12, marginBottom: 16 }}>
+              E.164 format — include country code
+            </p>
+          </div>
+          <div>
+            <label style={{ ...S.label, color: identity.telegram_handle ? '#22c55e' : '#e8607a' }}>
+              Telegram <span style={{ fontSize: 10 }}>required</span>
+            </label>
+            <input
+              style={{
+                ...S.input,
+                borderColor: identity.telegram_handle ? 'rgba(34,197,94,0.4)' : 'rgba(232,96,122,0.5)',
+              }}
+              value={identity.telegram_handle}
+              onChange={(e) => setIdentity((p) => ({ ...p, telegram_handle: e.target.value }))}
+              placeholder="@username or +31612345678"
+            />
+            <p style={{ fontSize: 11, color: '#4b5563', marginTop: -12, marginBottom: 16 }}>
+              Username or phone number
+            </p>
           </div>
         </div>
 

@@ -358,8 +358,6 @@ export default function BoostPage() {
   }
 
   const activeBoosts  = myBoosts.filter(b => b.status === 'active')
-  const upcomingCount = myBoosts.filter(b => b.week_start > new Date().toISOString().slice(0, 10)).length
-
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#07090f', padding: '48px 24px' }}>

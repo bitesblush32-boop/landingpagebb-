@@ -147,7 +147,7 @@ export default function AdminAdsPage() {
   const [summary, setSummary] = useState<Summary>({ active: 0, disabled: 0, cancelled: 0 })
   const [settings, setSettings] = useState<Settings | null>(null)
   const [loading, setLoading] = useState(true)
-  const [authed, setAuthed] = useState(false)
+  const [, setAuthed] = useState(false)
   const [filterCommunity, setFilterCommunity] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)

@@ -162,10 +162,10 @@ export async function POST(req: Request) {
 
     await client.query('COMMIT')
     return NextResponse.json({ success: true, boost: result.rows[0] }, { status: 201 })
-  } catch (err: any) {
+  } catch (err: unknown) {
     await client.query('ROLLBACK').catch(() => {})
     // Unique constraint violation = slot taken concurrently
-    if (err?.code === '23505') {
+    if ((err as { code?: string })?.code === '23505') {
       return NextResponse.json({ error: 'This slot was just taken — please choose another week' }, { status: 409 })
     }
     console.error('POST /api/companions/boosts error:', err)

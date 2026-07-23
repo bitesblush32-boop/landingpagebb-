@@ -10,9 +10,6 @@ interface Stats {
   views_month: number
   whatsapp_clicks: number
   bookings_pending: number
-  photo_count?: number
-  story_count?: number
-  hourly_rate?: number
 }
 
 interface CompanionMe {
@@ -22,6 +19,10 @@ interface CompanionMe {
   is_live: boolean
   profile_completeness: number
   status: string
+  companion_whatsapp: string | null
+  profile_whatsapp: string | null
+  telegram_handle: string | null
+  has_primary_photo: number
 }
 
 const S: Record<string, React.CSSProperties> = {
@@ -114,144 +115,319 @@ const QUICK_LINKS = [
   { href: '/dashboard/analytics', label: 'Analytics', icon: '▥', desc: 'See your profile stats' },
 ]
 
-function WelcomeBanner({
-  me,
-  stats,
-  onDismiss,
+// ─── Tour Modal ────────────────────────────────────────────────────────────────
+
+const TOUR_STEPS = [
+  {
+    eyebrow: 'Welcome',
+    title: 'Your stage awaits.',
+    body: 'This is your companion dashboard — where you manage your profile, photos, stories, and see how dreamers find you. It takes about 5 minutes to go live.',
+    sections: [
+      { icon: '◉', label: 'Profile', desc: 'Your bio, contact details & rates' },
+      { icon: '◻', label: 'Photos', desc: 'Your primary photo appears on every card' },
+      { icon: '✦', label: 'Stories', desc: 'Written content that draws dreamers in' },
+      { icon: '▥', label: 'Analytics', desc: 'Views, clicks, and booking stats' },
+    ],
+    cta: null,
+    ctaHref: null,
+  },
+  {
+    eyebrow: 'Step 1 of 2 — Required',
+    title: 'Add your contact details.',
+    body: 'WhatsApp and Telegram are the two buttons dreamers use to reach you. Without them your profile stays hidden — you will not appear in any search or discovery feed.',
+    sections: [
+      { icon: '📱', label: 'WhatsApp', desc: 'Primary CTA — dreamers message you directly' },
+      { icon: '✈️', label: 'Telegram', desc: 'Secondary CTA — username or phone number' },
+    ],
+    cta: 'Fill my contact details →',
+    ctaHref: '/dashboard/profile',
+  },
+  {
+    eyebrow: 'Step 2 of 2 — Required',
+    title: 'Upload your primary photo.',
+    body: 'Your primary photo is the first thing dreamers see when browsing. Without it your profile card shows a placeholder. Upload at least one photo and set it as primary to complete your profile.',
+    sections: [
+      { icon: '◻', label: 'Primary photo', desc: 'Shown on your card in discover & search' },
+      { icon: '◻', label: 'Gallery photos', desc: 'Shown when a dreamer opens your profile' },
+    ],
+    cta: 'Upload a photo →',
+    ctaHref: '/dashboard/photos',
+  },
+]
+
+function TourModal({
+  onClose,
+  tourComplete,
 }: {
-  me: CompanionMe
-  stats: Stats | null
-  onDismiss: () => void
+  onClose: () => void
+  tourComplete: boolean
 }) {
-  const tasks = [
-    {
-      label: 'Complete your profile',
-      done: me.profile_completeness >= 50,
-      href: '/dashboard/profile',
-    },
-    {
-      label: 'Upload at least 3 photos',
-      done: (stats?.photo_count ?? 0) >= 3,
-      href: '/dashboard/photos',
-    },
-    {
-      label: 'Write your first story',
-      done: (stats?.story_count ?? 0) >= 1,
-      href: '/dashboard/stories',
-    },
-    {
-      label: 'Set your session rate',
-      done: !!stats?.hourly_rate,
-      href: '/dashboard/profile',
-    },
-    {
-      label: 'Toggle live — become visible',
-      done: me.is_live,
-      href: undefined,
-    },
-  ]
-  const doneCount = tasks.filter((t) => t.done).length
+  const [step, setStep] = useState(0)
+  const current = TOUR_STEPS[step]
+  const isLast = step === TOUR_STEPS.length - 1
+
+  function advance() {
+    if (isLast) {
+      onClose()
+    } else {
+      setStep((s) => s + 1)
+    }
+  }
 
   return (
     <div
       style={{
-        background: 'rgba(232,96,122,.06)',
-        border: '1px solid rgba(232,96,122,.2)',
-        borderRadius: 16,
-        padding: '24px',
-        marginBottom: 32,
-        position: 'relative',
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(7,9,15,0.92)',
+        zIndex: 9000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px 16px',
       }}
     >
-      <button
-        onClick={onDismiss}
+      <div
         style={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
-          background: 'none',
-          border: 'none',
-          color: '#4b5563',
-          cursor: 'pointer',
-          fontSize: 16,
-          lineHeight: 1,
-          padding: 4,
-        }}
-        aria-label="Dismiss"
-      >
-        ×
-      </button>
-      <p
-        style={{
-          fontSize: 11,
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          color: '#6b7280',
-          marginBottom: 6,
+          background: '#0d1117',
+          border: '1px solid #1c2333',
+          borderRadius: 20,
+          padding: '32px 28px',
+          maxWidth: 480,
+          width: '100%',
+          position: 'relative',
         }}
       >
-        Getting started
-      </p>
-      <h2
-        style={{
-          fontFamily: 'var(--font-serif)',
-          fontSize: 22,
-          color: '#eeeef0',
-          lineHeight: 1.3,
-          marginBottom: 4,
-        }}
-      >
-        Your stage is{' '}
-        <em style={{ fontStyle: 'italic', color: '#e8607a' }}>waiting.</em>
-      </h2>
-      <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
-        {doneCount} of {tasks.length} complete
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {tasks.map((task) => (
-          <div
-            key={task.label}
+        {/* Step dots */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+          {TOUR_STEPS.map((_, i) => (
+            <div
+              key={i}
+              style={{
+                width: i === step ? 20 : 6,
+                height: 6,
+                borderRadius: 99,
+                background: i === step ? '#e8607a' : '#1c2333',
+                transition: 'width .2s ease, background .2s',
+              }}
+            />
+          ))}
+        </div>
+
+        <p
+          style={{
+            fontSize: 11,
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            color: '#6b7280',
+            marginBottom: 8,
+          }}
+        >
+          {current.eyebrow}
+        </p>
+        <h2
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 24,
+            color: '#eeeef0',
+            lineHeight: 1.3,
+            marginBottom: 12,
+          }}
+        >
+          {current.title}
+        </h2>
+        <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.65, marginBottom: 24 }}>
+          {current.body}
+        </p>
+
+        {/* Feature rows */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+          {current.sections.map((sec) => (
+            <div
+              key={sec.label}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+                padding: '12px 14px',
+                background: '#111620',
+                borderRadius: 12,
+                border: '1px solid #1c2333',
+              }}
+            >
+              <span style={{ fontSize: 18, lineHeight: 1, marginTop: 1 }}>{sec.icon}</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0', marginBottom: 2 }}>
+                  {sec.label}
+                </div>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>{sec.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {current.cta && current.ctaHref ? (
+            <a
+              href={current.ctaHref}
+              style={{
+                display: 'block',
+                background: '#e8607a',
+                color: '#fff',
+                textDecoration: 'none',
+                textAlign: 'center',
+                padding: '13px 20px',
+                borderRadius: 12,
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              {current.cta}
+            </a>
+          ) : null}
+
+          <button
+            onClick={advance}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              opacity: task.done ? 0.4 : 1,
+              background: current.cta ? 'transparent' : '#e8607a',
+              border: current.cta ? '1px solid #1c2333' : 'none',
+              color: current.cta ? '#6b7280' : '#fff',
+              padding: '12px 20px',
+              borderRadius: 12,
+              fontSize: 13,
+              cursor: 'pointer',
+              width: '100%',
             }}
           >
+            {isLast ? (tourComplete ? 'Done — go to dashboard' : 'Got it, I\'ll do this later') : 'Next →'}
+          </button>
+        </div>
+
+        {/* Skip */}
+        {step === 0 && (
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              background: 'none',
+              border: 'none',
+              color: '#4b5563',
+              cursor: 'pointer',
+              fontSize: 18,
+              lineHeight: 1,
+              padding: 4,
+            }}
+            aria-label="Skip tour"
+          >
+            ×
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Required Action Banner ────────────────────────────────────────────────────
+
+function RequiredActionBanner({
+  hasWhatsapp,
+  hasTelegram,
+  hasPrimaryPhoto,
+}: {
+  hasWhatsapp: boolean
+  hasTelegram: boolean
+  hasPrimaryPhoto: boolean
+}) {
+  const hasContact = hasWhatsapp && hasTelegram
+  const allDone = hasContact && hasPrimaryPhoto
+  if (allDone) return null
+
+  const items = [
+    {
+      label: 'Add WhatsApp & Telegram',
+      done: hasContact,
+      href: '/dashboard/profile',
+      hint: hasWhatsapp && !hasTelegram ? 'Telegram missing' : !hasWhatsapp ? 'WhatsApp missing' : '',
+    },
+    {
+      label: 'Upload your primary photo',
+      done: hasPrimaryPhoto,
+      href: '/dashboard/photos',
+      hint: '',
+    },
+  ]
+
+  return (
+    <div
+      style={{
+        background: 'rgba(232,96,122,.05)',
+        border: '1px solid rgba(232,96,122,.25)',
+        borderRadius: 16,
+        padding: '20px 22px',
+        marginBottom: 28,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+        <div
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: '#e8607a',
+            flexShrink: 0,
+          }}
+        />
+        <p style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0' }}>
+          Your profile is hidden from dreamers
+        </p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {items.map((item) => (
+          <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span
               style={{
                 width: 20,
                 height: 20,
                 borderRadius: '50%',
-                border: `1px solid ${task.done ? '#22c55e' : 'rgba(232,96,122,.4)'}`,
-                background: task.done ? 'rgba(34,197,94,.15)' : 'transparent',
+                border: `1px solid ${item.done ? '#22c55e' : 'rgba(232,96,122,.5)'}`,
+                background: item.done ? 'rgba(34,197,94,.12)' : 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: 11,
-                color: task.done ? '#22c55e' : 'transparent',
+                color: item.done ? '#22c55e' : 'transparent',
                 flexShrink: 0,
               }}
             >
               ✓
             </span>
-            {task.href && !task.done ? (
-              <a
-                href={task.href}
-                style={{ fontSize: 13, color: '#e8607a', textDecoration: 'none' }}
-              >
-                {task.label} →
-              </a>
-            ) : (
-              <span
-                style={{
-                  fontSize: 13,
-                  color: task.done ? '#6b7280' : '#9ca3af',
-                  textDecoration: task.done ? 'line-through' : 'none',
-                }}
-              >
-                {task.label}
+            {item.done ? (
+              <span style={{ fontSize: 13, color: '#6b7280', textDecoration: 'line-through' }}>
+                {item.label}
               </span>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <a href={item.href} style={{ fontSize: 13, color: '#e8607a', textDecoration: 'none' }}>
+                  {item.label} →
+                </a>
+                {item.hint && (
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: '#6b7280',
+                      background: '#111620',
+                      border: '1px solid #1c2333',
+                      borderRadius: 6,
+                      padding: '2px 7px',
+                    }}
+                  >
+                    {item.hint}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         ))}
@@ -259,6 +435,8 @@ function WelcomeBanner({
     </div>
   )
 }
+
+// ─── Main Dashboard Content ────────────────────────────────────────────────────
 
 function DashboardContent() {
   const router = useRouter()
@@ -268,7 +446,7 @@ function DashboardContent() {
   const [me, setMe] = useState<CompanionMe | null>(null)
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showBanner, setShowBanner] = useState(false)
+  const [showTour, setShowTour] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -282,33 +460,40 @@ function DashboardContent() {
         }
         setMe(meData)
         setStats(statsData)
-        // Show banner if ?welcome=1 OR onboarding not yet dismissed
-        const dismissed = (() => {
-          try {
-            return !!localStorage.getItem('bb_onboarding_done')
-          } catch {
-            return false
-          }
+
+        const hasWhatsapp = !!(meData.companion_whatsapp || meData.profile_whatsapp)
+        const hasTelegram = !!meData.telegram_handle
+        const hasPrimaryPhoto = (meData.has_primary_photo ?? 0) > 0
+        const tourComplete = hasWhatsapp && hasTelegram && hasPrimaryPhoto
+
+        const tourDismissed = (() => {
+          try { return !!localStorage.getItem('bb_tour_v1') } catch { return false }
         })()
-        if (isWelcome || !dismissed) {
-          setShowBanner(true)
+
+        if (isWelcome || (!tourDismissed && !tourComplete)) {
+          setShowTour(true)
           if (isWelcome) window.history.replaceState({}, '', '/dashboard')
+        }
+
+        if (tourComplete) {
+          try { localStorage.setItem('bb_tour_v1', 'done') } catch { /* ignore */ }
         }
       })
       .catch(() => router.replace('/login'))
       .finally(() => setLoading(false))
   }, [router, isWelcome])
 
-  function dismissBanner() {
-    try {
-      localStorage.setItem('bb_onboarding_done', '1')
-    } catch {
-      // ignore
-    }
-    setShowBanner(false)
+  function closeTour() {
+    try { localStorage.setItem('bb_tour_v1', 'seen') } catch { /* ignore */ }
+    setShowTour(false)
   }
 
   const displayName = me?.alias || me?.name?.split(' ')[0] || 'there'
+
+  const hasWhatsapp = !!(me?.companion_whatsapp || me?.profile_whatsapp)
+  const hasTelegram = !!me?.telegram_handle
+  const hasPrimaryPhoto = (me?.has_primary_photo ?? 0) > 0
+  const tourComplete = hasWhatsapp && hasTelegram && hasPrimaryPhoto
 
   if (loading)
     return (
@@ -331,111 +516,124 @@ function DashboardContent() {
     )
 
   return (
-    <div style={S.page}>
-      {/* Welcome banner */}
-      {showBanner && me && (
-        <WelcomeBanner me={me} stats={stats} onDismiss={dismissBanner} />
+    <>
+      {/* Tour modal — fullscreen overlay */}
+      {showTour && me && (
+        <TourModal onClose={closeTour} tourComplete={tourComplete} />
       )}
 
-      {/* Greeting */}
-      <div style={S.greeting}>
-        <p style={S.eyebrow}>Companion dashboard</p>
-        <h1 style={S.title}>
-          Welcome back, <em style={{ fontStyle: 'italic', color: '#e8607a' }}>{displayName}.</em>
-        </h1>
-        <p style={S.sub}>
-          {me?.is_live
-            ? 'Your profile is live — dreamers can discover you.'
-            : "Your profile is hidden. Toggle it live from the sidebar when you're ready."}
-        </p>
-      </div>
+      <div style={S.page}>
+        {/* Required action banner */}
+        {me && (
+          <RequiredActionBanner
+            hasWhatsapp={hasWhatsapp}
+            hasTelegram={hasTelegram}
+            hasPrimaryPhoto={hasPrimaryPhoto}
+          />
+        )}
 
-      {/* Stats */}
-      <div style={S.grid}>
-        {[
-          { label: 'Views today', val: stats?.views_today ?? 0 },
-          { label: 'Views this week', val: stats?.views_week ?? 0 },
-          { label: 'Views this month', val: stats?.views_month ?? 0 },
-          { label: 'WhatsApp clicks', val: stats?.whatsapp_clicks ?? 0 },
-          { label: 'Pending bookings', val: stats?.bookings_pending ?? 0 },
-        ].map((s) => (
-          <div key={s.label} style={S.statCard}>
-            <div style={S.statNum}>{s.val}</div>
-            <div style={S.statLabel}>{s.label}</div>
-          </div>
-        ))}
-      </div>
+        {/* Greeting */}
+        <div style={S.greeting}>
+          <p style={S.eyebrow}>Companion dashboard</p>
+          <h1 style={S.title}>
+            Welcome back, <em style={{ fontStyle: 'italic', color: '#e8607a' }}>{displayName}.</em>
+          </h1>
+          <p style={S.sub}>
+            {tourComplete && me?.is_live
+              ? 'Your profile is live — dreamers can discover you.'
+              : tourComplete
+                ? "Your profile is ready. Toggle it live from the sidebar when you're ready."
+                : 'Complete the 2 required steps above to become visible to dreamers.'}
+          </p>
+        </div>
 
-      {/* Profile completeness */}
-      {me && (
-        <div style={S.completenessCard}>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 6,
-            }}
-          >
-            <span style={{ fontSize: 14, fontWeight: 500, color: '#eeeef0' }}>
-              Profile completeness
-            </span>
-            <span style={{ fontSize: 14, color: '#e8607a', fontWeight: 500 }}>
-              {me.profile_completeness}%
-            </span>
-          </div>
-          <div style={S.progressBg}>
+        {/* Stats */}
+        <div style={S.grid}>
+          {[
+            { label: 'Views today', val: stats?.views_today ?? 0 },
+            { label: 'Views this week', val: stats?.views_week ?? 0 },
+            { label: 'Views this month', val: stats?.views_month ?? 0 },
+            { label: 'WhatsApp clicks', val: stats?.whatsapp_clicks ?? 0 },
+            { label: 'Pending bookings', val: stats?.bookings_pending ?? 0 },
+          ].map((s) => (
+            <div key={s.label} style={S.statCard}>
+              <div style={S.statNum}>{s.val}</div>
+              <div style={S.statLabel}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Profile completeness */}
+        {me && (
+          <div style={S.completenessCard}>
             <div
               style={{
-                width: `${me.profile_completeness}%`,
-                height: '100%',
-                background: '#e8607a',
-                borderRadius: 99,
-                transition: 'width 1s ease',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 6,
               }}
-            />
+            >
+              <span style={{ fontSize: 14, fontWeight: 500, color: '#eeeef0' }}>
+                Profile completeness
+              </span>
+              <span style={{ fontSize: 14, color: '#e8607a', fontWeight: 500 }}>
+                {me.profile_completeness}%
+              </span>
+            </div>
+            <div style={S.progressBg}>
+              <div
+                style={{
+                  width: `${me.profile_completeness}%`,
+                  height: '100%',
+                  background: '#e8607a',
+                  borderRadius: 99,
+                  transition: 'width 1s ease',
+                }}
+              />
+            </div>
+            {me.profile_completeness < 70 && (
+              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 10 }}>
+                Complete your profile to attract more dreamers.{' '}
+                <Link href="/dashboard/profile" style={{ color: '#e8607a', textDecoration: 'none' }}>
+                  Continue →
+                </Link>
+              </p>
+            )}
           </div>
-          {me.profile_completeness < 70 && (
-            <p style={{ fontSize: 12, color: '#6b7280', marginTop: 10 }}>
-              Complete your profile to attract more dreamers.{' '}
-              <Link href="/dashboard/profile" style={{ color: '#e8607a', textDecoration: 'none' }}>
-                Continue →
-              </Link>
-            </p>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* Quick links */}
-      <p
-        style={
-          {
-            fontSize: 12,
-            color: '#6b7280',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            marginBottom: 14,
-          } as React.CSSProperties
-        }
-      >
-        Quick actions
-      </p>
-      <div style={S.quickLinks}>
-        {QUICK_LINKS.map((l) => (
-          <a
-            key={l.href}
-            href={l.href}
-            style={S.quickLink}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(232,96,122,.35)')}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#1c2333')}
-          >
-            <span style={{ fontSize: 20, color: '#e8607a' }}>{l.icon}</span>
-            <span style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0' }}>{l.label}</span>
-            <span style={{ fontSize: 11, color: '#6b7280' }}>{l.desc}</span>
-          </a>
-        ))}
+        {/* Quick links */}
+        <p
+          style={
+            {
+              fontSize: 12,
+              color: '#6b7280',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: 14,
+            } as React.CSSProperties
+          }
+        >
+          Quick actions
+        </p>
+        <div style={S.quickLinks}>
+          {QUICK_LINKS.map((l) => (
+            <a
+              key={l.href}
+              href={l.href}
+              style={S.quickLink}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(232,96,122,.35)')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#1c2333')}
+            >
+              <span style={{ fontSize: 20, color: '#e8607a' }}>{l.icon}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0' }}>{l.label}</span>
+              <span style={{ fontSize: 11, color: '#6b7280' }}>{l.desc}</span>
+            </a>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 

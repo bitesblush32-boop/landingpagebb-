@@ -355,7 +355,7 @@ function HeaderBanner({ boost, accentColor, accentBg }: { boost: BoostCompanion;
           </div>
           {subtitle && (
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2, fontStyle: 'italic' }}>
-              "{subtitle}"
+              &quot;{subtitle}&quot;
             </div>
           )}
         </div>
@@ -472,7 +472,7 @@ function RightRail({ boost, accentColor, accentBg }: { boost: BoostCompanion; ac
           )}
           {boost.tagline && (
             <div style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic', lineHeight: 1.5 }}>
-              "{boost.tagline.slice(0, 80)}{boost.tagline.length > 80 ? '…' : ''}"
+              &quot;{boost.tagline.slice(0, 80)}{boost.tagline.length > 80 ? '…' : ''}&quot;
             </div>
           )}
         </div>
