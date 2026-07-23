@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { BOOST_LABELS, type BoostType } from '@/lib/boosts'
 
@@ -143,6 +143,7 @@ function PriceField({
 
 export default function AdminAdsPage() {
   const router = useRouter()
+  const pathname = usePathname()
   const [boosts, setBoosts] = useState<Boost[]>([])
   const [summary, setSummary] = useState<Summary>({ active: 0, disabled: 0, cancelled: 0 })
   const [settings, setSettings] = useState<Settings | null>(null)
@@ -243,35 +244,84 @@ export default function AdminAdsPage() {
     )
   }
 
+  const ADMIN_NAV = [
+    { href: '/admin/ads', label: 'Ads & Boosts', icon: '★' },
+  ]
+
   return (
-    <div style={{ minHeight: '100vh', background: '#07090f', color: '#eeeef0' }}>
+    <div style={{ minHeight: '100vh', background: '#07090f', color: '#eeeef0', display: 'flex' }}>
       <style>{`
         @keyframes bb-spin { to { transform: rotate(360deg) } }
-        @media (max-width: 640px) {
-          .ads-table-row { grid-template-columns: 1fr !important; }
-          .ads-actions { flex-wrap: wrap; }
+        @media (max-width: 768px) {
+          .bb-admin-sidebar { display: none !important; }
+          .bb-admin-main { margin-left: 0 !important; }
         }
       `}</style>
 
-      {/* Nav */}
-      <nav style={{
-        position: 'sticky', top: 0, zIndex: 100,
+      {/* Left sidebar */}
+      <aside
+        className="bb-admin-sidebar"
+        style={{
+          width: 220, flexShrink: 0, background: '#0d1117',
+          borderRight: '1px solid #1c2333', display: 'flex', flexDirection: 'column',
+          position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 100,
+        }}
+      >
+        {/* Logo */}
+        <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid #1c2333' }}>
+          <Image src="/logo.png" alt="BlushBite" width={160} height={56} style={{ height: 48, width: 'auto', display: 'block' }} />
+          <div style={{ fontSize: 10, color: '#4b5563', marginTop: 8, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            Admin panel
+          </div>
+        </div>
+
+        {/* Nav links */}
+        <nav style={{ flex: 1, padding: '10px 0' }}>
+          {ADMIN_NAV.map(item => {
+            const active = pathname === item.href
+            return (
+              <a
+                key={item.href}
+                href={item.href}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 18px', fontSize: 13, textDecoration: 'none',
+                  color: active ? '#e8607a' : '#6b7280',
+                  background: active ? 'rgba(232,96,122,.07)' : 'transparent',
+                  borderRight: `2px solid ${active ? '#e8607a' : 'transparent'}`,
+                  transition: 'color .15s, background .15s',
+                }}
+              >
+                <span style={{ fontSize: 12 }}>{item.icon}</span>
+                {item.label}
+              </a>
+            )
+          })}
+        </nav>
+
+        {/* Sign out */}
+        <div style={{ padding: '14px 18px', borderTop: '1px solid #1c2333' }}>
+          <button
+            onClick={logout}
+            style={{ fontSize: 12, color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="bb-admin-main" style={{ flex: 1, marginLeft: 220 }}>
+
+      {/* Top bar — mobile logo + page title */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 50,
         background: 'rgba(7,9,15,.95)', backdropFilter: 'blur(16px)',
         borderBottom: '1px solid #1c2333',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 20px', height: 56,
+        display: 'flex', alignItems: 'center', padding: '0 20px', height: 52,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Image src="/logo.png" alt="BlushBite" width={120} height={42} style={{ height: 42, width: 'auto' }} />
-          <span style={{ fontSize: 12, color: '#4b5563' }}>Admin · Ads & Boosts</span>
-        </div>
-        <button
-          onClick={logout}
-          style={{ fontSize: 12, color: '#4b5563', background: 'none', border: 'none', cursor: 'pointer' }}
-        >
-          Sign out
-        </button>
-      </nav>
+        <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 500 }}>Ads &amp; Boosts</span>
+      </div>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 16px 80px' }}>
 
@@ -494,6 +544,7 @@ export default function AdminAdsPage() {
           </div>
         </div>
       </div>
+      </div>{/* bb-admin-main */}
     </div>
   )
 }
