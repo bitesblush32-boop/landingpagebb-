@@ -6,7 +6,9 @@ export async function GET() {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const rows = await query<Record<string, unknown>>(
+  let rows: Record<string, unknown>[]
+  try {
+    rows = await query<Record<string, unknown>>(
     `SELECT
        c.id, c.email, c.name, c.alias, c.companion_stage, c.full_name,
        c.date_of_birth, c.country, c.whatsapp_number AS companion_whatsapp,
@@ -28,8 +30,12 @@ export async function GET() {
      LEFT JOIN companion_onboarding_progress cop
             ON cop.companion_id = c.id AND cop.stage = 7
      WHERE c.id = $1`,
-    [session.sub]
-  )
+      [session.sub]
+    )
+  } catch (err: unknown) {
+    console.error('[me] query error:', err)
+    return NextResponse.json({ error: 'DB error', detail: String((err as Error)?.message ?? err) }, { status: 500 })
+  }
 
   if (rows.length === 0) return NextResponse.json({ error: 'Not found.' }, { status: 404 })
 
