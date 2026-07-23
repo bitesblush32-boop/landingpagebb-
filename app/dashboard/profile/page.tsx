@@ -778,18 +778,38 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
   const [savingIdentity, setSavingIdentity] = useState(false)
   const [identitySaveState, setIdentitySaveState] = useState<'idle' | 'saved'>('idle')
   const [locStatus, setLocStatus] = useState<'idle' | 'loading' | 'success' | 'denied' | 'error'>('idle')
+  const [detectedLocation, setDetectedLocation] = useState<string | null>(null)
 
   async function shareLocation() {
     if (!navigator.geolocation) { setLocStatus('error'); return }
     setLocStatus('loading')
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        const { latitude, longitude } = pos.coords
         const res = await fetch('/api/companions/location', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+          body: JSON.stringify({ latitude, longitude }),
         })
-        setLocStatus(res.ok ? 'success' : 'error')
+        if (res.ok) {
+          setLocStatus('success')
+          // Reverse geocode to show the companion what city was detected
+          try {
+            const geo = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+              { headers: { 'Accept-Language': 'en' } }
+            ).then((r) => r.json())
+            const city = geo?.address?.city ?? geo?.address?.town ?? geo?.address?.village ?? null
+            const country = geo?.address?.country ?? null
+            if (city || country) {
+              setDetectedLocation([city, country].filter(Boolean).join(', '))
+            }
+          } catch {
+            // reverse geocode is best-effort; no error shown
+          }
+        } else {
+          setLocStatus('error')
+        }
       },
       () => setLocStatus('denied')
     )
@@ -1065,6 +1085,27 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
           </p>
         </div>
 
+        {/* Contact info banner */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 8,
+          background: 'rgba(201,169,110,0.06)',
+          border: '1px solid rgba(201,169,110,0.2)',
+          borderRadius: 8,
+          padding: '8px 12px',
+          marginBottom: 16,
+          fontSize: 11,
+          color: '#9ca3af',
+          lineHeight: 1.5,
+        }}>
+          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>ℹ</span>
+          <span>
+            Fill these correctly — dreamers tap these buttons to contact and book you.
+            Without them your profile stays hidden from search.
+          </span>
+        </div>
+
         {/* WhatsApp — country code picker + number */}
         <div style={{ marginBottom: 4 }}>
           <label style={{ ...S.label, color: waLocalNumber && !fieldErrors.whatsapp ? '#22c55e' : '#e8607a' }}>
@@ -1188,7 +1229,9 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
             </p>
             <p style={{ fontSize: 11, color: '#6b7280' }}>
               {locStatus === 'success'
-                ? 'Location shared — dreamers can see your distance.'
+                ? detectedLocation
+                  ? `Detected: ${detectedLocation}. Dreamers can see your distance.`
+                  : 'Location shared — dreamers can see your distance.'
                 : locStatus === 'denied'
                   ? 'Location blocked. Enable it in browser settings.'
                   : locStatus === 'error'
