@@ -410,6 +410,7 @@ const COMMUNITY_CONFIG: Record<Community, {
   accentColor: string
   accentBg: string
   accentGrid: string
+  heroBgImage?: string
 }> = {
   female: {
     badge: 'Female companion community',
@@ -437,6 +438,7 @@ const COMMUNITY_CONFIG: Record<Community, {
     accentColor: '#c084fc',
     accentBg: 'rgba(192,132,252,.1)',
     accentGrid: 'rgba(192,132,252,.04)',
+    heroBgImage: '/shemale-hero.png',
   },
 }
 
@@ -1110,7 +1112,7 @@ export default function GenderLanding({
         />
         {/* Accent glow */}
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none z-0"
           style={{
             background: `radial-gradient(ellipse 60% 55% at 30% 45%,${cfg.accentBg} 0%,transparent 70%)`,
             zIndex: 1,
