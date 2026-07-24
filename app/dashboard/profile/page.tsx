@@ -301,6 +301,7 @@ function ToastContainer({ toasts, dismiss }: { toasts: ToastItem[]; dismiss: (id
 
 interface MeData {
   status: string
+  name: string | null
   full_name: string | null
   email: string
   date_of_birth: string | null

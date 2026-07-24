@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export default function AdminNav() {
@@ -27,12 +28,12 @@ export default function AdminNav() {
         <span style={{ fontWeight: 700, color: '#e8607a', fontSize: 16 }}>
           BlushBite Admin
         </span>
-        <a
+        <Link
           href="/admin/ads"
           style={{ color: '#eeeef0', fontSize: 14, textDecoration: 'none' }}
         >
           Ads &amp; Boosts
-        </a>
+        </Link>
       </div>
       <button
         onClick={handleLogout}
