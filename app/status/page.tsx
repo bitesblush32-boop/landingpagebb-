@@ -9,7 +9,6 @@ import Image from 'next/image'
 interface CompanionMe {
   id: string
   name: string
-  alias: string | null
   email: string
   is_live: boolean
   is_verified: boolean

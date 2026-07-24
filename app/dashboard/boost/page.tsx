@@ -54,6 +54,12 @@ const TYPE_ICONS: Record<string, string> = {
 
 // ── Slot Picker ───────────────────────────────────────────────────────────────
 
+// Image specs for each banner type
+const BANNER_SPECS: Partial<Record<BoostType, { label: string; w: number; h: number }>> = {
+  header_banner: { label: 'Header Banner', w: 1200, h: 200 },
+  right_rail:    { label: 'Right Rail',    w: 280,  h: 400 },
+}
+
 function SlotPicker({
   boostType,
   community,
@@ -70,9 +76,14 @@ function SlotPicker({
   const [selected, setSelected] = useState<string | null>(null)
   const [headline, setHeadline] = useState('')
   const [tagline, setTagline] = useState('')
+  const [bannerImageUrl, setBannerImageUrl] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
   const [booking, setBooking] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  const spec = BANNER_SPECS[boostType] ?? null
 
   const loadSlots = useCallback(async () => {
     setLoading(true)
@@ -86,6 +97,24 @@ function SlotPicker({
   }, [boostType, community])
 
   useEffect(() => { loadSlots() }, [loadSlots])
+
+  async function handleImagePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError('')
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const r = await fetch('/api/companions/boosts/upload-banner', { method: 'POST', body: fd })
+      const d = await r.json()
+      if (!r.ok) { setUploadError(d.error ?? 'Upload failed'); return }
+      setBannerImageUrl(d.url)
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
 
   async function book() {
     if (!selected) return
@@ -101,6 +130,7 @@ function SlotPicker({
           week_start: selected,
           banner_headline: headline.trim() || undefined,
           banner_tagline: tagline.trim() || undefined,
+          banner_image_url: bannerImageUrl || undefined,
         }),
       })
       const d = await r.json()
@@ -109,6 +139,7 @@ function SlotPicker({
       setSelected(null)
       setHeadline('')
       setTagline('')
+      setBannerImageUrl(null)
       await loadSlots()
       onBooked()
     } finally {
@@ -186,6 +217,73 @@ function SlotPicker({
           )
         })}
       </div>
+
+      {/* Banner image upload (header_banner + right_rail only) */}
+      {selected && spec && (
+        <div style={{ background: '#0d1117', border: '1px solid #1c2333', borderRadius: 12, padding: 16, marginBottom: 12 }}>
+          <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Custom banner image
+          </div>
+          <div style={{ fontSize: 11, color: '#4b5563', marginBottom: 12 }}>
+            Recommended size: <span style={{ color: '#c9a96e' }}>{spec.w} × {spec.h} px</span> · JPG or PNG · max 5 MB
+          </div>
+
+          {/* Preview or drop area */}
+          {bannerImageUrl ? (
+            <div style={{ position: 'relative', marginBottom: 10 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={bannerImageUrl}
+                alt="Banner preview"
+                style={{
+                  width: '100%',
+                  height: boostType === 'header_banner' ? 72 : 140,
+                  objectFit: 'cover',
+                  borderRadius: 8,
+                  border: '1px solid rgba(201,169,110,.3)',
+                  display: 'block',
+                }}
+              />
+              <button
+                onClick={() => setBannerImageUrl(null)}
+                style={{
+                  position: 'absolute', top: 6, right: 6,
+                  background: 'rgba(7,9,15,.8)', border: '1px solid #1c2333',
+                  borderRadius: 6, padding: '2px 8px', fontSize: 11,
+                  color: '#f87171', cursor: 'pointer',
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <label
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 6, height: 80, borderRadius: 8,
+                border: '1px dashed #1c2333', background: '#111620',
+                cursor: uploading ? 'wait' : 'pointer', marginBottom: 10,
+              }}
+            >
+              <span style={{ fontSize: 18 }}>▬</span>
+              <span style={{ fontSize: 12, color: '#6b7280' }}>
+                {uploading ? 'Uploading…' : 'Click to upload your banner image'}
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                disabled={uploading}
+                onChange={handleImagePick}
+                style={{ display: 'none' }}
+              />
+            </label>
+          )}
+
+          {uploadError && (
+            <div style={{ fontSize: 12, color: '#f87171', marginBottom: 8 }}>{uploadError}</div>
+          )}
+        </div>
+      )}
 
       {/* Custom text (optional) */}
       {selected && (
@@ -327,7 +425,7 @@ export default function BoostPage() {
       fetch('/api/companions/boosts').then(r => r.ok ? r.json() : { boosts: [] }),
       fetch('/api/admin/boost-settings').then(r => r.ok ? r.json() : { settings: null }),
     ])
-    if (meRes?.community) setCommunity(meRes.community)
+    if (meRes?.gender_community) setCommunity(meRes.gender_community)
     setMyBoosts(boostsRes.boosts ?? [])
     setSettings(settingsRes.settings)
     setLoading(false)

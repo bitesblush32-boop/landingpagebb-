@@ -10,7 +10,7 @@ export async function GET() {
   try {
     rows = await query<Record<string, unknown>>(
     `SELECT
-       c.id, c.email, c.name, c.alias, c.companion_stage, c.full_name,
+       c.id, c.email, c.name, c.companion_stage, c.full_name,
        c.date_of_birth, c.country, c.whatsapp_number AS companion_whatsapp,
        c.gender_community,
        cp.bio, cp.tagline, cp.city, cp.is_live, cp.is_verified,

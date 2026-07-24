@@ -125,8 +125,8 @@ export async function PATCH(req: NextRequest) {
       ]
     )
     if (display_name != null) {
-      await client.query('UPDATE companions SET alias = $1, updated_at = NOW() WHERE id = $2', [
-        String(display_name) || null,
+      await client.query('UPDATE companions SET name = $1, updated_at = NOW() WHERE id = $2', [
+        String(display_name).trim() || null,
         session.sub,
       ])
     }

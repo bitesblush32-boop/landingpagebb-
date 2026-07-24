@@ -15,7 +15,6 @@ interface Stats {
 interface CompanionMe {
   id: string
   name: string
-  alias: string | null
   is_live: boolean
   profile_completeness: number
   status: string
@@ -488,7 +487,7 @@ function DashboardContent() {
     setShowTour(false)
   }
 
-  const displayName = me?.alias || me?.name?.split(' ')[0] || 'there'
+  const displayName = me?.name?.split(' ')[0] || 'there'
 
   const hasWhatsapp = !!(me?.companion_whatsapp || me?.profile_whatsapp)
   const hasTelegram = !!me?.telegram_handle

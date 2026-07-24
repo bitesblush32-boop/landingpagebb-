@@ -309,7 +309,6 @@ interface MeData {
   companion_whatsapp: string | null
   profile_whatsapp: string | null
   telegram_handle: string | null
-  alias: string | null
   gender: string | null
   gender_community: string | null
   tagline: string | null
@@ -334,7 +333,7 @@ function VerificationView({ me }: { me: MeData }) {
 
   const [form, setForm] = useState<AppForm>({
     full_name: me.full_name ?? '',
-    display_name: me.alias ?? '',
+    display_name: me.name ?? '',
     date_of_birth: me.date_of_birth ? me.date_of_birth.split('T')[0] : '',
     country: me.country ?? '',
     city: me.city ?? '',
@@ -870,7 +869,7 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
       if (d)
         setExt((prev) => ({
           ...prev,
-          display_name: meData.alias ?? '',
+          display_name: meData.name ?? '',
           height_cm: d.height_cm != null ? parseInt(d.height_cm) : null,
           body_type: d.body_type ?? '',
           hair_color: d.hair_color ?? '',
@@ -884,7 +883,7 @@ function ProfileBuilder({ meData }: { meData: MeData }) {
         }))
       if (sc?.cards) setCards(sc.cards)
     }).finally(() => setLoading(false))
-  }, [meData.alias])
+  }, [meData.name])
 
   async function addCard() {
     setCardErr('')

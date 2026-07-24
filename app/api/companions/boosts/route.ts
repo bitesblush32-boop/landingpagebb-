@@ -64,6 +64,7 @@ export async function POST(req: Request) {
     week_start: string  // YYYY-MM-DD (must be a Monday)
     banner_headline?: string
     banner_tagline?: string
+    banner_image_url?: string
   }
   try {
     body = await req.json()
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { boost_type, community, week_start, banner_headline, banner_tagline } = body
+  const { boost_type, community, week_start, banner_headline, banner_tagline, banner_image_url } = body
 
   if (!BOOST_TYPES.includes(boost_type as BoostType)) {
     return NextResponse.json({ error: 'Invalid boost type' }, { status: 400 })
@@ -145,8 +146,8 @@ export async function POST(req: Request) {
     const result = await client.query(
       `INSERT INTO companion_boosts
          (companion_id, boost_type, community, week_start, week_end, price_eur,
-          status, banner_headline, banner_tagline, payment_status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, $8, 'manual')
+          status, banner_headline, banner_tagline, banner_image_url, payment_status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'active', $7, $8, $9, 'manual')
        RETURNING id, boost_type, community, week_start::text, week_end::text, price_eur::text, status`,
       [
         session.sub,
@@ -157,6 +158,7 @@ export async function POST(req: Request) {
         price,
         banner_headline?.trim() || null,
         banner_tagline?.trim() || null,
+        banner_image_url?.trim() || null,
       ]
     )
 

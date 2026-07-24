@@ -7,7 +7,6 @@ import Image from 'next/image'
 interface CompanionMe {
   id: string
   name: string
-  alias: string | null
   is_live: boolean
   profile_completeness: number
   status: string // 'approved' | 'rejected' | 'taken_down'
@@ -70,7 +69,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }
 
-  const displayName = me?.alias || me?.name || '…'
+  const displayName = me?.name || '…'
 
   if (!authChecked) {
     return <div style={{ minHeight: '100vh', background: '#07090f' }} />
@@ -100,7 +99,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {me && (
             <div>
               <div style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0', marginBottom: 2 }}>
-                {displayName}
+                @{displayName}
               </div>
               <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 12 }}>Companion portal</div>
 

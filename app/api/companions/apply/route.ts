@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { pool } from '@/lib/db'
-import { generateAlias } from '@/lib/alias'
 import { buildSessionCookie, buildCommunityCookie } from '@/lib/session'
 import { sendWelcomeEmail } from '@/lib/email'
 import { randomUUID } from 'crypto'
@@ -49,28 +48,17 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Generate unique alias
-    let alias = generateAlias()
-    for (let i = 0; i < 10; i++) {
-      const conflict = await client.query('SELECT id FROM companions WHERE alias = $1 LIMIT 1', [
-        alias,
-      ])
-      if (conflict.rows.length === 0) break
-      alias = generateAlias()
-    }
-
     await client.query('BEGIN')
 
     await client.query(
       `INSERT INTO companions
-        (id, email, name, alias, full_name, date_of_birth, country, whatsapp_number,
+        (id, email, name, full_name, date_of_birth, country, whatsapp_number,
          companion_stage, onboarding_complete, gender_community, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
       [
         id,
         cleanEmail,
         cleanDisplay,
-        alias,
         null,
         null,
         null,
