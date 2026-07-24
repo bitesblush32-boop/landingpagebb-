@@ -29,7 +29,6 @@ export async function GET(req: Request) {
         banner_headline: string | null
         banner_tagline: string | null
         companion_name: string
-        alias: string | null
         tagline: string | null
         city: string | null
         hourly_rate: string | null
@@ -43,7 +42,6 @@ export async function GET(req: Request) {
            cb.banner_headline,
            cb.banner_tagline,
            c.name  AS companion_name,
-           c.alias,
            cp.tagline,
            cp.city,
            cp.hourly_rate::text,
