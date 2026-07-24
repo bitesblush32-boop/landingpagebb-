@@ -341,15 +341,11 @@ function HeroCardFan({ community, accentColor }: { community: Community; accentC
         >
           {/* Photo */}
           <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            <img
+            <Image
               src={card.img}
               alt={card.name}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block',
-              }}
+              fill
+              style={{ objectFit: 'cover' }}
               loading="eager"
             />
             {/* Overlay info strip */}
@@ -1065,14 +1061,11 @@ export default function GenderLanding({
           style={{ zIndex: 0 }}
           aria-hidden
         >
-          <img
+          <Image
             src={`/hero/${community}-bg.png`}
             alt=""
+            fill
             style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
               objectFit: 'cover',
               objectPosition: 'center 20%',
               filter: 'blur(4px) brightness(0.80) saturate(1.2)',
