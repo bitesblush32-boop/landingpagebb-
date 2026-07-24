@@ -978,15 +978,8 @@ export default function GenderLanding({
 
   // ── Device binding ────────────────────────────────────────────────────────
   useEffect(() => {
-    // Check first-visit: if bb_community not set in localStorage, this is a new visitor
-    let isFirstVisit = false
-    try {
-      const stored = localStorage.getItem('bb_community')
-      isFirstVisit = stored !== community
-    } catch {
-      isFirstVisit = false
-    }
-    setShowOverlay(isFirstVisit)
+    // Always show overlay on every page load
+    setShowOverlay(true)
 
     // Bind device to this community (cookie + localStorage + fingerprint DB binding)
     document.cookie = `bb_community=${community}; max-age=31536000; path=/; SameSite=Lax`
