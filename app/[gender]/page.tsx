@@ -105,20 +105,55 @@ export default async function GenderPage({
   const { gender } = await params
   if (!VALID.includes(gender as Community)) redirect('/')
 
-  // Fetch live stats for this community
-  const statsRows = await query<{ companion_count: string; city_count: string }>(
-    `SELECT
-       COUNT(DISTINCT c.id)::text AS companion_count,
-       COUNT(DISTINCT cp.city) FILTER (WHERE cp.city IS NOT NULL)::text AS city_count
-     FROM companions c
-     JOIN companion_profiles cp ON cp.companion_id = c.id
-     WHERE c.gender_community = $1
-       AND cp.is_live = true`,
-    [gender]
-  ).catch(() => [])
+  // Fetch live stats + real hero cards for this community in parallel
+  const [statsRows, heroRows] = await Promise.all([
+    query<{ companion_count: string; city_count: string }>(
+      `SELECT
+         COUNT(DISTINCT c.id)::text AS companion_count,
+         COUNT(DISTINCT cp.city) FILTER (WHERE cp.city IS NOT NULL)::text AS city_count
+       FROM companions c
+       JOIN companion_profiles cp ON cp.companion_id = c.id
+       WHERE c.gender_community = $1
+         AND cp.is_live = true`,
+      [gender]
+    ).catch(() => []),
+
+    query<{ name: string; city: string; photo_url: string }>(
+      `SELECT
+         COALESCE(c.name, 'Anonymous') AS name,
+         COALESCE(cp.city, 'Europe')   AS city,
+         (
+           SELECT url FROM companion_photos
+           WHERE companion_profile_id = cp.id
+             AND is_approved = true
+             AND deleted_at IS NULL
+           ORDER BY is_primary DESC, sort_order ASC
+           LIMIT 1
+         ) AS photo_url
+       FROM companions c
+       JOIN companion_profiles cp ON cp.companion_id = c.id
+       WHERE c.gender_community = $1
+         AND cp.is_live = true
+         AND EXISTS (
+           SELECT 1 FROM companion_photos
+           WHERE companion_profile_id = cp.id
+             AND is_approved = true
+             AND deleted_at IS NULL
+         )
+       ORDER BY cp.profile_completeness DESC
+       LIMIT 2`,
+      [gender]
+    ).catch(() => []),
+  ])
 
   const companionCount = parseInt(statsRows[0]?.companion_count ?? '0', 10)
   const cityCount      = parseInt(statsRows[0]?.city_count      ?? '0', 10)
+
+  // Only use real cards when we have exactly 2 companions with photos
+  const heroCards =
+    heroRows.length === 2
+      ? heroRows.map((r) => ({ name: r.name, city: r.city, img: r.photo_url }))
+      : undefined
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -141,6 +176,7 @@ export default async function GenderPage({
         community={gender as Community}
         companionCount={companionCount}
         cityCount={cityCount}
+        heroCards={heroCards}
       />
     </>
   )

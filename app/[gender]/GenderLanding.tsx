@@ -290,29 +290,37 @@ const HERO_CARDS: Record<Community, Array<{ name: string; city: string; img: str
 
 // ── HeroCardFan component ─────────────────────────────────────────────────────
 
-function HeroCardFan({ community, accentColor }: { community: Community; accentColor: string }) {
+function HeroCardFan({
+  community,
+  accentColor,
+  cards: cardsProp,
+}: {
+  community: Community
+  accentColor: string
+  cards?: Array<{ name: string; city: string; img: string }>
+}) {
   const [hovered, setHovered] = useState(false)
-  const cards = HERO_CARDS[community]
+  const cards = (cardsProp && cardsProp.length >= 2) ? cardsProp : HERO_CARDS[community]
 
   const spring = 'cubic-bezier(0.34,1.56,0.64,1)'
 
-  // Card positions: [back card, front card]
+  // Card positions: [back card, front card] — adjusted for larger 260×340 size
   const transforms = hovered
     ? [
-        'rotate(-22deg) translate(-56px, 24px)',
-        'rotate(14deg) translate(48px, -20px)',
+        'rotate(-24deg) translate(-68px, 28px)',
+        'rotate(16deg) translate(58px, -24px)',
       ]
     : [
-        'rotate(-10deg) translate(-28px, 12px)',
-        'rotate(5deg) translate(22px, -8px)',
+        'rotate(-10deg) translate(-34px, 14px)',
+        'rotate(5deg) translate(28px, -10px)',
       ]
 
   return (
     <div
       style={{
         position: 'relative',
-        width: 200,
-        height: 280,
+        width: 260,
+        height: 340,
         cursor: 'pointer',
         flexShrink: 0,
       }}
@@ -321,77 +329,81 @@ function HeroCardFan({ community, accentColor }: { community: Community; accentC
       onTouchStart={() => setHovered((v) => !v)}
       aria-label="Profile previews"
     >
-      {cards.map((card, i) => (
-        <div
-          key={card.name}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: 18,
-            overflow: 'hidden',
-            background: '#0d1117',
-            border: `1.5px solid ${accentColor}35`,
-            boxShadow: `0 12px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)`,
-            transform: transforms[i],
-            transformOrigin: 'center bottom',
-            transition: `transform 550ms ${spring}`,
-            zIndex: i + 1,
-            willChange: 'transform',
-          }}
-        >
-          {/* Photo */}
-          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            <Image
-              src={card.img}
-              alt={card.name}
-              fill
-              style={{ objectFit: 'cover' }}
-              loading="eager"
-            />
-            {/* Overlay info strip */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: '24px 14px 14px',
-                background: 'linear-gradient(to top, rgba(7,9,15,0.95) 0%, rgba(7,9,15,0.7) 60%, transparent 100%)',
-              }}
-            >
-              {/* Verified badge */}
+      {cards.map((card, i) => {
+        const isExternal = card.img.startsWith('http')
+        return (
+          <div
+            key={card.name}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 20,
+              overflow: 'hidden',
+              background: '#0d1117',
+              border: `1.5px solid ${accentColor}35`,
+              boxShadow: `0 16px 56px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)`,
+              transform: transforms[i],
+              transformOrigin: 'center bottom',
+              transition: `transform 550ms ${spring}`,
+              zIndex: i + 1,
+              willChange: 'transform',
+            }}
+          >
+            {/* Photo */}
+            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+              <Image
+                src={card.img}
+                alt={card.name}
+                fill
+                style={{ objectFit: 'cover' }}
+                loading="eager"
+                unoptimized={isExternal}
+              />
+              {/* Overlay info strip */}
               <div
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  background: `${accentColor}20`,
-                  border: `1px solid ${accentColor}45`,
-                  borderRadius: 6,
-                  padding: '2px 7px',
-                  marginBottom: 6,
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  padding: '32px 18px 16px',
+                  background: 'linear-gradient(to top, rgba(7,9,15,0.95) 0%, rgba(7,9,15,0.7) 60%, transparent 100%)',
                 }}
               >
-                <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                  <path
-                    d="M6 1L7.4 4.2L11 4.8L8.5 7.2L9.1 11L6 9.4L2.9 11L3.5 7.2L1 4.8L4.6 4.2L6 1Z"
-                    fill={accentColor}
-                  />
-                </svg>
-                <span style={{ fontSize: 9, color: accentColor, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Verified
-                </span>
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#eeeef0', fontFamily: 'var(--font-serif)', lineHeight: 1.2 }}>
-                {card.name}
-              </div>
-              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                {card.city}
+                {/* Verified badge */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    background: `${accentColor}20`,
+                    border: `1px solid ${accentColor}45`,
+                    borderRadius: 6,
+                    padding: '2px 8px',
+                    marginBottom: 8,
+                  }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M6 1L7.4 4.2L11 4.8L8.5 7.2L9.1 11L6 9.4L2.9 11L3.5 7.2L1 4.8L4.6 4.2L6 1Z"
+                      fill={accentColor}
+                    />
+                  </svg>
+                  <span style={{ fontSize: 10, color: accentColor, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Verified
+                  </span>
+                </div>
+                <div style={{ fontSize: 17, fontWeight: 600, color: '#eeeef0', fontFamily: 'var(--font-serif)', lineHeight: 1.2 }}>
+                  {card.name}
+                </div>
+                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 3 }}>
+                  {card.city}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
@@ -941,10 +953,12 @@ export default function GenderLanding({
   community,
   companionCount = 0,
   cityCount = 0,
+  heroCards,
 }: {
   community: Community
   companionCount?: number
   cityCount?: number
+  heroCards?: Array<{ name: string; city: string; img: string }>
 }) {
   const cfg = COMMUNITY_CONFIG[community]
 
@@ -1022,11 +1036,11 @@ export default function GenderLanding({
           borderBottom: '1px solid #1c2333',
         }}
       >
-        <Image src="/logo.png" alt="BlushBite" width={200} height={70} style={{ height: 70, width: 'auto', display: 'block' }} />
+        <Image src="/logo.png" alt="BlushBite" width={200} height={80} style={{ height: 80, width: 'auto', display: 'block', marginLeft: 20 }} />
         <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className="text-[13px] font-medium rounded-full px-3 min-h-[36px] inline-flex items-center transition-all duration-[150ms]"
+            className="text-[13px] font-medium rounded-xl px-4 min-h-[38px] inline-flex items-center transition-all duration-[150ms]"
             style={{
               color: '#eeeef0',
               background: 'rgba(255,255,255,0.07)',
@@ -1038,7 +1052,7 @@ export default function GenderLanding({
           </Link>
           <a
             href="#apply"
-            className="inline-flex items-center gap-1.5 text-[13px] font-medium rounded-full px-4 min-h-[40px] transition-all duration-[150ms]"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium rounded-xl px-4 min-h-[38px] transition-all duration-[150ms]"
             style={{
               color: cfg.accentColor,
               background: cfg.accentBg,
@@ -1196,7 +1210,7 @@ export default function GenderLanding({
           {/* ── Right: interactive card fan ── */}
           <div
             className="hidden lg:flex items-center justify-center flex-shrink-0"
-            style={{ width: 320, height: 380, position: 'relative' }}
+            style={{ width: 420, height: 460, position: 'relative' }}
           >
             {/* Soft glow behind cards */}
             <div
@@ -1209,7 +1223,7 @@ export default function GenderLanding({
                 pointerEvents: 'none',
               }}
             />
-            <HeroCardFan community={community} accentColor={cfg.accentColor} />
+            <HeroCardFan community={community} accentColor={cfg.accentColor} cards={heroCards} />
             {/* Hover hint */}
             <div
               style={{
