@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 530" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="f1-bg" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#1e0a10"/>
+      <stop offset="100%" stop-color="#0d0507"/>
+    </radialGradient>
+    <radialGradient id="f1-aura" cx="50%" cy="38%" r="55%">
+      <stop offset="0%" stop-color="#e8607a" stop-opacity="0.4"/>
+      <stop offset="70%" stop-color="#e8607a" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#e8607a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="f1-skin" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e8b89a" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#d4956b" stop-opacity="0.95"/>
+      <stop offset="85%" stop-color="#c9845e" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#c9845e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="f1-hair" cx="50%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#2d0f18"/>
+      <stop offset="55%" stop-color="#3e1a22"/>
+      <stop offset="100%" stop-color="#1a0a0f"/>
+    </radialGradient>
+    <radialGradient id="f1-hair-shine" cx="40%" cy="35%" r="35%">
+      <stop offset="0%" stop-color="#6b2030" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#6b2030" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="f1-body" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#c9a96e" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#c9a96e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="f1-dress" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#e8607a" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#e8607a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="f1-fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="60%" stop-color="#0d0507" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#0d0507" stop-opacity="1"/>
+    </linearGradient>
+    <filter id="f1-blur-sm">
+      <feGaussianBlur stdDeviation="0.8"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="530" fill="#0d0507"/>
+  <rect width="400" height="530" fill="url(#f1-bg)"/>
+  <rect width="400" height="530" fill="url(#f1-aura)"/>
+
+  <!-- Floor glow -->
+  <ellipse cx="200" cy="560" rx="280" ry="100" fill="#e8607a" opacity="0.08"/>
+
+  <!-- Dress / body base (wider at bottom) -->
+  <ellipse cx="200" cy="440" rx="180" ry="230" fill="url(#f1-dress)"/>
+  <!-- Outfit texture layers -->
+  <ellipse cx="200" cy="460" rx="155" ry="200" fill="#2d0f18" opacity="0.35"/>
+  <ellipse cx="200" cy="490" rx="130" ry="180" fill="#e8607a" opacity="0.06"/>
+
+  <!-- Décolleté / upper chest -->
+  <ellipse cx="200" cy="330" rx="90" ry="55" fill="#e8b89a" opacity="0.18"/>
+  <!-- Dress neckline V suggestion -->
+  <polygon points="185,300 215,300 200,360" fill="#1e0a10" opacity="0.4"/>
+
+  <!-- Shoulders -->
+  <ellipse cx="115" cy="340" rx="65" ry="40" fill="#e8b89a" opacity="0.25"/>
+  <ellipse cx="285" cy="340" rx="65" ry="40" fill="#e8b89a" opacity="0.25"/>
+
+  <!-- Neck -->
+  <rect x="178" y="260" width="44" height="75" rx="22" fill="#e8b89a" opacity="0.7"/>
+  <!-- Neck shadow -->
+  <rect x="188" y="265" width="24" height="70" rx="12" fill="#c9845e" opacity="0.3"/>
+
+  <!-- Head / face -->
+  <ellipse cx="200" cy="195" rx="78" ry="85" fill="url(#f1-skin)"/>
+  <!-- Face structure — jaw slightly wider -->
+  <ellipse cx="200" cy="215" rx="72" ry="60" fill="#e8b89a" opacity="0.4"/>
+
+  <!-- Eyes -->
+  <ellipse cx="175" cy="185" rx="12" ry="8" fill="#2d1520" opacity="0.9"/>
+  <ellipse cx="225" cy="185" rx="12" ry="8" fill="#2d1520" opacity="0.9"/>
+  <!-- Eye whites -->
+  <ellipse cx="175" cy="185" rx="8" ry="5" fill="#f5e8e0" opacity="0.6"/>
+  <ellipse cx="225" cy="185" rx="8" ry="5" fill="#f5e8e0" opacity="0.6"/>
+  <!-- Irises -->
+  <circle cx="175" cy="185" r="5" fill="#3d1020" opacity="0.9"/>
+  <circle cx="225" cy="185" r="5" fill="#3d1020" opacity="0.9"/>
+  <!-- Eye shine -->
+  <circle cx="172" cy="183" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="222" cy="183" r="1.5" fill="white" opacity="0.7"/>
+  <!-- Lashes upper line -->
+  <path d="M163,181 Q175,177 187,181" stroke="#1a0a0f" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M213,181 Q225,177 237,181" stroke="#1a0a0f" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- Nose -->
+  <ellipse cx="200" cy="208" rx="8" ry="5" fill="#c9845e" opacity="0.35"/>
+  <path d="M193,212 Q200,216 207,212" stroke="#c9845e" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Lips -->
+  <path d="M182,228 Q191,222 200,224 Q209,222 218,228 Q209,236 200,237 Q191,236 182,228Z" fill="#e8607a" opacity="0.85"/>
+  <path d="M182,228 Q200,226 218,228" stroke="#c04060" stroke-width="0.8" fill="none" opacity="0.6"/>
+
+  <!-- Brows -->
+  <path d="M163,172 Q175,167 187,170" stroke="#2d1520" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+  <path d="M213,170 Q225,167 237,172" stroke="#2d1520" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Cheek blush -->
+  <ellipse cx="155" cy="205" rx="22" ry="14" fill="#e8607a" opacity="0.12" filter="url(#f1-blur-sm)"/>
+  <ellipse cx="245" cy="205" rx="22" ry="14" fill="#e8607a" opacity="0.12" filter="url(#f1-blur-sm)"/>
+
+  <!-- Hair -->
+  <ellipse cx="200" cy="135" rx="90" ry="95" fill="url(#f1-hair)"/>
+  <!-- Hair volume sides -->
+  <ellipse cx="130" cy="190" rx="55" ry="100" fill="#2d0f18" opacity="0.92"/>
+  <ellipse cx="270" cy="185" rx="50" ry="95" fill="#2d0f18" opacity="0.88"/>
+  <!-- Hair shine -->
+  <ellipse cx="185" cy="115" rx="30" ry="20" fill="url(#f1-hair-shine)"/>
+  <!-- Parting highlight -->
+  <line x1="200" y1="95" x2="200" y2="150" stroke="#6b2030" stroke-width="2" opacity="0.3"/>
+
+  <!-- Earrings -->
+  <circle cx="128" cy="215" r="5" fill="#c9a96e" opacity="0.7"/>
+  <circle cx="128" cy="224" r="3" fill="#c9a96e" opacity="0.5"/>
+  <circle cx="272" cy="215" r="5" fill="#c9a96e" opacity="0.7"/>
+  <circle cx="272" cy="224" r="3" fill="#c9a96e" opacity="0.5"/>
+
+  <!-- Gold body glow -->
+  <rect width="400" height="530" fill="url(#f1-body)"/>
+
+  <!-- Bottom fade for card overlay text -->
+  <rect width="400" height="530" fill="url(#f1-fade)"/>
+</svg>

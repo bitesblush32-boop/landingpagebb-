@@ -271,212 +271,131 @@ function EnterButton({
     </button>
   )
 }
+// ── Hero card fan data ────────────────────────────────────────────────────────
 
-// ── Boost types (server-passed) ───────────────────────────────────────────────
-
-export interface BoostCompanion {
-  id: string
-  boost_type: string
-  banner_headline: string | null
-  banner_tagline: string | null
-  companion_name: string
-  alias: string | null
-  tagline: string | null
-  city: string | null
-  primary_photo_url: string | null
+const HERO_CARDS: Record<Community, Array<{ name: string; city: string; img: string }>> = {
+  female: [
+    { name: 'Ava', city: 'Amsterdam', img: '/cards/female-1.svg' },
+    { name: 'Seren', city: 'Paris', img: '/cards/female-2.svg' },
+  ],
+  male: [
+    { name: 'Luca', city: 'Milan', img: '/cards/male-1.svg' },
+    { name: 'Marco', city: 'Berlin', img: '/cards/male-2.svg' },
+  ],
+  shemale: [
+    { name: 'Valentina', city: 'Amsterdam', img: '/cards/shemale-1.svg' },
+    { name: 'Kira', city: 'London', img: '/cards/shemale-2.svg' },
+  ],
 }
 
-export interface ActiveBoosts {
-  headerBanner: BoostCompanion | null
-  rightRail:    BoostCompanion | null
-  featured:     BoostCompanion[]
-}
+// ── HeroCardFan component ─────────────────────────────────────────────────────
 
-// ── Header Banner ─────────────────────────────────────────────────────────────
+function HeroCardFan({ community, accentColor }: { community: Community; accentColor: string }) {
+  const [hovered, setHovered] = useState(false)
+  const cards = HERO_CARDS[community]
 
-function HeaderBanner({ boost, accentColor, accentBg }: { boost: BoostCompanion; accentColor: string; accentBg: string }) {
-  const name     = boost.banner_headline || boost.alias || boost.companion_name
-  const subtitle = boost.banner_tagline  || boost.tagline  || ''
-  const city     = boost.city
+  const spring = 'cubic-bezier(0.34,1.56,0.64,1)'
+
+  // Card positions: [back card, front card]
+  const transforms = hovered
+    ? [
+        'rotate(-22deg) translate(-56px, 24px)',
+        'rotate(14deg) translate(48px, -20px)',
+      ]
+    : [
+        'rotate(-10deg) translate(-28px, 12px)',
+        'rotate(5deg) translate(22px, -8px)',
+      ]
 
   return (
     <div
       style={{
-        background: '#0d1117',
-        borderBottom: `1px solid ${accentColor}25`,
-        padding: '10px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
-        flexWrap: 'wrap',
-        transform: 'translateZ(0)', // GPU layer
+        position: 'relative',
+        width: 200,
+        height: 280,
+        cursor: 'pointer',
+        flexShrink: 0,
       }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onTouchStart={() => setHovered((v) => !v)}
+      aria-label="Profile previews"
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-        {/* Photo thumbnail */}
-        {boost.primary_photo_url ? (
-          <div style={{
-            width: 44, height: 44, borderRadius: 10, overflow: 'hidden', flexShrink: 0,
-            border: `1px solid ${accentColor}40`,
-          }}>
+      {cards.map((card, i) => (
+        <div
+          key={card.name}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 18,
+            overflow: 'hidden',
+            background: '#0d1117',
+            border: `1.5px solid ${accentColor}35`,
+            boxShadow: `0 12px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04)`,
+            transform: transforms[i],
+            transformOrigin: 'center bottom',
+            transition: `transform 550ms ${spring}`,
+            zIndex: i + 1,
+            willChange: 'transform',
+          }}
+        >
+          {/* Photo */}
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
             <img
-              src={boost.primary_photo_url}
-              alt={name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              loading="lazy"
+              src={card.img}
+              alt={card.name}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+              loading="eager"
             />
-          </div>
-        ) : (
-          <div style={{
-            width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-            background: accentBg, border: `1px solid ${accentColor}30`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, color: accentColor,
-          }}>
-            ✦
-          </div>
-        )}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', fontFamily: 'var(--font-serif)' }}>
-              {name}
-            </span>
-            {city && (
-              <span style={{ fontSize: 11, color: '#6b7280' }}>· {city}</span>
-            )}
-            <span style={{
-              fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.1em',
-              color: accentColor, background: accentBg,
-              border: `1px solid ${accentColor}35`, borderRadius: 4, padding: '2px 6px',
-            }}>
-              Featured
-            </span>
-          </div>
-          {subtitle && (
-            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2, fontStyle: 'italic' }}>
-              &quot;{subtitle}&quot;
+            {/* Overlay info strip */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                padding: '24px 14px 14px',
+                background: 'linear-gradient(to top, rgba(7,9,15,0.95) 0%, rgba(7,9,15,0.7) 60%, transparent 100%)',
+              }}
+            >
+              {/* Verified badge */}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  background: `${accentColor}20`,
+                  border: `1px solid ${accentColor}45`,
+                  borderRadius: 6,
+                  padding: '2px 7px',
+                  marginBottom: 6,
+                }}
+              >
+                <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                  <path
+                    d="M6 1L7.4 4.2L11 4.8L8.5 7.2L9.1 11L6 9.4L2.9 11L3.5 7.2L1 4.8L4.6 4.2L6 1Z"
+                    fill={accentColor}
+                  />
+                </svg>
+                <span style={{ fontSize: 9, color: accentColor, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
+                  Verified
+                </span>
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: '#eeeef0', fontFamily: 'var(--font-serif)', lineHeight: 1.2 }}>
+                {card.name}
+              </div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+                {card.city}
+              </div>
             </div>
-          )}
-        </div>
-      </div>
-      <div style={{ fontSize: 10, color: '#4b5563' }}>
-        Promoted · BlushBite
-      </div>
-    </div>
-  )
-}
-
-// ── Featured Card ─────────────────────────────────────────────────────────────
-
-function FeaturedCard({ boost, accentColor, accentBg }: { boost: BoostCompanion; accentColor: string; accentBg: string }) {
-  const name = boost.alias || boost.companion_name
-  const tag  = boost.tagline ? `"${boost.tagline}"` : null
-
-  return (
-    <div style={{
-      background: '#0d1117',
-      border: `1px solid ${accentColor}30`,
-      borderRadius: 16,
-      overflow: 'hidden',
-      flexShrink: 0,
-      width: 'clamp(160px, 40vw, 200px)',
-      transform: 'translateZ(0)',
-    }}>
-      {/* Photo */}
-      <div style={{ aspectRatio: '3/4', background: accentBg, position: 'relative', overflow: 'hidden' }}>
-        {boost.primary_photo_url ? (
-          <img
-            src={boost.primary_photo_url}
-            alt={name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            loading="lazy"
-          />
-        ) : (
-          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: accentColor }}>
-            ✦
           </div>
-        )}
-        {/* Featured badge */}
-        <div style={{
-          position: 'absolute', top: 8, left: 8,
-          fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.08em',
-          color: accentColor, background: 'rgba(7,9,15,.85)',
-          border: `1px solid ${accentColor}40`, borderRadius: 4, padding: '2px 7px',
-        }}>
-          Featured
         </div>
-      </div>
-      {/* Info */}
-      <div style={{ padding: '10px 12px' }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#eeeef0', fontFamily: 'var(--font-serif)', marginBottom: 2 }}>
-          {name}
-        </div>
-        {boost.city && (
-          <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>{boost.city}</div>
-        )}
-        {tag && (
-          <div style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic', lineHeight: 1.4 }}>
-            {tag.length > 60 ? tag.slice(0, 57) + '…"' : tag}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── Right Rail ────────────────────────────────────────────────────────────────
-
-function RightRail({ boost, accentColor, accentBg }: { boost: BoostCompanion; accentColor: string; accentBg: string }) {
-  const name = boost.alias || boost.companion_name
-
-  return (
-    <div style={{
-      width: 220, flexShrink: 0,
-      position: 'sticky', top: 76,  // below fixed nav (64px) + 12px gap
-      alignSelf: 'flex-start',
-      transform: 'translateZ(0)',
-    }}>
-      <div style={{
-        background: '#0d1117',
-        border: `1px solid ${accentColor}30`,
-        borderRadius: 16,
-        overflow: 'hidden',
-      }}>
-        {/* Top accent */}
-        <div style={{ height: 2, background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)` }} />
-        <div style={{ padding: '12px 14px 6px', fontSize: 9, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-          Featured tonight
-        </div>
-        {/* Photo */}
-        <div style={{ aspectRatio: '3/4', background: accentBg, overflow: 'hidden' }}>
-          {boost.primary_photo_url ? (
-            <img
-              src={boost.primary_photo_url}
-              alt={name}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              loading="lazy"
-            />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40, color: accentColor }}>
-              ✦
-            </div>
-          )}
-        </div>
-        <div style={{ padding: '12px 14px 14px' }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#eeeef0', fontFamily: 'var(--font-serif)', marginBottom: 3 }}>
-            {name}
-          </div>
-          {boost.city && (
-            <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 6 }}>{boost.city}</div>
-          )}
-          {boost.tagline && (
-            <div style={{ fontSize: 11, color: '#4b5563', fontStyle: 'italic', lineHeight: 1.5 }}>
-              &quot;{boost.tagline.slice(0, 80)}{boost.tagline.length > 80 ? '…' : ''}&quot;
-            </div>
-          )}
-        </div>
-      </div>
+      ))}
     </div>
   )
 }
@@ -1024,12 +943,10 @@ export default function GenderLanding({
   community,
   companionCount = 0,
   cityCount = 0,
-  activeBoosts = { headerBanner: null, rightRail: null, featured: [] },
 }: {
   community: Community
   companionCount?: number
   cityCount?: number
-  activeBoosts?: ActiveBoosts
 }) {
   const cfg = COMMUNITY_CONFIG[community]
 
@@ -1136,19 +1053,51 @@ export default function GenderLanding({
         </div>
       </nav>
 
-      {/* ── Header Banner (promoted companion) ── */}
-      {activeBoosts.headerBanner && (
-        <div style={{ paddingTop: 64 /* nav height */ }}>
-          <HeaderBanner
-            boost={activeBoosts.headerBanner}
-            accentColor={cfg.accentColor}
-            accentBg={cfg.accentBg}
+      {/* ── Hero ── */}
+      <section
+        className="relative min-h-screen flex items-center px-5 pb-20 overflow-hidden pt-28"
+      >
+        {/* Community bg image — blurred atmospheric portrait */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ zIndex: 0 }}
+          aria-hidden
+        >
+          <img
+            src={`/hero/${community}-bg.png`}
+            alt=""
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center 20%',
+              filter: 'blur(4px) brightness(0.80) saturate(1.2)',
+              transform: 'scale(1.06)',
+              transformOrigin: 'center center',
+              opacity: 0.82,
+            }}
+          />
+          {/* Overlay — heavy on left for text, barely there on right for the figure */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(to right, rgba(7,9,15,0.78) 0%, rgba(7,9,15,0.42) 45%, rgba(7,9,15,0.10) 100%)',
+            }}
+          />
+          {/* Bottom fade */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(to top, rgba(7,9,15,0.9) 0%, transparent 35%)',
+            }}
           />
         </div>
-      )}
 
-      {/* ── Hero ── */}
-      <section className={`relative min-h-screen flex flex-col items-center justify-center text-center px-5 pb-20 ${activeBoosts.headerBanner ? 'pt-12' : 'pt-28'}`}>
+        {/* Grid overlay */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -1156,85 +1105,132 @@ export default function GenderLanding({
             backgroundSize: '60px 60px',
             WebkitMaskImage: 'radial-gradient(ellipse 85% 85% at 50% 50%,black 25%,transparent 80%)',
             maskImage: 'radial-gradient(ellipse 85% 85% at 50% 50%,black 25%,transparent 80%)',
+            zIndex: 1,
           }}
         />
+        {/* Accent glow */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse 72% 58% at 50% 28%,${cfg.accentBg} 0%,transparent 70%)`,
+            background: `radial-gradient(ellipse 60% 55% at 30% 45%,${cfg.accentBg} 0%,transparent 70%)`,
+            zIndex: 1,
           }}
         />
-        <div className="relative z-10 animate-fade-up">
-          <div
-            className="inline-flex items-center gap-2 rounded-full text-[11px] font-medium uppercase tracking-[0.07em] px-3.5 py-1.5 mb-4"
-            style={{
-              color: cfg.accentColor,
-              background: cfg.accentBg,
-              border: `1px solid ${cfg.accentColor}40`,
-            }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.accentColor }} />
-            {cfg.badge}
+
+        {/* Content — desktop: two columns; mobile: stacked */}
+        <div
+          className="relative w-full max-w-[1100px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-8"
+          style={{ zIndex: 2 }}
+        >
+          {/* ── Left: copy ── */}
+          <div className="flex-1 text-center lg:text-left animate-fade-up">
+            <div
+              className="inline-flex items-center gap-2 rounded-full text-[11px] font-medium uppercase tracking-[0.07em] px-3.5 py-1.5 mb-4"
+              style={{
+                color: cfg.accentColor,
+                background: cfg.accentBg,
+                border: `1px solid ${cfg.accentColor}40`,
+              }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: cfg.accentColor }} />
+              {cfg.badge}
+            </div>
+
+            {/* Live stats */}
+            {companionCount > 0 && (
+              <div className="flex items-center justify-center lg:justify-start gap-5 mb-7">
+                <div className="text-center">
+                  <div className="text-[22px] font-semibold leading-none mb-0.5" style={{ fontFamily: 'var(--font-serif)', color: '#c9a96e' }}>
+                    {companionCount}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-[0.08em]" style={{ color: '#4b5563' }}>companions</div>
+                </div>
+                <div style={{ width: 1, height: 28, background: '#1c2333' }} />
+                {cityCount > 0 && (
+                  <>
+                    <div className="text-center">
+                      <div className="text-[22px] font-semibold leading-none mb-0.5" style={{ fontFamily: 'var(--font-serif)', color: '#c9a96e' }}>
+                        {cityCount}
+                      </div>
+                      <div className="text-[10px] uppercase tracking-[0.08em]" style={{ color: '#4b5563' }}>cities</div>
+                    </div>
+                    <div style={{ width: 1, height: 28, background: '#1c2333' }} />
+                  </>
+                )}
+                <div className="text-center">
+                  <div className="text-[22px] font-semibold leading-none mb-0.5" style={{ fontFamily: 'var(--font-serif)', color: '#c9a96e' }}>EU</div>
+                  <div className="text-[10px] uppercase tracking-[0.08em]" style={{ color: '#4b5563' }}>verified</div>
+                </div>
+              </div>
+            )}
+
+            <h1
+              className="text-[clamp(32px,5vw,56px)] font-normal leading-[1.12] mb-5 max-w-[560px] mx-auto lg:mx-0"
+              style={{ fontFamily: 'var(--font-serif)', color: '#eeeef0' }}
+            >
+              {cfg.heroH1}
+              <br />
+              <em className="italic" style={{ color: cfg.accentColor }}>
+                {cfg.heroEm}
+              </em>
+            </h1>
+            <p
+              className="text-[15px] leading-[1.75] max-w-[440px] mx-auto lg:mx-0 mb-10"
+              style={{ color: '#6b7280' }}
+            >
+              {cfg.heroSub}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start items-center">
+              <a
+                href="#apply"
+                className="inline-flex items-center justify-center rounded-full font-medium text-[14px] px-7 min-h-[50px] min-w-[180px] transition-all duration-[150ms] active:scale-[0.98]"
+                style={{ color: '#fff', background: '#e8607a', border: 'none', textDecoration: 'none' }}
+              >
+                Begin your journey
+              </a>
+              <a
+                href="#why-join"
+                className="inline-flex items-center justify-center rounded-full text-[14px] min-h-[50px] px-6 transition-all duration-[150ms]"
+                style={{ color: '#6b7280', border: '1px solid #1c2333', textDecoration: 'none' }}
+              >
+                See what&rsquo;s inside ↓
+              </a>
+            </div>
           </div>
 
-          {/* Live stats */}
-          {companionCount > 0 && (
-            <div className="flex items-center justify-center gap-5 mb-7">
-              <div className="text-center">
-                <div className="text-[22px] font-semibold leading-none mb-0.5" style={{ fontFamily: 'var(--font-serif)', color: '#c9a96e' }}>
-                  {companionCount}
-                </div>
-                <div className="text-[10px] uppercase tracking-[0.08em]" style={{ color: '#4b5563' }}>companions</div>
-              </div>
-              <div style={{ width: 1, height: 28, background: '#1c2333' }} />
-              {cityCount > 0 && (
-                <>
-                  <div className="text-center">
-                    <div className="text-[22px] font-semibold leading-none mb-0.5" style={{ fontFamily: 'var(--font-serif)', color: '#c9a96e' }}>
-                      {cityCount}
-                    </div>
-                    <div className="text-[10px] uppercase tracking-[0.08em]" style={{ color: '#4b5563' }}>cities</div>
-                  </div>
-                  <div style={{ width: 1, height: 28, background: '#1c2333' }} />
-                </>
-              )}
-              <div className="text-center">
-                <div className="text-[22px] font-semibold leading-none mb-0.5" style={{ fontFamily: 'var(--font-serif)', color: '#c9a96e' }}>EU</div>
-                <div className="text-[10px] uppercase tracking-[0.08em]" style={{ color: '#4b5563' }}>verified</div>
-              </div>
+          {/* ── Right: interactive card fan ── */}
+          <div
+            className="hidden lg:flex items-center justify-center flex-shrink-0"
+            style={{ width: 320, height: 380, position: 'relative' }}
+          >
+            {/* Soft glow behind cards */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: '-30px',
+                borderRadius: '50%',
+                background: `radial-gradient(ellipse 70% 70% at 55% 55%, ${cfg.accentBg} 0%, transparent 70%)`,
+                filter: 'blur(20px)',
+                pointerEvents: 'none',
+              }}
+            />
+            <HeroCardFan community={community} accentColor={cfg.accentColor} />
+            {/* Hover hint */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: -28,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontSize: 10,
+                color: '#4b5563',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              hover to reveal
             </div>
-          )}
-          <h1
-            className="text-[clamp(32px,5.5vw,58px)] font-normal leading-[1.12] mb-5 max-w-[680px] mx-auto"
-            style={{ fontFamily: 'var(--font-serif)', color: '#eeeef0' }}
-          >
-            {cfg.heroH1}
-            <br />
-            <em className="italic" style={{ color: '#e8607a' }}>
-              {cfg.heroEm}
-            </em>
-          </h1>
-          <p
-            className="text-[15px] leading-[1.75] max-w-[460px] mx-auto mb-10"
-            style={{ color: '#6b7280' }}
-          >
-            {cfg.heroSub}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <a
-              href="#apply"
-              className="inline-flex items-center justify-center rounded-full font-medium text-[14px] px-7 min-h-[50px] min-w-[180px] transition-all duration-[150ms] active:scale-[0.98]"
-              style={{ color: '#fff', background: '#e8607a', border: 'none', textDecoration: 'none' }}
-            >
-              Begin your journey
-            </a>
-            <a
-              href="#why-join"
-              className="inline-flex items-center justify-center rounded-full text-[14px] min-h-[50px] px-6 transition-all duration-[150ms]"
-              style={{ color: '#6b7280', border: '1px solid #1c2333', textDecoration: 'none' }}
-            >
-              See what&rsquo;s inside ↓
-            </a>
           </div>
         </div>
       </section>
@@ -1257,60 +1253,8 @@ export default function GenderLanding({
         ))}
       </div>
 
-      {/* ── Featured companions (social proof) ── */}
-      {activeBoosts.featured.length > 0 && (
-        <div style={{ padding: '24px 0', borderBottom: '1px solid #1c2333' }}>
-          <div className="max-w-[1100px] mx-auto px-5">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', color: cfg.accentColor }}>Featured</span>
-                <span style={{ width: 1, height: 10, background: '#1c2333', display: 'inline-block' }} />
-                <span style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#4b5563' }}>Active this week</span>
-              </div>
-            </div>
-            <div style={{
-              display: 'flex', gap: 12, overflowX: 'auto',
-              scrollSnapType: 'x mandatory',
-              WebkitOverflowScrolling: 'touch',
-              paddingBottom: 4,
-              msOverflowStyle: 'none',
-              scrollbarWidth: 'none',
-            }}>
-              {activeBoosts.featured.map(b => (
-                <div key={b.id} style={{ scrollSnapAlign: 'start', flexShrink: 0 }}>
-                  <FeaturedCard boost={b} accentColor={cfg.accentColor} accentBg={cfg.accentBg} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Why join (with optional right rail) ── */}
-      <div id="why-join" style={{ position: 'relative' }}>
-        {/* Right rail — desktop only (≥1100px), rendered as a sibling via flex */}
-        {activeBoosts.rightRail && (
-          <div
-            className="bb-right-rail"
-            style={{
-              position: 'absolute', top: 0, right: 20,
-              display: 'none', // shown via CSS below
-            }}
-          >
-            <RightRail boost={activeBoosts.rightRail} accentColor={cfg.accentColor} accentBg={cfg.accentBg} />
-          </div>
-        )}
-        <style>{`
-          @media (min-width: 1100px) {
-            .bb-right-rail { display: block !important; }
-          }
-          /* hide scrollbar on featured row */
-          ::-webkit-scrollbar { display: none; }
-        `}</style>
-      </div>
-
-      {/* ── Why join original content ── */}
-      <div id="why-join-content">
+      {/* ── Why join ── */}
+      <div id="why-join">
         <div className="max-w-[1100px] mx-auto px-5 py-16 sm:py-20">
           <p className="text-[11px] uppercase tracking-[0.1em] mb-2" style={{ color: '#6b7280' }}>
             For Companions

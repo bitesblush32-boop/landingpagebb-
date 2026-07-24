@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 530" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="m1-bg" cx="50%" cy="28%" r="80%">
+      <stop offset="0%" stop-color="#080e1c"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </radialGradient>
+    <radialGradient id="m1-aura" cx="50%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.28"/>
+      <stop offset="70%" stop-color="#3b82f6" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="m1-skin" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#c8a070" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#b88860" stop-opacity="0.95"/>
+      <stop offset="85%" stop-color="#a07050" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#a07050" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="m1-hair" cx="50%" cy="25%" r="60%">
+      <stop offset="0%" stop-color="#0d1520"/>
+      <stop offset="55%" stop-color="#152030"/>
+      <stop offset="100%" stop-color="#080e1c"/>
+    </radialGradient>
+    <radialGradient id="m1-suit" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="m1-fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="60%" stop-color="#050810" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#050810" stop-opacity="1"/>
+    </linearGradient>
+    <filter id="m1-blur-sm">
+      <feGaussianBlur stdDeviation="0.8"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="530" fill="#050810"/>
+  <rect width="400" height="530" fill="url(#m1-bg)"/>
+  <rect width="400" height="530" fill="url(#m1-aura)"/>
+
+  <!-- Floor glow -->
+  <ellipse cx="200" cy="560" rx="280" ry="90" fill="#60a5fa" opacity="0.06"/>
+
+  <!-- Suit body — broad and strong -->
+  <ellipse cx="200" cy="440" rx="200" ry="240" fill="#0d1a30" opacity="0.95"/>
+  <!-- Suit jacket lapels -->
+  <polygon points="175,290 200,340 200,530 130,530 90,380" fill="#101828" opacity="0.9"/>
+  <polygon points="225,290 200,340 200,530 270,530 310,380" fill="#101828" opacity="0.9"/>
+  <!-- Shirt/tie center -->
+  <rect x="186" y="290" width="28" height="240" fill="#1e2a3e" opacity="0.7"/>
+  <!-- Tie -->
+  <polygon points="196,295 204,295 208,395 200,410 192,395" fill="#60a5fa" opacity="0.35"/>
+  <polygon points="196,295 204,295 208,395 200,410 192,395" fill="#3b6fa8" opacity="0.2"/>
+
+  <!-- Suit jacket button highlights (lapel glint) -->
+  <ellipse cx="155" cy="310" rx="40" ry="20" fill="#1e2a3e" opacity="0.5" transform="rotate(-25 155 310)"/>
+  <ellipse cx="245" cy="310" rx="40" ry="20" fill="#1e2a3e" opacity="0.5" transform="rotate(25 245 310)"/>
+
+  <!-- Broad shoulders -->
+  <ellipse cx="90" cy="320" rx="80" ry="40" fill="#c8a070" opacity="0.08"/>
+  <ellipse cx="310" cy="320" rx="80" ry="40" fill="#c8a070" opacity="0.08"/>
+
+  <!-- Neck — strong, with Adam's apple suggestion -->
+  <rect x="181" y="252" width="38" height="72" rx="19" fill="#c8a070" opacity="0.75"/>
+  <ellipse cx="200" cy="295" rx="8" ry="5" fill="#b88860" opacity="0.4"/>
+
+  <!-- Head / face — stronger jaw, masculine -->
+  <ellipse cx="200" cy="188" rx="80" ry="82" fill="url(#m1-skin)"/>
+  <!-- Stronger jaw line -->
+  <ellipse cx="200" cy="230" rx="76" ry="48" fill="#c8a070" opacity="0.45"/>
+  <!-- Cheekbones -->
+  <ellipse cx="148" cy="195" rx="28" ry="18" fill="#b88860" opacity="0.18"/>
+  <ellipse cx="252" cy="195" rx="28" ry="18" fill="#b88860" opacity="0.18"/>
+
+  <!-- Eyes — deeper set, stronger brow -->
+  <ellipse cx="172" cy="180" rx="14" ry="9" fill="#1a1020" opacity="0.92"/>
+  <ellipse cx="228" cy="180" rx="14" ry="9" fill="#1a1020" opacity="0.92"/>
+  <ellipse cx="172" cy="180" rx="9" ry="6" fill="#f0e0d0" opacity="0.5"/>
+  <ellipse cx="228" cy="180" rx="9" ry="6" fill="#f0e0d0" opacity="0.5"/>
+  <circle cx="172" cy="180" r="5.5" fill="#2a3050" opacity="0.9"/>
+  <circle cx="228" cy="180" r="5.5" fill="#2a3050" opacity="0.9"/>
+  <circle cx="169" cy="178" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="225" cy="178" r="1.5" fill="white" opacity="0.7"/>
+
+  <!-- Nose — stronger, more prominent -->
+  <path d="M196,200 L196,220 Q200,225 204,220 L204,200" stroke="#b88860" stroke-width="1.5" fill="none" opacity="0.4"/>
+  <ellipse cx="190" cy="222" rx="5" ry="3.5" fill="#a07050" opacity="0.3"/>
+  <ellipse cx="210" cy="222" rx="5" ry="3.5" fill="#a07050" opacity="0.3"/>
+  <path d="M188,222 Q200,228 212,222" stroke="#a07050" stroke-width="1.2" fill="none" opacity="0.45"/>
+
+  <!-- Lips — straighter, more defined -->
+  <path d="M180,238 Q190,234 200,235 Q210,234 220,238 Q212,245 200,246 Q188,245 180,238Z" fill="#a07060" opacity="0.8"/>
+  <path d="M180,238 Q200,236 220,238" stroke="#8a5040" stroke-width="1" fill="none" opacity="0.55"/>
+
+  <!-- Brows — thick, expressive -->
+  <path d="M157,167 Q172,161 186,164" stroke="#2a1810" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <path d="M214,164 Q228,161 243,167" stroke="#2a1810" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+
+  <!-- Stubble / beard shadow -->
+  <ellipse cx="200" cy="235" rx="65" ry="40" fill="#8a6040" opacity="0.12" filter="url(#m1-blur-sm)"/>
+  <ellipse cx="200" cy="248" rx="50" ry="28" fill="#6a4030" opacity="0.1" filter="url(#m1-blur-sm)"/>
+
+  <!-- Hair — short, close cropped, dark -->
+  <ellipse cx="200" cy="125" rx="85" ry="80" fill="url(#m1-hair)"/>
+  <!-- Fade on temples -->
+  <ellipse cx="132" cy="175" rx="55" ry="85" fill="#080e1c" opacity="0.95"/>
+  <ellipse cx="268" cy="175" rx="55" ry="85" fill="#080e1c" opacity="0.95"/>
+  <!-- Hair texture lines -->
+  <path d="M160,115 Q200,108 240,115" stroke="#1e2e44" stroke-width="1.5" fill="none" opacity="0.5"/>
+  <path d="M165,125 Q200,118 235,125" stroke="#1e2e44" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Watch glimpse (left wrist) -->
+  <rect x="65" y="410" width="30" height="18" rx="6" fill="#c9a96e" opacity="0.2"/>
+  <rect x="67" y="412" width="26" height="14" rx="4" fill="#1e2a3e" opacity="0.6"/>
+
+  <!-- Suit glow -->
+  <rect width="400" height="530" fill="url(#m1-suit)"/>
+
+  <!-- Bottom fade -->
+  <rect width="400" height="530" fill="url(#m1-fade)"/>
+</svg>

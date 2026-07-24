@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 530" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="m2-bg" cx="50%" cy="28%" r="80%">
+      <stop offset="0%" stop-color="#06101c"/>
+      <stop offset="100%" stop-color="#040810"/>
+    </radialGradient>
+    <radialGradient id="m2-aura" cx="50%" cy="38%" r="55%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.22"/>
+      <stop offset="70%" stop-color="#0ea5e9" stop-opacity="0.07"/>
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="m2-skin" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#b8905a" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#a87848" stop-opacity="0.95"/>
+      <stop offset="85%" stop-color="#906038" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#906038" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="m2-hair" cx="50%" cy="28%" r="55%">
+      <stop offset="0%" stop-color="#1a0a05"/>
+      <stop offset="55%" stop-color="#280f08"/>
+      <stop offset="100%" stop-color="#100503"/>
+    </radialGradient>
+    <radialGradient id="m2-jacket" cx="50%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#1a2830" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#0a1420" stop-opacity="0.9"/>
+    </radialGradient>
+    <linearGradient id="m2-fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="60%" stop-color="#040810" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#040810" stop-opacity="1"/>
+    </linearGradient>
+    <filter id="m2-blur-sm">
+      <feGaussianBlur stdDeviation="0.8"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="530" fill="#040810"/>
+  <rect width="400" height="530" fill="url(#m2-bg)"/>
+  <rect width="400" height="530" fill="url(#m2-aura)"/>
+
+  <!-- Floor glow -->
+  <ellipse cx="200" cy="560" rx="270" ry="80" fill="#38bdf8" opacity="0.05"/>
+
+  <!-- Dark turtleneck / fitted outfit -->
+  <ellipse cx="200" cy="450" rx="185" ry="240" fill="url(#m2-jacket)"/>
+  <!-- Turtleneck collar -->
+  <ellipse cx="200" cy="290" rx="55" ry="30" fill="#1a2830" opacity="0.9"/>
+  <!-- Jacket texture — subtle highlight on left shoulder -->
+  <ellipse cx="100" cy="350" rx="90" ry="50" fill="#38bdf8" opacity="0.04" transform="rotate(-15 100 350)"/>
+
+  <!-- Neck into turtleneck -->
+  <rect x="180" y="258" width="40" height="65" rx="20" fill="#b8905a" opacity="0.7"/>
+  <rect x="180" y="268" width="40" height="50" rx="20" fill="#1a2830" opacity="0.6"/>
+
+  <!-- Head — slightly more angular face -->
+  <ellipse cx="200" cy="186" rx="79" ry="82" fill="url(#m2-skin)"/>
+  <ellipse cx="200" cy="228" rx="74" ry="46" fill="#b8905a" opacity="0.42"/>
+
+  <!-- Eyes — piercing, lighter iris (Berlin aesthetic) -->
+  <ellipse cx="172" cy="177" rx="14" ry="9.5" fill="#15101a" opacity="0.92"/>
+  <ellipse cx="228" cy="177" rx="14" ry="9.5" fill="#15101a" opacity="0.92"/>
+  <ellipse cx="172" cy="177" rx="9" ry="6" fill="#e8e0d5" opacity="0.52"/>
+  <ellipse cx="228" cy="177" rx="9" ry="6" fill="#e8e0d5" opacity="0.52"/>
+  <!-- Lighter grey-blue irises -->
+  <circle cx="172" cy="177" r="5.5" fill="#4a6080" opacity="0.85"/>
+  <circle cx="228" cy="177" r="5.5" fill="#4a6080" opacity="0.85"/>
+  <circle cx="169" cy="175" r="1.5" fill="white" opacity="0.72"/>
+  <circle cx="225" cy="175" r="1.5" fill="white" opacity="0.72"/>
+
+  <!-- Strong brows (dark, slightly unkempt) -->
+  <path d="M155,164 Q172,158 186,162" stroke="#1a0a05" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <path d="M214,162 Q228,158 245,164" stroke="#1a0a05" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- Nose — defined, aquiline -->
+  <path d="M197,196 L197,218 Q200,223 203,218 L203,196" stroke="#a07848" stroke-width="1.5" fill="none" opacity="0.45"/>
+  <path d="M187,220 Q200,227 213,220" stroke="#906038" stroke-width="1.3" fill="none" opacity="0.4"/>
+
+  <!-- Lips — set, serious expression -->
+  <path d="M182,235 Q191,231 200,232 Q209,231 218,235 Q210,242 200,243 Q190,242 182,235Z" fill="#906050" opacity="0.78"/>
+  <path d="M182,235 Q200,233 218,235" stroke="#704030" stroke-width="1" fill="none" opacity="0.5"/>
+
+  <!-- Light facial stubble -->
+  <ellipse cx="200" cy="232" rx="70" ry="42" fill="#6a4020" opacity="0.14" filter="url(#m2-blur-sm)"/>
+  <!-- Full beard shadow on lower face -->
+  <ellipse cx="200" cy="252" rx="55" ry="30" fill="#4a2810" opacity="0.18" filter="url(#m2-blur-sm)"/>
+  <!-- Chin beard shape -->
+  <ellipse cx="200" cy="262" rx="35" ry="22" fill="#3a1808" opacity="0.25" filter="url(#m2-blur-sm)"/>
+
+  <!-- Cheekbones -->
+  <ellipse cx="144" cy="196" rx="26" ry="16" fill="#906038" opacity="0.15"/>
+  <ellipse cx="256" cy="196" rx="26" ry="16" fill="#906038" opacity="0.15"/>
+
+  <!-- Dark brown hair — textured, slightly messy -->
+  <ellipse cx="200" cy="122" rx="83" ry="78" fill="url(#m2-hair)"/>
+  <!-- Temple shading -->
+  <ellipse cx="130" cy="170" rx="55" ry="80" fill="#08050a" opacity="0.95"/>
+  <ellipse cx="270" cy="170" rx="55" ry="80" fill="#08050a" opacity="0.95"/>
+  <!-- Slight wave/texture in hair -->
+  <path d="M155,110 Q180,105 205,110 Q225,107 245,112" stroke="#2a1008" stroke-width="2" fill="none" opacity="0.5"/>
+  <path d="M160,122 Q185,117 210,122 Q230,118 248,124" stroke="#2a1008" stroke-width="1.5" fill="none" opacity="0.35"/>
+  <!-- Small forelock detail -->
+  <ellipse cx="200" cy="138" rx="22" ry="18" fill="#1a0a05" opacity="0.7" transform="rotate(-8 200 138)"/>
+
+  <!-- Bottom fade -->
+  <rect width="400" height="530" fill="url(#m2-fade)"/>
+</svg>

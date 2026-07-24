@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 530" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="s2-bg" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#180d20"/>
+      <stop offset="100%" stop-color="#090610"/>
+    </radialGradient>
+    <radialGradient id="s2-aura" cx="50%" cy="36%" r="55%">
+      <stop offset="0%" stop-color="#e879f9" stop-opacity="0.3"/>
+      <stop offset="60%" stop-color="#c084fc" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#c084fc" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="s2-skin" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e8c098" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#d8a070" stop-opacity="0.95"/>
+      <stop offset="85%" stop-color="#c08860" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#c08860" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="s2-hair" cx="50%" cy="25%" r="60%">
+      <stop offset="0%" stop-color="#c9a96e"/>
+      <stop offset="45%" stop-color="#d4b060"/>
+      <stop offset="100%" stop-color="#a88030"/>
+    </radialGradient>
+    <radialGradient id="s2-hair-wave" cx="35%" cy="40%" r="45%">
+      <stop offset="0%" stop-color="#e8c870" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#e8c870" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="s2-body" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#5b0f70" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#5b0f70" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="s2-fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="60%" stop-color="#090610" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#090610" stop-opacity="1"/>
+    </linearGradient>
+    <filter id="s2-blur-sm">
+      <feGaussianBlur stdDeviation="0.8"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="530" fill="#090610"/>
+  <rect width="400" height="530" fill="url(#s2-bg)"/>
+  <rect width="400" height="530" fill="url(#s2-aura)"/>
+
+  <!-- Floor glow -->
+  <ellipse cx="200" cy="560" rx="275" ry="90" fill="#e879f9" opacity="0.06"/>
+
+  <!-- Body — fitted, confident posture -->
+  <ellipse cx="200" cy="445" rx="165" ry="235" fill="url(#s2-body)"/>
+  <ellipse cx="200" cy="470" rx="138" ry="215" fill="#180d20" opacity="0.6"/>
+  <!-- Body shimmer accents -->
+  <ellipse cx="200" cy="400" rx="100" ry="160" fill="#e879f9" opacity="0.04"/>
+
+  <!-- Shoulders — slightly broad but feminine -->
+  <ellipse cx="100" cy="320" rx="78" ry="35" fill="#e8c098" opacity="0.2"/>
+  <ellipse cx="300" cy="320" rx="78" ry="35" fill="#e8c098" opacity="0.2"/>
+
+  <!-- Chest / neckline -->
+  <ellipse cx="200" cy="318" rx="82" ry="50" fill="#e8c098" opacity="0.15"/>
+
+  <!-- Neck -->
+  <rect x="181" y="252" width="38" height="72" rx="19" fill="#e8c098" opacity="0.7"/>
+
+  <!-- Delicate necklace -->
+  <path d="M165,275 Q200,285 235,275" stroke="#c9a96e" stroke-width="1.5" fill="none" opacity="0.45"/>
+  <circle cx="200" cy="285" r="3" fill="#c9a96e" opacity="0.55"/>
+
+  <!-- Head / face -->
+  <ellipse cx="200" cy="185" rx="77" ry="84" fill="url(#s2-skin)"/>
+  <ellipse cx="200" cy="210" rx="70" ry="58" fill="#e8c098" opacity="0.38"/>
+
+  <!-- Eyes — sultry, half-lidded -->
+  <ellipse cx="173" cy="179" rx="14" ry="9" fill="#180a20" opacity="0.95"/>
+  <ellipse cx="227" cy="179" rx="14" ry="9" fill="#180a20" opacity="0.95"/>
+  <!-- Smoky eyeshadow -->
+  <ellipse cx="173" cy="174" rx="20" ry="11" fill="#e879f9" opacity="0.18" filter="url(#s2-blur-sm)"/>
+  <ellipse cx="227" cy="174" rx="20" ry="11" fill="#e879f9" opacity="0.18" filter="url(s2-blur-sm)"/>
+  <!-- Lower shadow -->
+  <ellipse cx="173" cy="185" rx="14" ry="6" fill="#9050b0" opacity="0.15" filter="url(#s2-blur-sm)"/>
+  <ellipse cx="227" cy="185" rx="14" ry="6" fill="#9050b0" opacity="0.15" filter="url(s2-blur-sm)"/>
+  <!-- Eye whites -->
+  <ellipse cx="173" cy="179" rx="9" ry="5.5" fill="#f0e8de" opacity="0.52"/>
+  <ellipse cx="227" cy="179" rx="9" ry="5.5" fill="#f0e8de" opacity="0.52"/>
+  <!-- Green eyes — unique -->
+  <circle cx="173" cy="179" r="5.5" fill="#2a5a30" opacity="0.88"/>
+  <circle cx="227" cy="179" r="5.5" fill="#2a5a30" opacity="0.88"/>
+  <circle cx="170" cy="177" r="1.5" fill="white" opacity="0.72"/>
+  <circle cx="224" cy="177" r="1.5" fill="white" opacity="0.72"/>
+  <!-- Liner -->
+  <path d="M159,176 Q173,171 187,175" stroke="#180a20" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <path d="M213,175 Q227,171 241,176" stroke="#180a20" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <!-- Extended liner -->
+  <path d="M187,175 L192,171" stroke="#180a20" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M213,175 L208,171" stroke="#180a20" stroke-width="1.8" stroke-linecap="round"/>
+
+  <!-- High arched brows -->
+  <path d="M159,163 Q173,156 187,161" stroke="#5a2800" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.75"/>
+  <path d="M213,161 Q227,156 241,163" stroke="#5a2800" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.75"/>
+
+  <!-- Nose -->
+  <ellipse cx="200" cy="202" rx="6.5" ry="4" fill="#c08860" opacity="0.28"/>
+  <path d="M194,207 Q200,212 206,207" stroke="#c08860" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Lips — berry/wine red -->
+  <path d="M181,224 Q191,218 200,220 Q209,218 219,224 Q211,232 200,234 Q189,232 181,224Z" fill="#9b2050" opacity="0.9"/>
+  <path d="M181,224 Q200,222 219,224" stroke="#7a1040" stroke-width="0.8" fill="none" opacity="0.55"/>
+  <ellipse cx="200" cy="225" rx="11" ry="3" fill="white" opacity="0.12"/>
+
+  <!-- Cheek blush -->
+  <ellipse cx="148" cy="198" rx="24" ry="15" fill="#e879f9" opacity="0.1" filter="url(#s2-blur-sm)"/>
+  <ellipse cx="252" cy="198" rx="24" ry="15" fill="#e879f9" opacity="0.1" filter="url(s2-blur-sm)"/>
+
+  <!-- Golden wavy hair — London chic -->
+  <!-- Crown volume -->
+  <ellipse cx="200" cy="120" rx="87" ry="88" fill="url(#s2-hair)"/>
+  <!-- Side waves -->
+  <ellipse cx="120" cy="210" rx="65" ry="125" fill="#c9a940" opacity="0.82" transform="rotate(-8 120 210)"/>
+  <ellipse cx="280" cy="200" rx="58" ry="110" fill="#c9a940" opacity="0.78" transform="rotate(8 280 200)"/>
+  <!-- Wave texture -->
+  <path d="M120,140 Q145,130 160,145 Q175,160 165,175" stroke="#d4b050" stroke-width="2" fill="none" opacity="0.4"/>
+  <path d="M280,135 Q255,125 240,140 Q225,155 235,170" stroke="#d4b050" stroke-width="2" fill="none" opacity="0.35"/>
+  <!-- Hair wave shine -->
+  <rect width="400" height="530" fill="url(#s2-hair-wave)"/>
+  <!-- Hair volume highlights -->
+  <ellipse cx="175" cy="108" rx="32" ry="20" fill="#e8c870" opacity="0.3"/>
+
+  <!-- Hoop earrings -->
+  <circle cx="128" cy="212" r="10" fill="none" stroke="#c9a96e" stroke-width="3" opacity="0.65"/>
+  <circle cx="272" cy="212" r="10" fill="none" stroke="#c9a96e" stroke-width="3" opacity="0.65"/>
+
+  <!-- Bottom fade -->
+  <rect width="400" height="530" fill="url(#s2-fade)"/>
+</svg>
