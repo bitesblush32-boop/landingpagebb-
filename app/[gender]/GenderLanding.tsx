@@ -1150,7 +1150,34 @@ export default function GenderLanding({
       )}
 
       {/* ── Hero ── */}
-      <section className={`relative min-h-screen flex flex-col items-center justify-center text-center px-5 pb-20 ${activeBoosts.headerBanner ? 'pt-12' : 'pt-28'}`}>
+      <section className={`relative min-h-screen flex flex-col items-center justify-center text-center px-5 pb-20 overflow-hidden ${activeBoosts.headerBanner ? 'pt-12' : 'pt-28'}`}>
+        {cfg.heroBgImage && (
+          <>
+            <div
+              className="bb-hero-bg-image absolute inset-0 pointer-events-none z-0"
+              style={{
+                top: '4rem',
+                backgroundImage: `url(${cfg.heroBgImage})`,
+                backgroundSize: 'cover',
+                backgroundRepeat: 'no-repeat',
+                opacity: 0.7,
+                filter: 'brightness(0.9) contrast(1.05)',
+                WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0) 95%)',
+                maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0) 95%)',
+              }}
+            />
+            <style>{`
+              .bb-hero-bg-image {
+                background-position: left 35%;
+              }
+              @media (min-width: 1024px) {
+                .bb-hero-bg-image {
+                  background-position: center 35%;
+                }
+              }
+            `}</style>
+          </>
+        )}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
