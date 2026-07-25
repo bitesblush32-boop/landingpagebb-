@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
+import NotificationBell from '@/components/dashboard/NotificationBell'
 
 interface CompanionMe {
   id: string
@@ -77,6 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#07090f' }}>
+      <NotificationBell />
       {/* Sidebar — desktop only */}
       <aside
         style={{

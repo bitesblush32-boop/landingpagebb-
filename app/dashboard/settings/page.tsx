@@ -2,6 +2,15 @@
 
 import { useState, useEffect } from 'react'
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const raw = atob(base64)
+  const bytes = new Uint8Array(new ArrayBuffer(raw.length))
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
+  return bytes
+}
+
 interface Settings {
   whatsapp_number: string | null
   instagram_handle: string | null
@@ -113,6 +122,78 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
+
+  // Push notifications
+  const [pushState, setPushState] = useState<'unsupported' | 'off' | 'on' | 'busy'>('off')
+  const [pushErr, setPushErr] = useState('')
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setPushState('unsupported')
+      return
+    }
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => reg.pushManager.getSubscription())
+      .then((sub) => setPushState(sub ? 'on' : 'off'))
+      .catch(() => setPushState('off'))
+  }, [])
+
+  async function enablePush() {
+    setPushErr('')
+    setPushState('busy')
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') {
+        setPushErr('Notifications were blocked — enable them in your browser settings to turn this on.')
+        setPushState('off')
+        return
+      }
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!publicKey) {
+        setPushErr('Push is not configured yet.')
+        setPushState('off')
+        return
+      }
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      })
+      const json = sub.toJSON()
+      const r = await fetch('/api/companions/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+      })
+      if (!r.ok) throw new Error('Could not save subscription.')
+      setPushState('on')
+    } catch {
+      setPushErr("That didn't work — try again in a moment.")
+      setPushState('off')
+    }
+  }
+
+  async function disablePush() {
+    setPushErr('')
+    setPushState('busy')
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) {
+        await fetch('/api/companions/push/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        })
+        await sub.unsubscribe()
+      }
+      setPushState('off')
+    } catch {
+      setPushErr("That didn't work — try again in a moment.")
+      setPushState('on')
+    }
+  }
 
   // Password
   const [currentPw, setCurrentPw] = useState('')
@@ -251,6 +332,31 @@ export default function SettingsPage() {
         >
           {saving ? 'Saving…' : 'Save changes'}
         </button>
+      </div>
+
+      {/* Push notifications */}
+      <div style={S.section}>
+        <div style={S.sectionTitle}>Notifications</div>
+        {pushErr && <div style={S.err}>{pushErr}</div>}
+        {pushState === 'unsupported' ? (
+          <p style={{ fontSize: 13, color: '#6b7280' }}>
+            Your browser doesn&apos;t support push notifications.
+          </p>
+        ) : (
+          <>
+            <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 16 }}>
+              Get a quiet nudge on this device when something happens — a booking, a new badge, a
+              sign-in. Never anything explicit on your lock screen.
+            </p>
+            <button
+              style={{ ...S.saveBtn, opacity: pushState === 'busy' ? 0.6 : 1 }}
+              onClick={pushState === 'on' ? disablePush : enablePush}
+              disabled={pushState === 'busy'}
+            >
+              {pushState === 'busy' ? 'Working…' : pushState === 'on' ? 'Turn off notifications' : 'Turn on notifications'}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Password */}
