@@ -116,62 +116,88 @@ const QUICK_LINKS = [
 
 // ─── Tour Modal ────────────────────────────────────────────────────────────────
 
+const WA_SVG = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <path fill="#25D366" d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.977-1.418A9.956 9.956 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z"/>
+    <path fill="#fff" d="M16.75 14.4c-.25-.125-1.475-.73-1.7-.812-.228-.083-.394-.125-.56.125-.167.25-.645.812-.79.98-.146.166-.292.187-.542.062-.25-.125-1.055-.389-2.01-1.24-.743-.663-1.244-1.48-1.39-1.73-.146-.25-.015-.385.11-.51.113-.11.25-.291.375-.437.125-.145.167-.25.25-.416.083-.167.042-.313-.02-.438-.063-.125-.56-1.354-.769-1.854-.202-.487-.408-.42-.56-.428l-.477-.008c-.167 0-.438.063-.667.313-.23.25-.875.854-.875 2.083 0 1.23.896 2.417 1.021 2.584.125.166 1.764 2.694 4.271 3.778.597.257 1.063.41 1.426.526.599.19 1.145.163 1.576.099.48-.072 1.475-.604 1.684-1.188.208-.583.208-1.083.146-1.187-.063-.104-.23-.167-.48-.292z"/>
+  </svg>
+)
+
+const TG_SVG = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" fill="#26A5E4"/>
+    <path fill="#fff" d="M17.707 7.293l-2.12 10.003c-.155.688-.562.856-1.137.532l-3.146-2.317-1.518 1.46c-.168.168-.308.308-.632.308l.226-3.196 5.826-5.263c.253-.226-.055-.35-.394-.125L7.07 13.99 3.97 13.02c-.674-.21-.687-.674.14-.998l13.257-5.11c.562-.203 1.054.137.87 1.381h-.53z"/>
+  </svg>
+)
+
+const CAM_SVG = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+    <circle cx="12" cy="13" r="4"/>
+  </svg>
+)
+
+const GRID_SVG = (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5">
+    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+  </svg>
+)
+
+const SUCCESS_SVG = (
+  <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+    <circle cx="28" cy="28" r="28" fill="rgba(34,197,94,.12)"/>
+    <circle cx="28" cy="28" r="20" fill="rgba(34,197,94,.2)"/>
+    <path stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" d="M19 28l6 6 12-12"/>
+  </svg>
+)
+
 const TOUR_STEPS = [
   {
-    eyebrow: 'Welcome',
-    title: 'Your stage awaits.',
-    body: 'This is your companion dashboard — where you manage your profile, photos, stories, and see how dreamers find you. It takes about 5 minutes to go live.',
-    sections: [
-      { icon: '◉', label: 'Profile', desc: 'Your bio, contact details & rates' },
-      { icon: '◻', label: 'Photos', desc: 'Your primary photo appears on every card' },
-      { icon: '✦', label: 'Stories', desc: 'Written content that draws dreamers in' },
-      { icon: '▥', label: 'Analytics', desc: 'Views, clicks, and booking stats' },
+    eyebrow: 'Step 1 of 3',
+    title: 'Start with who you are.',
+    body: 'Open Identity & Details. Fill your name, contact info, and bio.',
+    rows: [
+      { icon: WA_SVG,   label: 'WhatsApp',  desc: 'Dreamers reach you directly' },
+      { icon: TG_SVG,   label: 'Telegram',  desc: 'Your username or number' },
     ],
-    cta: null,
-    ctaHref: null,
-  },
-  {
-    eyebrow: 'Step 1 of 2 — Required',
-    title: 'Add your contact details.',
-    body: 'WhatsApp and Telegram are the two buttons dreamers use to reach you. Without them your profile stays hidden — you will not appear in any search or discovery feed.',
-    sections: [
-      { icon: '📱', label: 'WhatsApp', desc: 'Primary CTA — dreamers message you directly' },
-      { icon: '✈️', label: 'Telegram', desc: 'Secondary CTA — username or phone number' },
-    ],
-    cta: 'Fill my contact details →',
+    cta: 'Go to Identity & Details →',
     ctaHref: '/dashboard/profile',
   },
   {
-    eyebrow: 'Step 2 of 2 — Required',
-    title: 'Upload your primary photo.',
-    body: 'Your primary photo is the first thing dreamers see when browsing. Without it your profile card shows a placeholder. Upload at least one photo and set it as primary to complete your profile.',
-    sections: [
-      { icon: '◻', label: 'Primary photo', desc: 'Shown on your card in discover & search' },
-      { icon: '◻', label: 'Gallery photos', desc: 'Shown when a dreamer opens your profile' },
+    eyebrow: 'Step 2 of 3',
+    title: 'Name your price.',
+    body: 'Go to your profile, open the Rates tab, add one service.',
+    rows: [
+      { icon: <span style={{ fontSize: 18, color: '#9ca3af', lineHeight: 1 }}>₿</span>, label: 'Service name', desc: 'What you offer dreamers' },
+      { icon: <span style={{ fontSize: 18, color: '#9ca3af', lineHeight: 1 }}>€</span>, label: 'Rate',         desc: "What they'll see before booking" },
+    ],
+    cta: 'Set my rates →',
+    ctaHref: '/dashboard/profile',
+  },
+  {
+    eyebrow: 'Step 3 of 3',
+    title: 'Let them see your world.',
+    body: 'Upload at least one photo. It shows on every discovery card.',
+    rows: [
+      { icon: CAM_SVG,  label: 'Primary photo', desc: 'Your face on every card' },
+      { icon: GRID_SVG, label: 'Gallery',        desc: 'Shown when a dreamer opens your profile' },
     ],
     cta: 'Upload a photo →',
     ctaHref: '/dashboard/photos',
   },
 ]
 
-function TourModal({
-  onClose,
-  tourComplete,
-}: {
-  onClose: () => void
-  tourComplete: boolean
-}) {
+function TourModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0)
-  const current = TOUR_STEPS[step]
-  const isLast = step === TOUR_STEPS.length - 1
+  const isSuccess = step === 3
 
   function advance() {
-    if (isLast) {
-      onClose()
-    } else {
-      setStep((s) => s + 1)
-    }
+    if (step < 3) setStep((s) => s + 1)
+    else onClose()
   }
+
+  const current = !isSuccess ? TOUR_STEPS[step] : null
 
   return (
     <div
@@ -197,132 +223,144 @@ function TourModal({
           position: 'relative',
         }}
       >
-        {/* Step dots */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
-          {TOUR_STEPS.map((_, i) => (
-            <div
-              key={i}
-              style={{
-                width: i === step ? 20 : 6,
-                height: 6,
-                borderRadius: 99,
-                background: i === step ? '#e8607a' : '#1c2333',
-                transition: 'width .2s ease, background .2s',
-              }}
-            />
-          ))}
-        </div>
-
-        <p
-          style={{
-            fontSize: 11,
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
-            color: '#6b7280',
-            marginBottom: 8,
-          }}
-        >
-          {current.eyebrow}
-        </p>
-        <h2
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: 24,
-            color: '#eeeef0',
-            lineHeight: 1.3,
-            marginBottom: 12,
-          }}
-        >
-          {current.title}
-        </h2>
-        <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.65, marginBottom: 24 }}>
-          {current.body}
-        </p>
-
-        {/* Feature rows */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
-          {current.sections.map((sec) => (
-            <div
-              key={sec.label}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 12,
-                padding: '12px 14px',
-                background: '#111620',
-                borderRadius: 12,
-                border: '1px solid #1c2333',
-              }}
-            >
-              <span style={{ fontSize: 18, lineHeight: 1, marginTop: 1 }}>{sec.icon}</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0', marginBottom: 2 }}>
-                  {sec.label}
-                </div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>{sec.desc}</div>
-              </div>
+        {/* Success card */}
+        {isSuccess ? (
+          <div style={{ textAlign: 'center', padding: '8px 0' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+              {SUCCESS_SVG}
             </div>
-          ))}
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {current.cta && current.ctaHref ? (
-            <a
-              href={current.ctaHref}
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 26, color: '#eeeef0', lineHeight: 1.3, marginBottom: 10 }}>
+              You&apos;re all set.
+            </h2>
+            <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.65, marginBottom: 28 }}>
+              Your stage is ready. Dreamers can now find you.
+            </p>
+            <button
+              onClick={onClose}
               style={{
-                display: 'block',
                 background: '#e8607a',
+                border: 'none',
                 color: '#fff',
-                textDecoration: 'none',
-                textAlign: 'center',
                 padding: '13px 20px',
                 borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 500,
+                cursor: 'pointer',
+                width: '100%',
               }}
             >
-              {current.cta}
-            </a>
-          ) : null}
+              Enter my dashboard
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Step dots */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: i === step ? 20 : 6,
+                    height: 6,
+                    borderRadius: 99,
+                    background: i === step ? '#e8607a' : '#1c2333',
+                    transition: 'width .2s ease',
+                  }}
+                />
+              ))}
+            </div>
 
-          <button
-            onClick={advance}
-            style={{
-              background: current.cta ? 'transparent' : '#e8607a',
-              border: current.cta ? '1px solid #1c2333' : 'none',
-              color: current.cta ? '#6b7280' : '#fff',
-              padding: '12px 20px',
-              borderRadius: 12,
-              fontSize: 13,
-              cursor: 'pointer',
-              width: '100%',
-            }}
-          >
-            {isLast ? (tourComplete ? 'Done — go to dashboard' : 'Got it, I\'ll do this later') : 'Next →'}
-          </button>
-        </div>
+            <p style={{ fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#6b7280', marginBottom: 8 }}>
+              {current!.eyebrow}
+            </p>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 24, color: '#eeeef0', lineHeight: 1.3, marginBottom: 12 }}>
+              {current!.title}
+            </h2>
+            <p style={{ fontSize: 14, color: '#9ca3af', lineHeight: 1.65, marginBottom: 24 }}>
+              {current!.body}
+            </p>
 
-        {/* Skip */}
-        {step === 0 && (
-          <button
-            onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              background: 'none',
-              border: 'none',
-              color: '#4b5563',
-              cursor: 'pointer',
-              fontSize: 18,
-              lineHeight: 1,
-              padding: 4,
-            }}
-            aria-label="Skip tour"
-          >
-            ×
-          </button>
+            {/* Feature rows */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+              {current!.rows.map((row) => (
+                <div
+                  key={row.label}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '12px 14px',
+                    background: '#111620',
+                    borderRadius: 12,
+                    border: '1px solid #1c2333',
+                  }}
+                >
+                  <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>{row.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#eeeef0', marginBottom: 2 }}>{row.label}</div>
+                    <div style={{ fontSize: 12, color: '#6b7280' }}>{row.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href={current!.ctaHref}
+                style={{
+                  display: 'block',
+                  background: '#e8607a',
+                  color: '#fff',
+                  textDecoration: 'none',
+                  textAlign: 'center',
+                  padding: '13px 20px',
+                  borderRadius: 12,
+                  fontSize: 14,
+                  fontWeight: 500,
+                }}
+              >
+                {current!.cta}
+              </a>
+              <button
+                onClick={advance}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #1c2333',
+                  color: '#6b7280',
+                  padding: '12px 20px',
+                  borderRadius: 12,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  width: '100%',
+                }}
+              >
+                Next →
+              </button>
+            </div>
+
+            {/* Skip — step 0 only */}
+            {step === 0 && (
+              <button
+                onClick={onClose}
+                style={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  background: 'none',
+                  border: 'none',
+                  color: '#4b5563',
+                  cursor: 'pointer',
+                  fontSize: 18,
+                  lineHeight: 1,
+                  padding: 4,
+                }}
+                aria-label="Skip tour"
+              >
+                ×
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -518,7 +556,7 @@ function DashboardContent() {
     <>
       {/* Tour modal — fullscreen overlay */}
       {showTour && me && (
-        <TourModal onClose={closeTour} tourComplete={tourComplete} />
+        <TourModal onClose={closeTour} />
       )}
 
       <div style={S.page}>
